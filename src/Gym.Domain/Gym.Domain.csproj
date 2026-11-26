@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <!-- Entities and business rules (subscription status, stock). Filled in from step 2.2. -->
+    <!-- Entities and business rules (subscription dates and status, stock, private trainers, staff ratings). Pure C#, no packages. -->
   </PropertyGroup>
 
 </Project>
