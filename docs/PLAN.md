@@ -151,30 +151,36 @@ docs/PLAN.md          this file
 - **Logo:** gold crown with cyan gems over a white "T" and gold steps.
   - Source: the inline SVG in the sidebar of each design file.
   - Convert it to XAML geometry in `Gym.UI`.
-- **Colors (dark graphite):**
+- **Colors ("Deep Teal", chosen by the owner in step 2.1; replaces the graphite of the mockups):**
 
 | Token | Value |
 |---|---|
-| Background | `#0D0F12` |
-| Sidebar | `#111317` |
-| Panel | `#15181D` |
-| Panel 2 | `#1C2027` |
-| Line | `#23272F` |
-| Border | `#2E343E` |
-| Text | `#F1F3F6` |
-| Text secondary | `#A7AFBC` |
-| Text tertiary | `#C9CFD8` |
-| Brand / accent (cyan) | `#22D8F0` |
+| Background | `#0A1C22` |
+| Sidebar | `#0C2830` (vertical gradient to `#0A1F26` at the bottom) |
+| Panel | `#0F2731` |
+| Panel 2 | `#133340` |
+| Line | `#1B3E4A` |
+| Border | `#24505D` |
+| Text | `#EEF7F9` |
+| Text secondary | `#9DBCC4` |
+| Text tertiary | `#C4DCE1` |
+| Brand / accent (aqua) | `#22D8F0` |
+| Turquoise (secondary accent) | `#14C2B8` |
+| Accent gradient | `#22D8F0` → `#14C2B8`, left to right: primary buttons, active nav item, thin top accent line |
+| Accent soft fill | `#22D8F0` at 12 % opacity: selected rows, active nav background, info chips |
 | Gold (money, renew, premium) | `#D6A93A` (gradient `#F2CF6B` → `#D6A93A` → `#B8892A`) |
-| Text on accent | `#0B0D10` |
+| Text on accent | `#04181D` |
 | Status good | `#3DD68C` |
 | Status warning | `#F5B83D` |
 | Status bad | `#F26D6D` |
 
+- **Theme code:** all colours are resources in one dictionary, `Gym.UI/Themes/Colors.xaml`. Styles and controls use them through `DynamicResource`, so a later light theme is a swap of that one file. The logo keeps its fixed brand colours.
+
 - **Status colors** always come with an icon and a label, never color alone.
 - **Fonts:**
   - Alexandria (headings, numbers) and IBM Plex Sans Arabic (body). Both are Google Fonts (OFL).
-  - Embed them in `Gym.UI`.
+  - Embedded in `Gym.UI/Fonts` with their `OFL.txt`, taken from the google/fonts GitHub repo.
+  - google/fonts has Alexandria only as a variable font, which WPF cannot use for weights. The static Medium / SemiBold / Bold / ExtraBold files are instances of it made with fontTools (allowed by the OFL; Alexandria has no Reserved Font Name).
 - **RTL:**
   - The whole UI flips with `FlowDirection` in Arabic.
   - Syrian month names (كانون الثاني … كانون الأول).
@@ -246,6 +252,23 @@ The workflow file is `.github/workflows/build.yml`. It is added in step 2.1.
 - `Sale` + `SaleLine` (number, station, cashier, time, total; product, qty, unit price)
 - `Shift` (cashier, station, opened at, closed at)
 
+## Incoming requirements (from the owner, not designed yet)
+
+Answers received during step 2.1. Not built yet. The data model in step 2.3 must leave room for them.
+
+- **Private trainer:**
+  - Not staff. A private trainer is a member (player) who pays the normal member subscription.
+  - If he trains clients at the gym, he also pays a "private training service" subscription.
+  - That fee is one fixed amount, set in the system settings, the same for all private trainers.
+  - His clients are linked to him in the system. Each client is a normal member with their own subscription.
+- **Staff types:** Club trainer (a gym employee), Reception, Cashier, Admin.
+  - Club trainers appear in the Staff section.
+  - Club trainers get a monthly rating from management: 1 to 5 stars plus a note, with history.
+- **Biometric identification:**
+  - Start with a USB fingerprint reader at reception (e.g. ZKTeco ZK9500; confirm the model before coding).
+  - QR stays as the fallback.
+  - Face recognition later, through a door terminal.
+
 ## Open items
 
 1. **Syrian ID barcode:** what it actually holds is unknown. Before step 3, the owner scans one ID into Notepad and sends the text (digits may be masked).
@@ -256,6 +279,8 @@ The workflow file is `.github/workflows/build.yml`. It is added in step 2.1.
 6. **Expiring threshold:** 3 days for now, changeable.
 7. **Arabic digits:** 0-9 now. It can be switched to ٠-٩.
 8. **Backup target:** which external drive.
+9. **Repo is public:** the owner is considering making it private.
+10. **Fingerprint reader model:** confirm before coding (e.g. ZKTeco ZK9500).
 
 ## Working rules
 
