@@ -1,0 +1,81 @@
+<!--
+    TITANFIT logo, converted from the inline SVG in the sidebar of design/*.dc.html
+    (viewBox 58 -62 176 176): gold crown with cyan gems over a white "T" and gold steps.
+    Each gold shape gets its own top-to-bottom gradient, like the SVG objectBoundingBox gradient.
+
+    The logo colours are fixed brand colours, so they stay the same in any theme.
+
+    Image.LogoMark  the mark only (tight bounds), for large use.
+    Image.Logo      the mark inside the square SVG viewBox, as in the sidebar tile.
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <LinearGradientBrush x:Key="Logo.Gold" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#F2CF6B" />
+        <GradientStop Offset="0.55" Color="#D6A93A" />
+        <GradientStop Offset="1" Color="#B8892A" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="Logo.Gem" Color="#22D8F0" />
+    <SolidColorBrush x:Key="Logo.White" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="Logo.Groove" Color="#04181D" />
+
+    <DrawingGroup x:Key="Drawing.LogoMark">
+        <!-- Crown -->
+        <GeometryDrawing Brush="{StaticResource Logo.Gold}"
+                         Geometry="M119,-9 L115,-44 L132,-27 L146,-52 L160,-27 L177,-44 L173,-9 Z" />
+        <GeometryDrawing Brush="{StaticResource Logo.Gold}">
+            <GeometryDrawing.Geometry>
+                <RectangleGeometry Rect="118,-8,56,7" RadiusX="1" RadiusY="1" />
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <!-- Gems -->
+        <GeometryDrawing Brush="{StaticResource Logo.Gem}"
+                         Geometry="M146,-33 L152,-24 L146,-15 L140,-24 Z M129,-24 L133,-19 L129,-14 L125,-19 Z M163,-24 L167,-19 L163,-14 L159,-19 Z" />
+        <!-- White "T" with its centre groove -->
+        <GeometryDrawing Brush="{StaticResource Logo.White}" Geometry="M120,2 h52 v16 h-11 v46 h-30 v-46 h-11 Z" />
+        <GeometryDrawing Brush="{StaticResource Logo.Groove}">
+            <GeometryDrawing.Geometry>
+                <RectangleGeometry Rect="144.25,22,3.5,38" RadiusX="1.75" RadiusY="1.75" />
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <!-- Gold steps and white base -->
+        <GeometryDrawing Brush="{StaticResource Logo.Gold}">
+            <GeometryDrawing.Geometry>
+                <RectangleGeometry Rect="116,66,60,12" RadiusX="1.5" RadiusY="1.5" />
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="{StaticResource Logo.Gold}">
+            <GeometryDrawing.Geometry>
+                <RectangleGeometry Rect="122,80,48,11" RadiusX="1.5" RadiusY="1.5" />
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="{StaticResource Logo.Gold}">
+            <GeometryDrawing.Geometry>
+                <RectangleGeometry Rect="128,93,36,10" RadiusX="1.5" RadiusY="1.5" />
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="{StaticResource Logo.White}">
+            <GeometryDrawing.Geometry>
+                <RectangleGeometry Rect="135,105,22,7" RadiusX="1" RadiusY="1" />
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <DrawingImage x:Key="Image.LogoMark" Drawing="{StaticResource Drawing.LogoMark}" />
+
+    <DrawingImage x:Key="Image.Logo">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <!-- Transparent square = the SVG viewBox, so the mark keeps the same padding. -->
+                <GeometryDrawing Brush="Transparent">
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry Rect="58,-62,176,176" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <StaticResource ResourceKey="Drawing.LogoMark" />
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+</ResourceDictionary>

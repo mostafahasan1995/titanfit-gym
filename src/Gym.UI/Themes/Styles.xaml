@@ -1,0 +1,232 @@
+<!--
+    TITANFIT fonts and base styles: window, text, buttons, sidebar navigation, language toggle.
+    Touch first: every clickable target is at least 44 px high.
+    Colours come from Colors.xaml through DynamicResource, so swapping that one dictionary re-themes everything.
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:ui="clr-namespace:Gym.UI">
+
+    <!-- Fonts (embedded, SIL OFL): Alexandria for headings and numbers, IBM Plex Sans Arabic for body text. -->
+    <FontFamily x:Key="Font.Heading">pack://application:,,,/Gym.UI;component/Fonts/#Alexandria</FontFamily>
+    <FontFamily x:Key="Font.Body">pack://application:,,,/Gym.UI;component/Fonts/#IBM Plex Sans Arabic</FontFamily>
+
+    <!-- Keyboard focus ring (the design's 2 px light outline). -->
+    <Style x:Key="Focus.Visual">
+        <Setter Property="Control.Template">
+            <Setter.Value>
+                <ControlTemplate>
+                    <Rectangle Margin="-3" RadiusX="12" RadiusY="12" SnapsToDevicePixels="True"
+                               Stroke="{DynamicResource Brush.Text}" StrokeThickness="2" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Window -->
+    <Style x:Key="Window.TitanFit" TargetType="Window">
+        <Setter Property="Background" Value="{DynamicResource Brush.Background}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+        <Setter Property="FontFamily" Value="{StaticResource Font.Body}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="UseLayoutRounding" Value="True" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="TextOptions.TextFormattingMode" Value="Ideal" />
+    </Style>
+
+    <!-- Text -->
+    <Style x:Key="Text.Base" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Body}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </Style>
+    <Style x:Key="Text.Body" TargetType="TextBlock" BasedOn="{StaticResource Text.Base}" />
+    <Style x:Key="Text.Strong" TargetType="TextBlock" BasedOn="{StaticResource Text.Base}">
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style x:Key="Text.Caption" TargetType="TextBlock" BasedOn="{StaticResource Text.Base}">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
+    </Style>
+    <Style x:Key="Text.Overline" TargetType="TextBlock" BasedOn="{StaticResource Text.Caption}">
+        <Setter Property="FontSize" Value="12" />
+    </Style>
+    <Style x:Key="Text.H1" TargetType="TextBlock" BasedOn="{StaticResource Text.Base}">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Heading}" />
+        <Setter Property="FontSize" Value="26" />
+        <Setter Property="FontWeight" Value="Bold" />
+    </Style>
+    <Style x:Key="Text.H2" TargetType="TextBlock" BasedOn="{StaticResource Text.Base}">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Heading}" />
+        <Setter Property="FontSize" Value="18" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style x:Key="Text.Display" TargetType="TextBlock" BasedOn="{StaticResource Text.Base}">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Heading}" />
+        <Setter Property="FontSize" Value="88" />
+        <Setter Property="FontWeight" Value="ExtraBold" />
+    </Style>
+
+    <!-- Buttons. One template; the variants change colours. Hover and press add a light overlay. -->
+    <ControlTemplate x:Key="Button.Template" TargetType="ButtonBase">
+        <Grid x:Name="Root">
+            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="{Binding Path=(ui:ThemeAssist.CornerRadius), RelativeSource={RelativeSource TemplatedParent}}" />
+            <Border x:Name="Overlay" Background="Transparent"
+                    CornerRadius="{Binding Path=(ui:ThemeAssist.CornerRadius), RelativeSource={RelativeSource TemplatedParent}}" />
+            <ContentPresenter Margin="{TemplateBinding Padding}" RecognizesAccessKey="True"
+                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+        </Grid>
+        <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Overlay" Property="Background" Value="{DynamicResource Brush.Hover}" />
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter TargetName="Overlay" Property="Background" Value="{DynamicResource Brush.Pressed}" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="Root" Property="Opacity" Value="0.45" />
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+
+    <!-- Secondary (default): panel colour with a border. -->
+    <Style x:Key="Button.Secondary" TargetType="ButtonBase">
+        <Setter Property="Template" Value="{StaticResource Button.Template}" />
+        <Setter Property="ui:ThemeAssist.CornerRadius" Value="12" />
+        <Setter Property="MinHeight" Value="48" />
+        <Setter Property="MinWidth" Value="48" />
+        <Setter Property="Padding" Value="20,0" />
+        <Setter Property="FontFamily" Value="{StaticResource Font.Body}" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+        <Setter Property="Background" Value="{DynamicResource Brush.Panel2}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource Focus.Visual}" />
+    </Style>
+    <Style TargetType="Button" BasedOn="{StaticResource Button.Secondary}" />
+
+    <!-- Primary: aqua to turquoise gradient with dark text. -->
+    <Style x:Key="Button.Primary" TargetType="ButtonBase" BasedOn="{StaticResource Button.Secondary}">
+        <Setter Property="Background" Value="{DynamicResource Brush.AccentGradient}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextOnAccent}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="FontWeight" Value="Bold" />
+    </Style>
+
+    <!-- Gold: money, renew, premium. -->
+    <Style x:Key="Button.Gold" TargetType="ButtonBase" BasedOn="{StaticResource Button.Primary}">
+        <Setter Property="Background" Value="{DynamicResource Brush.GoldGradient}" />
+    </Style>
+
+    <!-- Ghost: transparent with a border, e.g. "Log out". -->
+    <Style x:Key="Button.Ghost" TargetType="ButtonBase" BasedOn="{StaticResource Button.Secondary}">
+        <Setter Property="ui:ThemeAssist.CornerRadius" Value="10" />
+        <Setter Property="MinHeight" Value="44" />
+        <Setter Property="Padding" Value="12,0" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="Normal" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextTertiary}" />
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+
+    <!-- Line icon (24 x 24 design grid, 1.8 stroke, round caps), sized by the Viewbox. -->
+    <Style x:Key="Icon.Line" TargetType="Path">
+        <Setter Property="StrokeThickness" Value="1.8" />
+        <Setter Property="StrokeStartLineCap" Value="Round" />
+        <Setter Property="StrokeEndLineCap" Value="Round" />
+        <Setter Property="StrokeLineJoin" Value="Round" />
+        <Setter Property="Stroke" Value="{Binding Path=(TextElement.Foreground), RelativeSource={RelativeSource Self}}" />
+    </Style>
+
+    <!-- Sidebar navigation item. Content = label, Tag = icon Geometry. -->
+    <Style x:Key="Nav.Item" TargetType="RadioButton">
+        <Setter Property="MinHeight" Value="46" />
+        <Setter Property="Padding" Value="12,0" />
+        <Setter Property="FontFamily" Value="{StaticResource Font.Body}" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource Focus.Visual}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Grid>
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="10" />
+                        <Border x:Name="Indicator" Width="3" Height="22" CornerRadius="1.5" Visibility="Collapsed"
+                                HorizontalAlignment="Left" VerticalAlignment="Center"
+                                Background="{DynamicResource Brush.AccentGradient}" />
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="{TemplateBinding Padding}">
+                            <Viewbox Width="20" Height="20" VerticalAlignment="Center">
+                                <Canvas Width="24" Height="24">
+                                    <Path x:Name="Icon" Style="{StaticResource Icon.Line}"
+                                          Stroke="{TemplateBinding Foreground}"
+                                          Data="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" />
+                                </Canvas>
+                            </Viewbox>
+                            <ContentPresenter Margin="12,0,0,0" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Hover}" />
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.AccentSoft}" />
+                            <Setter TargetName="Indicator" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="Icon" Property="Stroke" Value="{DynamicResource Brush.AccentGradient}" />
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+                            <Setter Property="FontWeight" Value="SemiBold" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- EN / عربي segmented toggle. -->
+    <Style x:Key="Lang.Toggle" TargetType="RadioButton">
+        <Setter Property="MinWidth" Value="56" />
+        <Setter Property="Height" Value="40" />
+        <Setter Property="Padding" Value="12,0" />
+        <Setter Property="FontFamily" Value="{StaticResource Font.Body}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource Focus.Visual}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="8"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.AccentSoft}" />
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Accent}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

@@ -1,0 +1,95 @@
+<!--
+    TITANFIT colour tokens, "Deep Teal" (docs/PLAN.md, "UI and theme").
+    Every colour of the UI lives here, so a later light theme is a swap of this one dictionary:
+    the styles and the shell use these keys with DynamicResource.
+    Each token exists as a Color (Color.*) and a brush (Brush.*).
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Surfaces -->
+    <Color x:Key="Color.Background">#0A1C22</Color>
+    <Color x:Key="Color.Sidebar">#0C2830</Color>
+    <Color x:Key="Color.SidebarBottom">#0A1F26</Color>
+    <Color x:Key="Color.Panel">#0F2731</Color>
+    <Color x:Key="Color.Panel2">#133340</Color>
+    <Color x:Key="Color.Line">#1B3E4A</Color>
+    <Color x:Key="Color.Border">#24505D</Color>
+
+    <!-- Text -->
+    <Color x:Key="Color.Text">#EEF7F9</Color>
+    <Color x:Key="Color.TextSecondary">#9DBCC4</Color>
+    <Color x:Key="Color.TextTertiary">#C4DCE1</Color>
+    <Color x:Key="Color.TextOnAccent">#04181D</Color>
+
+    <!-- Brand -->
+    <Color x:Key="Color.Brand">#22D8F0</Color>       <!-- aqua, "FIT" in the wordmark -->
+    <Color x:Key="Color.Accent">#22D8F0</Color>
+    <Color x:Key="Color.Turquoise">#14C2B8</Color>   <!-- secondary accent -->
+    <Color x:Key="Color.Gold">#D6A93A</Color>        <!-- money, renew, premium -->
+    <Color x:Key="Color.GoldLight">#F2CF6B</Color>
+    <Color x:Key="Color.GoldDark">#B8892A</Color>
+
+    <!-- Status (always shown with an icon and a label, never colour alone) -->
+    <Color x:Key="Color.Good">#3DD68C</Color>
+    <Color x:Key="Color.Warning">#F5B83D</Color>
+    <Color x:Key="Color.Bad">#F26D6D</Color>
+
+    <!-- Tints -->
+    <Color x:Key="Color.AccentSoft">#1F22D8F0</Color>   <!-- aqua at 12 %: selected rows, active nav, info chips -->
+    <Color x:Key="Color.GoldSoft">#29D6A93A</Color>     <!-- gold at 16 % -->
+    <Color x:Key="Color.GoodSoft">#1F3DD68C</Color>     <!-- 12 % -->
+    <Color x:Key="Color.WarningSoft">#1FF5B83D</Color>
+    <Color x:Key="Color.BadSoft">#1FF26D6D</Color>
+    <Color x:Key="Color.LogoTile">#04181D</Color>       <!-- tile behind the logo -->
+    <Color x:Key="Color.Hover">#0FFFFFFF</Color>        <!-- white overlays for hover / press -->
+    <Color x:Key="Color.Pressed">#1FFFFFFF</Color>
+
+    <SolidColorBrush x:Key="Brush.Background" Color="{StaticResource Color.Background}" />
+    <SolidColorBrush x:Key="Brush.Sidebar" Color="{StaticResource Color.Sidebar}" />
+    <SolidColorBrush x:Key="Brush.Panel" Color="{StaticResource Color.Panel}" />
+    <SolidColorBrush x:Key="Brush.Panel2" Color="{StaticResource Color.Panel2}" />
+    <SolidColorBrush x:Key="Brush.Line" Color="{StaticResource Color.Line}" />
+    <SolidColorBrush x:Key="Brush.Border" Color="{StaticResource Color.Border}" />
+    <SolidColorBrush x:Key="Brush.Text" Color="{StaticResource Color.Text}" />
+    <SolidColorBrush x:Key="Brush.TextSecondary" Color="{StaticResource Color.TextSecondary}" />
+    <SolidColorBrush x:Key="Brush.TextTertiary" Color="{StaticResource Color.TextTertiary}" />
+    <SolidColorBrush x:Key="Brush.TextOnAccent" Color="{StaticResource Color.TextOnAccent}" />
+    <SolidColorBrush x:Key="Brush.Brand" Color="{StaticResource Color.Brand}" />
+    <SolidColorBrush x:Key="Brush.Accent" Color="{StaticResource Color.Accent}" />
+    <SolidColorBrush x:Key="Brush.Turquoise" Color="{StaticResource Color.Turquoise}" />
+    <SolidColorBrush x:Key="Brush.Gold" Color="{StaticResource Color.Gold}" />
+    <SolidColorBrush x:Key="Brush.GoldLight" Color="{StaticResource Color.GoldLight}" />
+    <SolidColorBrush x:Key="Brush.GoldDark" Color="{StaticResource Color.GoldDark}" />
+    <SolidColorBrush x:Key="Brush.Good" Color="{StaticResource Color.Good}" />
+    <SolidColorBrush x:Key="Brush.Warning" Color="{StaticResource Color.Warning}" />
+    <SolidColorBrush x:Key="Brush.Bad" Color="{StaticResource Color.Bad}" />
+    <SolidColorBrush x:Key="Brush.AccentSoft" Color="{StaticResource Color.AccentSoft}" />
+    <SolidColorBrush x:Key="Brush.GoldSoft" Color="{StaticResource Color.GoldSoft}" />
+    <SolidColorBrush x:Key="Brush.GoodSoft" Color="{StaticResource Color.GoodSoft}" />
+    <SolidColorBrush x:Key="Brush.WarningSoft" Color="{StaticResource Color.WarningSoft}" />
+    <SolidColorBrush x:Key="Brush.BadSoft" Color="{StaticResource Color.BadSoft}" />
+    <SolidColorBrush x:Key="Brush.LogoTile" Color="{StaticResource Color.LogoTile}" />
+    <SolidColorBrush x:Key="Brush.Hover" Color="{StaticResource Color.Hover}" />
+    <SolidColorBrush x:Key="Brush.Pressed" Color="{StaticResource Color.Pressed}" />
+
+    <!-- Sidebar: #0C2830 at the top to #0A1F26 at the bottom. -->
+    <LinearGradientBrush x:Key="Brush.SidebarGradient" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="{StaticResource Color.Sidebar}" />
+        <GradientStop Offset="1" Color="{StaticResource Color.SidebarBottom}" />
+    </LinearGradientBrush>
+
+    <!-- Accent gradient, aqua to turquoise, left to right: primary buttons, active nav item, top accent line. -->
+    <LinearGradientBrush x:Key="Brush.AccentGradient" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Offset="0" Color="{StaticResource Color.Accent}" />
+        <GradientStop Offset="1" Color="{StaticResource Color.Turquoise}" />
+    </LinearGradientBrush>
+
+    <!-- Gold gradient (money, renew, premium): #F2CF6B to #D6A93A to #B8892A, top to bottom. -->
+    <LinearGradientBrush x:Key="Brush.GoldGradient" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="{StaticResource Color.GoldLight}" />
+        <GradientStop Offset="0.55" Color="{StaticResource Color.Gold}" />
+        <GradientStop Offset="1" Color="{StaticResource Color.GoldDark}" />
+    </LinearGradientBrush>
+
+</ResourceDictionary>

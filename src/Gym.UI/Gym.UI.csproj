@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <!-- Shared TITANFIT theme, styles, controls, fonts and logo for the three WPF apps. -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Alexandria and IBM Plex Sans Arabic (SIL Open Font License, see Fonts/*-OFL.txt). -->
+    <Resource Include="Fonts\*.ttf" />
+  </ItemGroup>
+
+</Project>
