@@ -84,11 +84,11 @@
                         <controls:StatusPill x:Name="NoStatusPill" Margin="0,0,8,8" />
                         <controls:StatusPill Tone="Gold" Margin="0,0,8,8" Text="{ui:Loc {x:Static shell:GalleryText.PrivateTrainer}}" />
                     </WrapPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                        <controls:MoneyText Amount="1400000" FontSize="28" VerticalAlignment="Center" />
-                        <controls:MoneyText Amount="-2000" FontSize="16" Margin="16,0,0,0" VerticalAlignment="Center"
+                    <WrapPanel Margin="0,8,0,0">
+                        <controls:MoneyText Amount="1400000" FontSize="28" VerticalAlignment="Center" Margin="0,0,16,0" />
+                        <controls:MoneyText Amount="-2000" FontSize="16" VerticalAlignment="Center"
                                             Foreground="{DynamicResource Brush.Bad}" />
-                    </StackPanel>
+                    </WrapPanel>
                 </StackPanel>
             </Border>
 
@@ -125,14 +125,14 @@
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTemplateColumn Header="{ui:Loc {x:Static shell:GalleryText.Status}}" Width="Auto">
+                            <DataGridTemplateColumn Header="{ui:Loc {x:Static shell:GalleryText.Status}}" Width="124">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <controls:StatusPill Status="{Binding Status}" />
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTextColumn Header="{ui:Loc {x:Static shell:GalleryText.Ends}}" Binding="{Binding Ends}" Width="Auto" />
+                            <DataGridTextColumn Header="{ui:Loc {x:Static shell:GalleryText.Ends}}" Binding="{Binding Ends}" Width="112" />
                         </DataGrid.Columns>
                     </DataGrid>
                 </StackPanel>

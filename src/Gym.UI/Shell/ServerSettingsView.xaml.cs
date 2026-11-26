@@ -24,7 +24,9 @@ public partial class ServerSettingsView : UserControl
         this.current = current;
         this.defaultStationName = defaultStationName;
         ServerBox.Text = current.ServerUrl;
+        StationBox.TextChanged += (_, _) => FollowTextDirection(StationBox);
         StationBox.Text = string.IsNullOrWhiteSpace(current.StationName) ? defaultStationName : current.StationName;
+        FollowTextDirection(StationBox);
         ApplyLanguage();
     }
 
@@ -77,6 +79,19 @@ public partial class ServerSettingsView : UserControl
 
         Result = updated;
         return Task.FromResult(true);
+    }
+
+    /// <summary>"Reception 1" stays in that order in the Arabic layout; an Arabic name stays right-to-left.</summary>
+    private static void FollowTextDirection(TextBox box)
+    {
+        if (BidiText.HasRtl(box.Text))
+        {
+            box.ClearValue(FlowDirectionProperty);
+        }
+        else
+        {
+            box.FlowDirection = FlowDirection.LeftToRight;
+        }
     }
 
     private async void OnTestClick(object sender, RoutedEventArgs e)
