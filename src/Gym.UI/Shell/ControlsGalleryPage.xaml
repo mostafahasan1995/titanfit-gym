@@ -125,14 +125,14 @@
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTemplateColumn Header="{ui:Loc {x:Static shell:GalleryText.Status}}" Width="124">
+                            <DataGridTemplateColumn Header="{ui:Loc {x:Static shell:GalleryText.Status}}" Width="116">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <controls:StatusPill Status="{Binding Status}" />
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTextColumn Header="{ui:Loc {x:Static shell:GalleryText.Ends}}" Binding="{Binding Ends}" Width="112" />
+                            <DataGridTextColumn Header="{ui:Loc {x:Static shell:GalleryText.Ends}}" Binding="{Binding Ends}" Width="150" />
                         </DataGrid.Columns>
                     </DataGrid>
                 </StackPanel>
