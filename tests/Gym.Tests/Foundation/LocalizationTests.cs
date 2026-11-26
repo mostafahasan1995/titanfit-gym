@@ -39,6 +39,24 @@ public sealed class LocalizationTests
         Assert.Equal("1,250", NumberText.Format(1250));
     }
 
+    [Fact]
+    public void Negative_amounts_keep_the_minus_before_the_number_in_Arabic()
+    {
+        Assert.Equal("-2,000 SYP", Money.Format(-2_000, AppLanguage.English));
+        Assert.Equal("\u200E-\u200E2,000 ل.س", Money.Format(-2_000, AppLanguage.Arabic));
+    }
+
+    [Theory]
+    [InlineData("الاستقبال 1", true)]
+    [InlineData("سارة منصور", true)]
+    [InlineData("Reception 1", false)]
+    [InlineData("#00231", false)]
+    [InlineData(null, false)]
+    public void Data_text_without_Arabic_letters_is_shown_left_to_right(string? text, bool rightToLeft)
+    {
+        Assert.Equal(rightToLeft, BidiText.HasRtl(text));
+    }
+
     [Theory]
     [InlineData("150000", 150_000L)]
     [InlineData("150,000", 150_000L)]

@@ -6,12 +6,13 @@ namespace Gym.UI.Controls;
 
 /// <summary>
 /// A line icon from <see cref="UiIcons"/> (24 x 24 design grid), drawn in the inherited text colour:
-/// <c>&lt;controls:Icon Data="{x:Static ui:UiIcons.Search}" Size="20" /&gt;</c>.
+/// <c>&lt;controls:Icon Data="{x:Static ui:UiIcons.Search}" Size="20" /&gt;</c>. In Arabic only the
+/// directional icons (<see cref="UiIcons.IsDirectional"/>: arrows, chevrons) are mirrored.
 /// </summary>
 public sealed class Icon : FrameworkElement
 {
     public static readonly DependencyProperty DataProperty = DependencyProperty.Register(
-        nameof(Data), typeof(Geometry), typeof(Icon), new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
+        nameof(Data), typeof(Geometry), typeof(Icon), new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender, OnDataChanged));
 
     public static readonly DependencyProperty SizeProperty = DependencyProperty.Register(
         nameof(Size), typeof(double), typeof(Icon),
@@ -49,7 +50,26 @@ public sealed class Icon : FrameworkElement
         set => SetValue(ForegroundProperty, value);
     }
 
+    public Icon()
+    {
+        // Icons keep their drawing in Arabic (a mirrored check mark reads like a chevron); arrows and chevrons flip.
+        FlowDirection = FlowDirection.LeftToRight;
+    }
+
     protected override System.Windows.Size MeasureOverride(System.Windows.Size availableSize) => new(Size, Size);
+
+    private static void OnDataChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var icon = (Icon)d;
+        if (e.NewValue is Geometry geometry && UiIcons.IsDirectional(geometry))
+        {
+            icon.ClearValue(FlowDirectionProperty);
+        }
+        else
+        {
+            icon.FlowDirection = FlowDirection.LeftToRight;
+        }
+    }
 
     protected override void OnRender(DrawingContext drawingContext)
     {

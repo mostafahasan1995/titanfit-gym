@@ -9,13 +9,13 @@ namespace Gym.UI;
 /// </summary>
 public static class Money
 {
-    // Keeps the number (and its minus sign) left-to-right inside Arabic text.
-    private const char LeftToRightEmbedding = '‪';
-    private const char PopDirectionalFormatting = '‬';
+    // Left-to-right marks around the minus sign keep "-2,000" in that order inside Arabic text
+    // (WPF does not apply the bidi embedding characters).
+    private const string ArabicMinus = "\u200E-\u200E";
 
     /// <summary>"150,000 SYP" or "150,000 ل.س".</summary>
     public static string Format(long amount, AppLanguage language) => language == AppLanguage.Arabic
-        ? $"{LeftToRightEmbedding}{NumberText.Format(amount)}{PopDirectionalFormatting} {CommonText.Currency.Ar}"
+        ? $"{(amount < 0 ? ArabicMinus + NumberText.Format(-amount) : NumberText.Format(amount))} {CommonText.Currency.Ar}"
         : $"{NumberText.Format(amount)} {CommonText.Currency.En}";
 
     /// <summary>"150,000" without the currency.</summary>

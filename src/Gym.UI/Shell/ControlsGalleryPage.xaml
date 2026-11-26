@@ -14,7 +14,7 @@
             <ColumnDefinition Width="16" />
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="16" />
-            <ColumnDefinition Width="1.15*" />
+            <ColumnDefinition Width="1.45*" />
         </Grid.ColumnDefinitions>
 
         <!-- Column 1: buttons and inputs -->
@@ -92,22 +92,12 @@
                 </StackPanel>
             </Border>
 
-            <Grid Margin="0,16,0,0" Height="196">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="16" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <Border Style="{DynamicResource Card}" Padding="8">
-                    <controls:EmptyState Title="{ui:Loc {x:Static ui:CommonText.NoResults}}" Text="{ui:Loc {x:Static ui:CommonText.NoResultsText}}" />
-                </Border>
-                <Border Grid.Column="2" Style="{DynamicResource Card}" Padding="0" ClipToBounds="True">
-                    <Grid>
-                        <TextBlock Margin="20" Style="{DynamicResource Text.Caption}" Text="{ui:Loc {x:Static shell:GalleryText.Members}}" />
-                        <controls:LoadingOverlay IsActive="True" Message="{ui:Loc {x:Static ui:CommonText.Loading}}" />
-                    </Grid>
-                </Border>
-            </Grid>
+            <Border Style="{DynamicResource Card}" Padding="0" Margin="0,16,0,0" Height="150" ClipToBounds="True">
+                <Grid>
+                    <TextBlock Margin="20" Style="{DynamicResource Text.Overline}" Text="{ui:Loc {x:Static shell:GalleryText.Members}}" />
+                    <controls:LoadingOverlay IsActive="True" Message="{ui:Loc {x:Static ui:CommonText.Loading}}" />
+                </Grid>
+            </Border>
         </StackPanel>
 
         <!-- Column 3: data grid and toasts -->
@@ -115,7 +105,7 @@
             <Border Style="{DynamicResource Card}" Padding="12,16,12,8">
                 <StackPanel>
                     <TextBlock Style="{DynamicResource Text.Overline}" Margin="8,0,0,0" Text="{ui:Loc {x:Static shell:GalleryText.Members}}" />
-                    <DataGrid x:Name="MembersGrid" Margin="0,8,0,0" Height="268">
+                    <DataGrid x:Name="MembersGrid" Margin="0,8,0,0" Height="206">
                         <DataGrid.Columns>
                             <DataGridTemplateColumn Width="60">
                                 <DataGridTemplateColumn.CellTemplate>
@@ -155,6 +145,10 @@
                     <controls:ToastView Kind="Warning" HorizontalAlignment="Stretch" Message="{ui:Loc {x:Static ui:CommonText.LiveReconnecting}}" />
                     <controls:ToastView Kind="Error" HorizontalAlignment="Stretch" Message="{ui:Loc {x:Static ui:ErrorText.InsufficientStock}}" />
                 </StackPanel>
+            </Border>
+
+            <Border Style="{DynamicResource Card}" Padding="8" Margin="0,16,0,0">
+                <controls:EmptyState Title="{ui:Loc {x:Static ui:CommonText.NoResults}}" Text="{ui:Loc {x:Static ui:CommonText.NoResultsText}}" />
             </Border>
         </StackPanel>
     </Grid>

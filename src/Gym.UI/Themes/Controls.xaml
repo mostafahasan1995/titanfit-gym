@@ -80,7 +80,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="controls:EmptyState">
-                    <StackPanel MaxWidth="440" Margin="24">
+                    <StackPanel MaxWidth="440" Margin="16">
                         <Border Width="72" Height="72" CornerRadius="22" HorizontalAlignment="Center"
                                 Background="{DynamicResource Brush.Panel2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1">
                             <controls:Icon Data="{TemplateBinding Icon}" Size="32" HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -90,8 +90,13 @@
                                    TextAlignment="Center" TextWrapping="Wrap" TextTrimming="None" Margin="0,18,0,0" />
                         <TextBlock Text="{TemplateBinding Text}" Style="{DynamicResource Text.Caption}" HorizontalAlignment="Center"
                                    TextAlignment="Center" TextWrapping="Wrap" TextTrimming="None" Margin="0,6,0,0" FontSize="14" />
-                        <ContentPresenter HorizontalAlignment="Center" Margin="0,20,0,0" />
+                        <ContentPresenter x:Name="ContentPart" HorizontalAlignment="Center" Margin="0,20,0,0" />
                     </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Content" Value="{x:Null}">
+                            <Setter TargetName="ContentPart" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
@@ -136,7 +141,7 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CaretBrush" Value="{DynamicResource Brush.Text}" />
         <Setter Property="SelectionBrush" Value="{DynamicResource Brush.Accent}" />
-        <Setter Property="Padding" Value="14,0,4,0" />
+        <Setter Property="Padding" Value="0" />
         <Setter Property="MinHeight" Value="52" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="FocusVisualStyle" Value="{x:Null}" />
@@ -147,7 +152,7 @@
                 <ControlTemplate TargetType="controls:SearchBox">
                     <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="14" SnapsToDevicePixels="True">
-                        <Grid Margin="{TemplateBinding Padding}">
+                        <Grid Margin="14,0,4,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
@@ -248,16 +253,12 @@
                                 </Viewbox>
                             </Grid>
                         </Border>
-                        <Border x:Name="Photo" Visibility="Collapsed"
-                                CornerRadius="{Binding Path=(ui:ThemeAssist.CornerRadius), RelativeSource={RelativeSource TemplatedParent}}">
-                            <Border.Background>
-                                <ImageBrush ImageSource="{Binding Source, RelativeSource={RelativeSource TemplatedParent}}" Stretch="UniformToFill" />
-                            </Border.Background>
-                        </Border>
+                        <Border x:Name="PART_Photo" Visibility="Collapsed"
+                                CornerRadius="{Binding Path=(ui:ThemeAssist.CornerRadius), RelativeSource={RelativeSource TemplatedParent}}" />
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="HasPhoto" Value="True">
-                            <Setter TargetName="Photo" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="PART_Photo" Property="Visibility" Value="Visible" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

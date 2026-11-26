@@ -68,7 +68,7 @@ public partial class ControlsGalleryPage : PageView
     public override async Task OnShownAsync(CancellationToken cancellationToken)
     {
         plans = await Context.Api.GetPlansAsync(ct: cancellationToken).ConfigureAwait(true);
-        var page = await Context.Api.SearchMembersAsync(pageSize: 4, ct: cancellationToken).ConfigureAwait(true);
+        var page = await Context.Api.SearchMembersAsync(pageSize: 3, ct: cancellationToken).ConfigureAwait(true);
         var list = new List<(Contracts.MemberSummary, ImageSource?)>();
         foreach (var member in page.Items)
         {

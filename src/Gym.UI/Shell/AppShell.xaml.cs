@@ -116,7 +116,7 @@ public partial class AppShell : UserControl
         }
 
         UpdateStation();
-        StaffText.Text = Context.Session.Staff.FullName;
+        BidiText.SetText(StaffText, Context.Session.Staff.FullName);
         RoleText.Text = AppRoles.RoleName(Context.Session.Role).For(language);
         LogoutButton.Content = CommonText.LogOut.For(language);
         ServerButton.ToolTip = CommonText.ServerSettings.For(language);
@@ -143,7 +143,7 @@ public partial class AppShell : UserControl
     }
 
     /// <summary>Shows the station name from the settings (after the server settings were saved).</summary>
-    internal void UpdateStation() => StationText.Text = Context.StationName;
+    internal void UpdateStation() => BidiText.SetText(StationText, Context.StationName);
 
     /// <summary>The status light in the header.</summary>
     internal void SetLiveStatus(LiveStatus status)

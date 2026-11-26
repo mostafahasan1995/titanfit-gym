@@ -204,6 +204,8 @@ public sealed class Avatar : Control
         DefaultStyleKeyProperty.OverrideMetadata(typeof(Avatar), new FrameworkPropertyMetadata(typeof(Avatar)));
     }
 
+    private Border? photo;
+
     public ImageSource? Source
     {
         get => (ImageSource?)GetValue(SourceProperty);
@@ -212,8 +214,28 @@ public sealed class Avatar : Control
 
     public bool HasPhoto => (bool)GetValue(HasPhotoProperty);
 
-    private static void OnSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
-        d.SetValue(HasPhotoPropertyKey, e.NewValue is not null);
+    public override void OnApplyTemplate()
+    {
+        base.OnApplyTemplate();
+        photo = GetTemplateChild("PART_Photo") as Border;
+        ShowPhoto();
+    }
+
+    private static void OnSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var avatar = (Avatar)d;
+        avatar.SetValue(HasPhotoPropertyKey, e.NewValue is not null);
+        avatar.ShowPhoto();
+    }
+
+    // Set in code: a binding inside a brush of the template has no element to resolve against.
+    private void ShowPhoto()
+    {
+        if (photo is not null)
+        {
+            photo.Background = Source is { } source ? new ImageBrush(source) { Stretch = Stretch.UniformToFill } : null;
+        }
+    }
 }
 
 /// <summary>The placeholder of a screen that is not built yet: icon, title, text and a detail line (e.g. sample data).</summary>

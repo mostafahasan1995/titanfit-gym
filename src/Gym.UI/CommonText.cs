@@ -101,8 +101,8 @@ public static class CommonText
     public static LocalText ServerLabel { get; } = new("Server", "الخادم");
 
     public static LocalText ServerUnreachable { get; } = new(
-        "Cannot reach the server at {0}. Check the address in Server settings.",
-        "تعذّر الوصول إلى الخادم {0}. تحقّق من العنوان في إعدادات الخادم.");
+        "Cannot reach the server. Check the address in Server settings.",
+        "تعذّر الوصول إلى الخادم. تحقّق من العنوان في إعدادات الخادم.");
 
     public static LocalText ReceptionOnly { get; } = new("This app is for reception staff and admins.", "هذا البرنامج لموظفي الاستقبال والمسؤولين فقط.");
 
@@ -142,7 +142,7 @@ public static class CommonText
 
     public static LocalText ServerAddress { get; } = new("Server address", "عنوان الخادم");
 
-    public static LocalText ServerAddressHint { get; } = new("The admin PC, e.g. http://192.168.1.10:5080", "جهاز الإدارة، مثل http://192.168.1.10:5080");
+    public static LocalText ServerAddressHint { get; } = new("The admin PC, e.g. http://192.168.1.10:5080", "عنوان جهاز الإدارة، مثل 192.168.1.10");
 
     public static LocalText StationName { get; } = new("Station name", "اسم المحطة");
 
@@ -158,7 +158,7 @@ public static class CommonText
 
     public static LocalText ConnectionFailed { get; } = new("No connection: {0}", "لا يوجد اتصال: {0}");
 
-    public static LocalText InvalidServerAddress { get; } = new("Enter a valid address, e.g. http://192.168.1.10:5080", "أدخل عنوانًا صحيحًا، مثل http://192.168.1.10:5080");
+    public static LocalText InvalidServerAddress { get; } = new("Enter a valid address, e.g. http://192.168.1.10:5080", "أدخل عنوانًا صحيحًا، مثل 192.168.1.10");
 
     public static LocalText SettingsSaved { get; } = new("Settings saved.", "تم حفظ الإعدادات.");
 

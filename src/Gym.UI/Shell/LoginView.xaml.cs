@@ -86,8 +86,7 @@ public partial class LoginView : UserControl
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or GymApiException)
         {
-            var server = host.Settings.ServerUri.GetLeftPart(UriPartial.Authority);
-            ShowMessage(l => CommonText.ServerUnreachable.Format(l, server), MessageTone.Warning);
+            ShowMessage(l => CommonText.ServerUnreachable.For(l), MessageTone.Warning);
         }
     }
 

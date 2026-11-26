@@ -8,11 +8,12 @@ The single source of truth for this project. Any session that continues the work
 |---|---|---|
 | 1 | Design mockups | ✅ Done (`design/`, logo and name added) |
 | 2 | Core: skeleton, CI, database, API, login, subscription logic, installers | ✅ Done (2.1–2.5) |
+| B0 | App foundation: API abstraction + sample data, station.json, login and roles, page shell, shared controls, smoke screenshots per page | ✅ Done (see "App foundation") |
 | 3 | Reception app | Waiting (needs Syrian ID scan sample) |
 | 4 | Cafeteria app | Waiting |
 | 5 | Admin app + deployment | Waiting |
 
-**Next action:** the app screens (steps 3 to 5). The owner said on 2026-11-26 to execute all steps without stopping; report at milestones.
+**Next action:** the app screens (steps 3 to 5, one agent per app, each only inside its own app project; follow "App foundation"). The owner said on 2026-11-26 to execute all steps without stopping; report at milestones.
 
 ## Requirements (from the gym)
 
@@ -71,7 +72,8 @@ src/
   Gym.Infrastructure  EF Core, PostgreSQL, migrations, data services
   Gym.Api             REST + SignalR + role-based auth
   Gym.Client          shared typed API client + SignalR connection for the apps
-  Gym.UI              shared TITANFIT theme, styles, controls, fonts, logo
+  Gym.UI              shared app foundation: theme, styles, controls, fonts, logo, station settings,
+                      login, page shell, localization, smoke screenshots
   Gym.Admin           WPF app (admin PC)
   Gym.Reception       WPF app (2 reception PCs)
   Gym.Cafeteria       WPF app (2 cafeteria PCs)
@@ -198,6 +200,25 @@ docs/PLAN.md          this file
 - **Touch:** buttons and targets 44 to 64 px. Check-in result readable from 2 m away.
 - **Motion:** short, and respects reduced-motion settings.
 
+## App foundation (B0, shared by the 3 apps)
+
+Everything shared is in `Gym.UI` and `Gym.Client`. An app agent adds files only inside its own project (`src/Gym.Reception`, `src/Gym.Cafeteria`, `src/Gym.Admin`): no change to shared files or to the CI workflow is needed. Ask the coordinator when something shared is missing.
+
+- **API:** pages call `Context.Api` (`Gym.Client.IGymApi`, one method per endpoint; errors throw `GymApiException` with the server `Code`). `GymApiClient` talks to the server. `Gym.Client.Sample.SampleGymApi` answers from memory: 24 members (Arabic and Latin names, placeholder photos, every status: active, expiring, expired, never paid), 2 private trainers with 5 linked clients and their service, the 4 plans, 9 staff (3 club trainers with monthly ratings, 1 inactive), 17 products in Drinks / Shakes / Snacks / Supplements with stock movements (some low, one at 0, one inactive), 7 days of sales and shifts (today's still open), 14 days of check-ins, settings 3 days / 100,000. It follows the server rules (status from `GetStatus`, stock = sum of movements, renewal chaining) and its writes work in memory, but it checks no roles and is not thread-safe. Logins: `admin`, `sara` (reception), `ahmad` (cashier), password `titanfit`.
+- **Live updates:** `Context.Live` (`ILiveConnection`: `GymLiveConnection` keeps reconnecting by itself; `SampleLiveConnection` publishes the sample API's own changes). Events come off the UI thread: wrap handlers in `Dispatcher.InvokeAsync`. The header shows Server online / Connecting / Reconnecting / Server offline.
+- **Station settings:** `%ProgramData%\TitanFit\station.json` (`Gym.UI.Station.StationSettings`), camelCase JSON: `serverUrl` (default `http://localhost:5080`), `stationName` (empty = the app default: Reception 1, Cafeteria 1, Admin PC), `language` (`en` / `ar`), `cameraName`, `printerName`, `lastUsername`. No file = first run: the Server settings dialog opens (server address, Test connection = `GET /health`, station name). It is also on the login card and the server button in the header. Pages read `Context.Station` and send `Context.StationName` with check-ins, sales and shifts. The station installer may write this file.
+- **Login and roles (`AppRoles`):** Reception app = Reception + Admin, Cafeteria app = Cashier + Admin, Admin app = Admin only; another role gets a clear message. The token stays in memory (`Context.Session`); a 401 on any call (login revoked or expired) goes back to the login with a message. Log out is in the sidebar. Station apps fill in the last username; the Admin app remembers nothing (the admin stays logged out on the server PC). On a server without an admin, the Admin app's login turns into "Create the first admin".
+- **Shell:** `StationWindow` (login, then `AppShell`) with an overlay for the pages: `Context.Ui.Toast(...)`, `ShowError(ex)`, `ShowDialogAsync(new DialogRequest { Title, Message, Content, PrimaryText, OnPrimary })`, `ConfirmAsync(...)`, `ShowMessageAsync(...)`, `RunBusyAsync(...)`. Each page view is built once per login, so its state survives page switches; logout drops it.
+- **How to add a page** (or fill a placeholder; every planned screen already has one in `Pages/`):
+  1. `src/Gym.<App>/Pages/XxxPage.xaml` with the root `<shell:PageView x:Class="Gym.<App>.Pages.XxxPage" ...>` (copy a placeholder for the xmlns lines) and `public XxxPage(PageContext context) : base(context) { InitializeComponent(); }`.
+  2. Load data in `public override async Task OnShownAsync(CancellationToken ct)` (runs each time the page is shown; the screenshot waits for it), not in `Loaded`. Text you set from code: set it again in `public override void OnLanguageChanged()`.
+  3. One line in `src/Gym.<App>/<App>App.cs`: `new("xxx", UiIcons.Users, <App>Text.Xxx, context => new XxxPage(context))`, optional `{ Title = <App>Text.XxxTitle }`. The id names the screenshot `<App>-xxx-<lang>.png`.
+  4. Hardware (camera, scanner, printer): skip it when `Context.IsSample` (CI has none).
+- **How to add strings:** `src/Gym.<App>/<App>Text.cs`: `public static LocalText Xxx { get; } = new("English", "العربية");` (`{0}` placeholders in both). XAML: `Text="{ui:Loc {x:Static local:<App>Text.Xxx}}"` (follows the EN / عربي switch); code: `<App>Text.Xxx.For(Context.Language)` or `.Format(Context.Language, args)`. Shared strings: `CommonText`, `ErrorText` (`ErrorText.Describe(ex, language)` turns API errors into staff messages). No visible text outside a strings class: the smoke run fails on an empty or untranslated Arabic text or different placeholders. Money: `controls:MoneyText Amount=...` or `Money.Format` ("150,000 SYP" / "150,000 ل.س"); numbers `NumberText`; dates `DateText` (Syrian months). Do not use `StringFormat` for numbers or dates (the Arabic culture changes the separators). Data that is always left-to-right (phone, URL, codes) gets `FlowDirection="LeftToRight"`; names and other data from code: `BidiText.SetText(textBlock, value)` (left-to-right when it has no Arabic letters). Do not put a URL inside an Arabic sentence (the bidi rules scramble it). Line icons keep their drawing in Arabic; only arrows and chevrons flip.
+- **How to add sample data:** the built-in data above covers every planned screen. If a screen needs more, set `SampleSetup = async api => { ... }` in the app's `AppDefinition` and use the normal API calls on the sample (`await api.LoginAsync("ahmad", SampleGymApi.SamplePassword); await api.CreateSaleAsync(...)`); it runs once before the first screenshot. Do not edit `SampleGymApi` from an app.
+- **Shared controls and styles** (all colours are Deep Teal tokens via `DynamicResource`; usage example: `Gym.UI/Shell/ControlsGalleryPage.xaml`, screenshot `<App>-controls-<lang>.png`): buttons `Button.Primary`, `Button.Secondary` (default), `Button.Gold`, `Button.Danger`, `Button.Ghost`, `Button.Icon` with `ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Check}"` (44 px and up); implicit TextBox, PasswordBox, ComboBox, DatePicker and Calendar, CheckBox, ListBox, DataGrid (read-only, 52 px rows, define the columns), ScrollBar, ToolTip; `ui:ThemeAssist.Placeholder` and `ui:ThemeAssist.HasError` on inputs; Border styles `Card`, `Card.Inset`, `Chip`, `Divider`; text styles `Text.H1`, `Text.H2`, `Text.Body`, `Text.Strong`, `Text.Caption`, `Text.Overline`, `Text.Label`, `Text.Number`, `Text.Display`; controls (`xmlns:controls="clr-namespace:Gym.UI.Controls;assembly=Gym.UI"`) `Icon`, `StatusPill` (`Status="{Binding Membership.Status}"`: green / amber / red / grey with icon and label), `MoneyText`, `SearchBox` (`SearchChanged`, 300 ms debounce), `FormField` (`Label`, `Hint`, `Error`), `EmptyState`, `LoadingOverlay`, `Avatar` (+ `Images.FromBytes`), `PagePlaceholder`, `ToastView`, `DialogFrame`; line icons `UiIcons.*`. CommunityToolkit.Mvvm 8.4.2 comes with Gym.UI for view models.
+- **Smoke mode:** `Gym.<App>.exe --smoke-screenshots <dir> --lang en|ar` writes `<App>-login`, `-server-settings`, (Admin) `-first-admin`, one per page id, `-controls` and `-dialog` PNGs plus `<App>-<lang>.json` (each screenshot with ok / error, text problems, unhandled errors, binding warnings). Exit code 1 when a page threw, a string failed the check or a UI error was unhandled. Run it locally the same way to see a screen without a server.
+
 ## Security
 
 - The QR holds no personal data (random code only).
@@ -218,7 +239,7 @@ docs/PLAN.md          this file
 - **First run:** `GET /api/setup/status` and `POST /api/setup/admin` create the first admin; refused once an admin exists.
 - **Errors:** RFC 7807 problem details with a stable `code` (e.g. `insufficient_stock`, `duplicate_national_no`, `not_a_private_trainer`): 400 rule or input, 401 not logged in, 403 role, 404 not found, 409 conflict.
 - **Live updates:** SignalR hub `/hubs/gym` (any logged-in staff) pushes `CheckInRecorded`, `MemberChanged`, `StockChanged`, `ProductChanged`, `SaleCompleted`, `SettingsChanged`. `Gym.Client.GymLiveConnection` wraps it (auto-reconnect).
-- **Client:** `Gym.Client.GymApiClient` has one method per endpoint below.
+- **Client:** `Gym.Client.IGymApi` has one method per endpoint below; `GymApiClient` implements it for the server, `Sample.SampleGymApi` in memory (see "App foundation").
 
 Roles: **A** = Admin, **R** = Reception, **C** = Cashier. Admin can call everything.
 
@@ -262,14 +283,14 @@ The workflow file is `.github/workflows/build.yml`. It is added in step 2.1.
 - **Job on `windows-latest`:**
   1. Set up .NET 10, then restore, build (Release) and test.
   2. Publish `Gym.Api`, `Gym.Admin`, `Gym.Reception`, `Gym.Cafeteria` as standalone exes: `-r win-x64 --self-contained -p:PublishSingleFile=true` (WPF apps also `-p:IncludeNativeLibrariesForSelfExtract=true`). The gym PCs need no .NET install.
-  3. Smoke test: each WPF exe runs with `--smoke-screenshot <path.png> --lang en|ar`. It renders the main window offscreen at 1440×900, checks that the embedded fonts loaded, saves a PNG and exits (non-zero on error).
+  3. Smoke test: each WPF exe runs with `--smoke-screenshots <dir> --lang en|ar` on the in-memory sample data (no server). It renders the login, the server settings, every registered page, the control gallery and a dialog offscreen at 1440×900, checks the embedded fonts and every EN/AR string, writes `<App>-<page>-<lang>.png` plus a manifest `<App>-<lang>.json`, and exits non-zero when anything failed. CI checks every PNG in the manifests (exists, > 10 KB), so a new page needs no workflow change.
 - **Job `installers`** (`windows-latest`, after the Windows job): `installer/build-installers.ps1` builds both setups (see "Installers") from the `titanfit-exes` artifact.
   - The runner has an Inno Setup 6 preinstalled (version not readable); the script installs the pinned 6.7.4 (SHA-256 checked) so the build does not depend on the runner image. PostgreSQL and Inno Setup are pinned in `installer/downloads.json` and cached with `actions/cache`.
   - Version: `<Version>` in `Directory.Build.props`. On a tag, the tag must be `v<Version>` (or `v<Version>-suffix`, a pre-release), otherwise the job fails.
 - **Job `install-smoke`** (fresh `windows-latest`): `installer/tests/install-smoke.ps1` installs the Server setup silently, checks both services, the ports, the ACLs, the firewall rule, `/health`, the first admin (`POST /api/setup/admin`), login and a `pg_dump` backup; runs the setup again (upgrade); installs the Station setup with `/SERVERURL` (and checks that a bad URL is refused); uninstalls both (services and rule gone, `%ProgramData%\TitanFit` kept); reinstalls the server on the kept data.
 - **Job `release`** (tags `v*` only, after both): creates the GitHub Release (or updates its files) with the two setups and `SHA256SUMS.txt`, using the workflow's own token (`contents: write` on this job only).
 - **Outputs:**
-  - Every run uploads the artifacts `titanfit-exes` (the 4 exes), `screenshots` (EN + AR PNG per app), `test-results` and `integration-test-results` (trx), `titanfit-installers` (the 2 setups + `SHA256SUMS.txt`) and `install-logs` (setup logs, server-setup.log, PostgreSQL log, events).
+  - Every run uploads the artifacts `titanfit-exes` (the 4 exes), `screenshots` (EN + AR PNG of every screen per app, with the manifests), `test-results` and `integration-test-results` (trx), `titanfit-installers` (the 2 setups + `SHA256SUMS.txt`) and `install-logs` (setup logs, server-setup.log, PostgreSQL log, events).
   - A `v*` tag also attaches the setups to a GitHub Release.
 - **Database tests:** GitHub service containers work only on Linux runners. The `integration` job (`ubuntu-latest`, `postgres:17` service) runs `tests/Gym.IntegrationTests` (database + API tests, each test class on its own new database) and uploads `integration-test-results`. The Windows job runs only `tests/Gym.Tests`.
 - **Migrations:** no .NET SDK is needed locally. Run the `ef-migration` workflow (Actions tab, input: migration name), download the `ef-migration` artifact and commit the files in `src/Gym.Infrastructure/Persistence/Migrations`. The integration tests fail if the model and the migrations differ.

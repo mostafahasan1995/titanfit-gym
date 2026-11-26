@@ -84,6 +84,10 @@ public static class UiIcons
 
     public static Geometry Printer { get; } = Make("M7,9 V4 h10 v5 M7,17 H5 a1.5,1.5 0 0 1 -1.5,-1.5 V10.5 A1.5,1.5 0 0 1 5,9 h14 a1.5,1.5 0 0 1 1.5,1.5 v5 A1.5,1.5 0 0 1 19,17 h-2 M7,14 h10 v6 H7 Z");
 
+    /// <summary>Icons that point somewhere (log out, chevrons left and right): mirrored in Arabic, the others are not.</summary>
+    public static bool IsDirectional(Geometry geometry) =>
+        ReferenceEquals(geometry, Logout) || ReferenceEquals(geometry, ChevronLeft) || ReferenceEquals(geometry, ChevronRight);
+
     private static Geometry Make(string pathData)
     {
         var geometry = Geometry.Parse(pathData);
