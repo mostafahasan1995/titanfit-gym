@@ -35,12 +35,7 @@ public class StaffRating
 
     public static StaffRating Create(StaffMember trainer, int year, int month, int stars, string? note, int ratedById, DateTime nowUtc)
     {
-        ArgumentNullException.ThrowIfNull(trainer);
-        if (trainer.Type != StaffType.ClubTrainer)
-        {
-            throw new DomainException("not_a_club_trainer", "Only club trainers get a monthly rating.");
-        }
-
+        EnsureCanBeRated(trainer);
         if (year is < 2000 or > 2100 || month is < 1 or > 12)
         {
             throw new DomainException("invalid_month", "The rating month is not valid.");
@@ -49,6 +44,15 @@ public class StaffRating
         var rating = new StaffRating { StaffId = trainer.Id, Staff = trainer, Year = year, Month = month, CreatedAt = nowUtc };
         rating.Update(stars, note, ratedById, nowUtc);
         return rating;
+    }
+
+    public static void EnsureCanBeRated(StaffMember staff)
+    {
+        ArgumentNullException.ThrowIfNull(staff);
+        if (staff.Type != StaffType.ClubTrainer)
+        {
+            throw new DomainException("not_a_club_trainer", "Only club trainers get a monthly rating.");
+        }
     }
 
     public void Update(int stars, string? note, int ratedById, DateTime nowUtc)

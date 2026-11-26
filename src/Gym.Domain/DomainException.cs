@@ -19,3 +19,6 @@ public sealed class NotFoundException(string code, string message) : DomainExcep
 /// <summary>The request conflicts with the current data, e.g. a duplicate national number (HTTP 409).</summary>
 public sealed class ConflictException(string code, string message, IReadOnlyDictionary<string, object?>? details = null)
     : DomainException(code, message, details);
+
+/// <summary>The logged-in user may not do this to this record, e.g. close another cashier's shift (HTTP 403).</summary>
+public sealed class ForbiddenException(string code, string message) : DomainException(code, message);
