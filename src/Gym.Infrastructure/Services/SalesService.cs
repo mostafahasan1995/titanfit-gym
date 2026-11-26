@@ -46,6 +46,8 @@ public sealed class SalesService(GymDbContext db, GymClock clock, StockService s
         var available = await stock.CurrentStockAsync(ids, ct);
         StockRules.EnsureAvailable(wanted.Select(w => (products[w.ProductId], available.GetValueOrDefault(w.ProductId), w.Quantity)));
 
+        // One cashier's sales run one after the other, so a first sale on two tills opens only one shift.
+        await ShiftService.LockCashierAsync(db, cashierId, ct);
         var now = clock.UtcNow;
         var shift = await db.Shifts.FirstOrDefaultAsync(s => s.CashierId == cashierId && s.ClosedAt == null, ct);
         if (shift is null)

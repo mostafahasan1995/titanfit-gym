@@ -9,6 +9,8 @@ public sealed class ShiftService(GymDbContext db, GymClock clock)
         ArgumentNullException.ThrowIfNull(request);
         var station = Guard.Required(request.Station, "Station", CheckIn.StationMaxLength);
         Guard.NotNegative(request.OpeningCash, "Opening cash");
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        await LockCashierAsync(db, cashierId, ct);
         var shift = await db.Shifts.FirstOrDefaultAsync(s => s.CashierId == cashierId && s.ClosedAt == null, ct);
         if (shift is null)
         {
@@ -17,8 +19,13 @@ public sealed class ShiftService(GymDbContext db, GymClock clock)
             await db.SaveChangesOrConflictAsync(ct);
         }
 
+        await transaction.CommitAsync(ct);
         return await GetAsync(shift.Id, ct);
     }
+
+    /// <summary>Locks the cashier's staff row until the transaction ends (serializes his shift opening).</summary>
+    internal static Task LockCashierAsync(GymDbContext db, int cashierId, CancellationToken ct) =>
+        db.Database.ExecuteSqlAsync($"SELECT 1 FROM staff WHERE id = {cashierId} FOR UPDATE", ct);
 
     public async Task<ShiftDto?> GetCurrentAsync(int cashierId, CancellationToken ct = default) =>
         await Project(db.Shifts.AsNoTracking().Where(s => s.CashierId == cashierId && s.ClosedAt == null)).FirstOrDefaultAsync(ct);
