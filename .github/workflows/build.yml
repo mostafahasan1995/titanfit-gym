@@ -47,9 +47,9 @@ jobs:
       - name: Build (Release)
         run: dotnet build TitanFit.slnx --configuration Release --no-restore
 
-      - name: Test
+      - name: Unit tests
         run: >
-          dotnet test TitanFit.slnx --configuration Release --no-build
+          dotnet test tests/Gym.Tests/Gym.Tests.csproj --configuration Release --no-build
           --results-directory TestResults
           --logger "trx;LogFileName=test-results.trx"
           --logger "console;verbosity=normal"
