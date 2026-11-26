@@ -51,6 +51,9 @@ jobs:
       - name: Add the EF design package to the API (this run only, not committed)
         run: dotnet add src/Gym.Api/Gym.Api.csproj package Microsoft.EntityFrameworkCore.Design --version 10.0.15
 
+      - name: Restore and build
+        run: dotnet build src/Gym.Api/Gym.Api.csproj
+
       - name: Remove the existing migrations
         if: ${{ inputs.replace }}
         run: rm -rf src/Gym.Infrastructure/Persistence/Migrations
