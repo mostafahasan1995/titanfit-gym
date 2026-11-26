@@ -11,13 +11,15 @@ using Microsoft.Extensions.Hosting.WindowsServices;
 //   Storage:DataPath             photos and the token key (default %ProgramData%\TitanFit)
 //   Jwt:Key                      optional signing key (32+ bytes); by default one is generated in Storage:DataPath/keys
 //   Jwt:LifetimeHours            login lifetime (default 12)
+// The server installer writes the machine values (connection string, data path) to %ProgramData%\TitanFit\server.json.
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 {
     Args = args,
     ContentRootPath = WindowsServiceHelpers.IsWindowsService() ? AppContext.BaseDirectory : null,
 });
 
-builder.Services.AddWindowsService(options => options.ServiceName = "TitanFit API");
+builder.Configuration.AddServerSettingsFile(args);
+builder.Services.AddWindowsService(options => options.ServiceName = "TitanFitServer");
 builder.Services.Configure<StorageOptions>(builder.Configuration.GetSection(StorageOptions.SectionName));
 builder.Services.AddGymInfrastructure(services => services.GetRequiredService<IConfiguration>().GetConnectionString("Gym"));
 builder.Services.ConfigureHttpJsonOptions(options => GymJson.Configure(options.SerializerOptions));
