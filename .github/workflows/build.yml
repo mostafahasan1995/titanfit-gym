@@ -176,3 +176,104 @@ jobs:
           path: TestResults
           if-no-files-found: warn
           retention-days: 14
+
+  installers:
+    name: Installers (Inno Setup)
+    needs: windows
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Download exes
+        uses: actions/download-artifact@v8
+        with:
+          name: titanfit-exes
+          path: dist
+
+      # PostgreSQL 17 binaries zip and Inno Setup, pinned with SHA-256 in installer/downloads.json.
+      - name: Cache downloads
+        uses: actions/cache@v6
+        with:
+          path: artifacts/downloads
+          key: installer-downloads-${{ hashFiles('installer/downloads.json') }}
+
+      - name: Build the setups
+        env:
+          TAG: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+        run: ./installer/build-installers.ps1 -ExesDir dist -OutDir artifacts/installers -Tag "$env:TAG"
+
+      - name: Upload setups
+        uses: actions/upload-artifact@v7
+        with:
+          name: titanfit-installers
+          path: artifacts/installers/*
+          if-no-files-found: error
+          retention-days: 14
+
+  install-smoke:
+    name: Install smoke test (Windows)
+    needs: installers
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Download setups
+        uses: actions/download-artifact@v8
+        with:
+          name: titanfit-installers
+          path: artifacts/installers
+
+      - name: Install, upgrade, uninstall, reinstall
+        run: ./installer/tests/install-smoke.ps1 -InstallersDir artifacts/installers -LogDir artifacts/install-logs
+
+      - name: Upload install logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: install-logs
+          path: artifacts/install-logs
+          if-no-files-found: warn
+          retention-days: 14
+
+  release:
+    name: GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [installers, install-smoke]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download setups
+        uses: actions/download-artifact@v8
+        with:
+          name: titanfit-installers
+          path: release
+
+      - name: Create or update the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          ls -l release
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release upload "$TAG" release/* --repo "$GITHUB_REPOSITORY" --clobber
+          else
+            prerelease=""
+            case "$TAG" in *-*) prerelease="--prerelease" ;; esac
+            gh release create "$TAG" release/* --repo "$GITHUB_REPOSITORY" --verify-tag \
+              --title "TitanFit $TAG" --generate-notes $prerelease
+          fi
