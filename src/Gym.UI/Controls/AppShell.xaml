@@ -103,7 +103,7 @@
             <!-- Content: an on-brand placeholder until the real screens arrive (steps 3 to 5). -->
             <Border Grid.Row="1" Margin="28,24,28,28" CornerRadius="20" Background="{DynamicResource Brush.Panel}"
                     BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1">
-                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="560">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="680">
                     <Image Source="{DynamicResource Image.LogoMark}" Height="160" HorizontalAlignment="Center" />
                     <controls:Wordmark FontSize="44" HorizontalAlignment="Center" Margin="0,24,0,0" />
                     <TextBlock x:Name="PlaceholderTitle" Style="{DynamicResource Text.H2}" HorizontalAlignment="Center"
