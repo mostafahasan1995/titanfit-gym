@@ -7,12 +7,12 @@ The single source of truth for this project. Any session that continues the work
 | Step | What | Status |
 |---|---|---|
 | 1 | Design mockups | ✅ Done (`design/`, logo and name added) |
-| 2 | Core: skeleton, CI, database, API, login, subscription logic | ⏭ Next |
+| 2 | Core: skeleton, CI, database, API, login, subscription logic | 🔄 In progress (2.1 ✅ done) |
 | 3 | Reception app | Waiting (needs Syrian ID scan sample) |
 | 4 | Cafeteria app | Waiting |
 | 5 | Admin app + deployment | Waiting |
 
-**Next action:** step 2.1 (solution skeleton + build workflow), then wait for the owner's OK before each next part.
+**Next action:** step 2.2 (Domain: subscription dates and `GetStatus` + unit tests), after the owner's OK. Wait for the owner's OK before each next part.
 
 ## Requirements (from the gym)
 
@@ -203,8 +203,9 @@ The workflow file is `.github/workflows/build.yml`. It is added in step 2.1.
 - **Triggers:** push and pull request to `master`, and tags `v*`.
 - **Job on `windows-latest`:**
   1. Set up .NET 10, then restore, build (Release) and test.
-  2. Publish `Gym.Api`, `Gym.Admin`, `Gym.Reception`, `Gym.Cafeteria` as standalone exes: `-r win-x64 --self-contained -p:PublishSingleFile=true`. The gym PCs need no .NET install.
-  3. Build the installers with Inno Setup. It is not certain that the runner has it preinstalled: check, and install it with `choco install innosetup` if missing.
+  2. Publish `Gym.Api`, `Gym.Admin`, `Gym.Reception`, `Gym.Cafeteria` as standalone exes: `-r win-x64 --self-contained -p:PublishSingleFile=true` (WPF apps also `-p:IncludeNativeLibrariesForSelfExtract=true`). The gym PCs need no .NET install.
+  3. Smoke test: each WPF exe runs with `--smoke-screenshot <path.png> --lang en|ar`. It renders the main window offscreen at 1440×900, checks that the embedded fonts loaded, saves a PNG and exits (non-zero on error).
+  4. Build the installers with Inno Setup (step 2.5). It is not certain that the runner has it preinstalled: check, and install it with `choco install innosetup` if missing.
 - **Installers:**
   - `TitanFit-Server-Setup.exe` (admin PC):
     - Installs Gym.Api as a Windows service, plus the Admin app.
@@ -212,7 +213,7 @@ The workflow file is `.github/workflows/build.yml`. It is added in step 2.1.
     - PostgreSQL is installed once with its official installer (not bundled).
   - `TitanFit-Station-Setup.exe`: choose Reception or Cafeteria, and enter the server address.
 - **Outputs:**
-  - Every run uploads the exes and setups as a workflow artifact.
+  - Every run uploads the artifacts `titanfit-exes` (the 4 exes), `screenshots` (EN + AR PNG per app) and `test-results` (trx). The setups join in step 2.5.
   - A `v*` tag also attaches them to a GitHub Release.
 - **Database tests:** GitHub service containers work only on Linux runners. Run PostgreSQL integration tests in a separate `ubuntu-latest` job with a `postgres` service container.
 - **Fetching the files back:**
@@ -226,7 +227,7 @@ The workflow file is `.github/workflows/build.yml`. It is added in step 2.1.
 
 1. **Design mockups.** ✅ Done.
 2. **Core**, in small parts, each with tests and real test output:
-   1. Solution skeleton (all projects, empty TITANFIT windows) + build workflow → first exes from Actions.
+   1. Solution skeleton (all projects, empty TITANFIT windows) + build workflow → first exes from Actions. ✅ Done: `TitanFit.slnx`, `GET /health` + 3 tests, `Gym.UI` theme (Deep Teal, fonts, logo, shared app shell with EN / عربي), 3 WPF shells, CI with exes and EN/AR screenshots.
    2. Domain: subscription dates and `GetStatus` + unit tests.
    3. Database: EF Core model + first migration + PostgreSQL integration tests.
    4. API: endpoints, SignalR hub, staff login with roles + tests.
