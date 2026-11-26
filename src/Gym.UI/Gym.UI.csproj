@@ -3,12 +3,26 @@
   <PropertyGroup>
     <TargetFramework>net10.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
-    <!-- Shared TITANFIT theme, styles, controls, fonts and logo for the three WPF apps. -->
+    <!-- Shared app foundation for the three WPF apps: TITANFIT theme, styles, controls, fonts and logo,
+         station settings, login, the app shell with its pages, localization and the CI smoke screenshots. -->
   </PropertyGroup>
 
   <ItemGroup>
     <!-- Alexandria and IBM Plex Sans Arabic (SIL Open Font License, see Fonts/*-OFL.txt). -->
     <Resource Include="Fonts\*.ttf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- MVVM helpers for the app screens (ObservableObject, RelayCommand, [ObservableProperty]). -->
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Gym.Client\Gym.Client.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Gym.Tests" />
   </ItemGroup>
 
 </Project>

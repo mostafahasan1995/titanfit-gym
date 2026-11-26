@@ -1,20 +1,13 @@
 <!--
-    The TITANFIT app shell from the design files: sidebar (logo, app name, pages, station, log out)
-    and a main area (header with title, date, server status and the EN / عربي toggle; content below).
+    The TITANFIT app shell from the design files: sidebar (logo, app name, the app's pages, station, staff, log out)
+    and a main area (header with title, date, live connection status, server settings and the EN / عربي toggle;
+    the current page below).
 -->
-<UserControl x:Class="Gym.UI.Controls.AppShell"
+<UserControl x:Class="Gym.UI.Shell.AppShell"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="clr-namespace:Gym.UI"
-             xmlns:controls="clr-namespace:Gym.UI.Controls"
-             Background="{DynamicResource Brush.Background}"
-             Foreground="{DynamicResource Brush.Text}"
-             FontFamily="{DynamicResource Font.Body}"
-             FontSize="14"
-             UseLayoutRounding="True"
-             SnapsToDevicePixels="True"
-             TextOptions.TextFormattingMode="Ideal"
-             NumberSubstitution.Substitution="European">
+             xmlns:controls="clr-namespace:Gym.UI.Controls">
 
     <Grid x:Name="LayoutRoot">
         <Grid.ColumnDefinitions>
@@ -25,7 +18,7 @@
         <!-- Sidebar -->
         <Border Grid.Column="0" Background="{DynamicResource Brush.SidebarGradient}"
                 BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,1,0" Padding="16,24">
-            <DockPanel LastChildFill="False">
+            <DockPanel>
                 <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="8,0">
                     <Border Width="44" Height="44" CornerRadius="12" Background="{DynamicResource Brush.LogoTile}"
                             BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1">
@@ -37,17 +30,6 @@
                     </StackPanel>
                 </StackPanel>
 
-                <ItemsControl x:Name="NavList" DockPanel.Dock="Top" Margin="0,32,0,0" Focusable="False">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <RadioButton Style="{DynamicResource Nav.Item}" GroupName="ShellNav" Margin="0,0,0,4"
-                                         Content="{Binding Label}" Tag="{Binding Icon}"
-                                         IsChecked="{Binding IsActive, Mode=OneTime}"
-                                         Checked="OnNavChecked" />
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-
                 <Border DockPanel.Dock="Bottom" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,1,0,0"
                         Padding="8,16,8,0">
                     <StackPanel>
@@ -55,18 +37,23 @@
                         <TextBlock x:Name="StaffText" Style="{DynamicResource Text.Strong}" Margin="0,2,0,0" />
                         <TextBlock x:Name="RoleText" Style="{DynamicResource Text.Caption}" Margin="0,2,0,0" />
                         <Button x:Name="LogoutButton" Style="{DynamicResource Button.Ghost}" Margin="0,12,0,0"
-                                HorizontalContentAlignment="Left" IsEnabled="False">
-                            <StackPanel Orientation="Horizontal">
-                                <Viewbox Width="18" Height="18" VerticalAlignment="Center">
-                                    <Canvas Width="24" Height="24">
-                                        <Path Style="{DynamicResource Icon.Line}" Data="{x:Static ui:UiIcons.Logout}" />
-                                    </Canvas>
-                                </Viewbox>
-                                <TextBlock x:Name="LogoutText" Margin="10,0,0,0" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
+                                HorizontalContentAlignment="Left" ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Logout}"
+                                Click="OnLogoutClick" />
                     </StackPanel>
                 </Border>
+
+                <ScrollViewer Margin="0,32,0,16" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+                    <ItemsControl x:Name="NavList" Focusable="False">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <RadioButton Style="{DynamicResource Nav.Item}" GroupName="ShellNav" Margin="0,0,0,4"
+                                             Content="{Binding Label}" Tag="{Binding Icon}"
+                                             IsChecked="{Binding IsActive, Mode=TwoWay}"
+                                             Checked="OnNavChecked" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
             </DockPanel>
         </Border>
 
@@ -77,13 +64,20 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <Border Grid.Row="0" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" Padding="28,20">
+            <Border Grid.Row="0" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" Padding="28,18">
                 <DockPanel>
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Ellipse Width="8" Height="8" Fill="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center" />
-                        <TextBlock x:Name="StatusText" Margin="8,0,0,0" FontSize="13" VerticalAlignment="Center"
-                                   Foreground="{DynamicResource Brush.TextTertiary}" />
-                        <Border Margin="16,0,0,0" Padding="4" CornerRadius="12" Background="{DynamicResource Brush.Panel}"
+                        <Border x:Name="LiveBorder" Height="40" Padding="14,0" CornerRadius="12" VerticalAlignment="Center"
+                                Background="{DynamicResource Brush.Panel}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Ellipse x:Name="LiveDot" Width="9" Height="9" VerticalAlignment="Center" />
+                                <TextBlock x:Name="LiveText" Margin="8,0,0,0" FontSize="13" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource Brush.TextTertiary}" />
+                            </StackPanel>
+                        </Border>
+                        <Button x:Name="ServerButton" Style="{DynamicResource Button.Icon}" Margin="12,0,0,0" Height="40" Width="40" MinHeight="40" MinWidth="40"
+                                ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Server}" Click="OnServerSettingsClick" />
+                        <Border Margin="12,0,0,0" Padding="4" CornerRadius="12" Background="{DynamicResource Brush.Panel}"
                                 BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1">
                             <StackPanel x:Name="LanguageGroup" Orientation="Horizontal">
                                 <RadioButton x:Name="EnglishButton" Style="{DynamicResource Lang.Toggle}" GroupName="ShellLanguage"
@@ -100,19 +94,9 @@
                 </DockPanel>
             </Border>
 
-            <!-- Content: an on-brand placeholder until the real screens arrive (steps 3 to 5). -->
-            <Border Grid.Row="1" Margin="28,24,28,28" CornerRadius="20" Background="{DynamicResource Brush.Panel}"
-                    BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1">
-                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="680">
-                    <Image Source="{DynamicResource Image.LogoMark}" Height="160" HorizontalAlignment="Center" />
-                    <controls:Wordmark FontSize="44" HorizontalAlignment="Center" Margin="0,24,0,0" />
-                    <TextBlock x:Name="PlaceholderTitle" Style="{DynamicResource Text.H2}" HorizontalAlignment="Center"
-                               TextAlignment="Center" Margin="0,28,0,0" />
-                    <TextBlock x:Name="PlaceholderText" Style="{DynamicResource Text.Body}" HorizontalAlignment="Center"
-                               TextAlignment="Center" TextWrapping="Wrap" TextTrimming="None" Margin="0,8,0,0"
-                               Foreground="{DynamicResource Brush.TextSecondary}" />
-                </StackPanel>
-            </Border>
+            <!-- The current page. -->
+            <ContentControl x:Name="PageHost" Grid.Row="1" Margin="28,24,28,28" Focusable="False"
+                            HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
         </Grid>
 
         <!-- Thin aqua-to-turquoise accent line along the top. -->

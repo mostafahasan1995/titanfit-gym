@@ -1,30 +1,45 @@
 using System.Windows;
+using Gym.UI.Shell;
 
 namespace Gym.UI;
 
-/// <summary>Shared startup for the WPF apps: normal run, or the CI screenshot smoke mode.</summary>
+/// <summary>
+/// Shared startup for the WPF apps. Normal run: station.json, login, then the app's pages.
+/// <c>--smoke-screenshots &lt;dir&gt; --lang en|ar</c>: the CI screenshot mode (see <see cref="SmokeScreenshot"/>).
+/// <c>--lang en|ar</c> alone overrides the language saved in station.json.
+/// </summary>
 public static class AppHost
 {
-    public static int Run(Application app, IReadOnlyList<string> args, Func<AppLanguage, Window> createMainWindow)
+    public static int Run(Application app, IReadOnlyList<string> args, AppDefinition definition)
     {
         ArgumentNullException.ThrowIfNull(app);
-        ArgumentNullException.ThrowIfNull(createMainWindow);
+        ArgumentNullException.ThrowIfNull(args);
+        ArgumentNullException.ThrowIfNull(definition);
+        ThemeAssist.Initialize();
 
         if (SmokeScreenshot.IsRequested(args))
         {
-            return SmokeScreenshot.Run(args, createMainWindow);
+            return SmokeScreenshot.Run(app, args, definition);
         }
 
-        AppLanguage language;
+        AppLanguage? language;
         try
         {
             language = AppLanguages.FromArgs(args);
         }
         catch (ArgumentException)
         {
-            language = AppLanguage.English;
+            language = null;
         }
 
-        return app.Run(createMainWindow(language));
+        var window = new StationWindow(definition, StationServices.ForServer(), language);
+
+        // An unexpected error in a screen shows as a red toast instead of closing the app.
+        app.DispatcherUnhandledException += (_, e) =>
+        {
+            window.Overlay.ShowError(e.Exception);
+            e.Handled = true;
+        };
+        return app.Run(window);
     }
 }

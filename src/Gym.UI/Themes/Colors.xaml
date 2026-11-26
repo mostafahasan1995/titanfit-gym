@@ -44,6 +44,12 @@
     <Color x:Key="Color.LogoTile">#04181D</Color>       <!-- tile behind the logo -->
     <Color x:Key="Color.Hover">#0FFFFFFF</Color>        <!-- white overlays for hover / press -->
     <Color x:Key="Color.Pressed">#1FFFFFFF</Color>
+    <Color x:Key="Color.AccentLine">#7322D8F0</Color>   <!-- 45 %: borders of soft chips and pills -->
+    <Color x:Key="Color.GoldLine">#73D6A93A</Color>
+    <Color x:Key="Color.GoodLine">#733DD68C</Color>
+    <Color x:Key="Color.WarningLine">#73F5B83D</Color>
+    <Color x:Key="Color.BadLine">#73F26D6D</Color>
+    <Color x:Key="Color.Scrim">#B8061418</Color>        <!-- dims the app behind dialogs and the busy overlay -->
 
     <SolidColorBrush x:Key="Brush.Background" Color="{StaticResource Color.Background}" />
     <SolidColorBrush x:Key="Brush.Sidebar" Color="{StaticResource Color.Sidebar}" />
@@ -72,6 +78,12 @@
     <SolidColorBrush x:Key="Brush.LogoTile" Color="{StaticResource Color.LogoTile}" />
     <SolidColorBrush x:Key="Brush.Hover" Color="{StaticResource Color.Hover}" />
     <SolidColorBrush x:Key="Brush.Pressed" Color="{StaticResource Color.Pressed}" />
+    <SolidColorBrush x:Key="Brush.AccentLine" Color="{StaticResource Color.AccentLine}" />
+    <SolidColorBrush x:Key="Brush.GoldLine" Color="{StaticResource Color.GoldLine}" />
+    <SolidColorBrush x:Key="Brush.GoodLine" Color="{StaticResource Color.GoodLine}" />
+    <SolidColorBrush x:Key="Brush.WarningLine" Color="{StaticResource Color.WarningLine}" />
+    <SolidColorBrush x:Key="Brush.BadLine" Color="{StaticResource Color.BadLine}" />
+    <SolidColorBrush x:Key="Brush.Scrim" Color="{StaticResource Color.Scrim}" />
 
     <!-- Sidebar: #0C2830 at the top to #0A1F26 at the bottom. -->
     <LinearGradientBrush x:Key="Brush.SidebarGradient" StartPoint="0,0" EndPoint="0,1">

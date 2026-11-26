@@ -12,12 +12,15 @@ namespace Gym.Client;
 /// Set <see cref="HttpClient.BaseAddress"/> to the server, e.g. <c>http://admin-pc:5080/</c>. After
 /// <see cref="LoginAsync"/> the token is sent with every request. Errors throw <see cref="GymApiException"/>.
 /// </summary>
-public sealed class GymApiClient(HttpClient http)
+public sealed class GymApiClient(HttpClient http) : IGymApi
 {
     /// <summary>The bearer token of the logged-in staff member, or null.</summary>
     public string? AccessToken { get; set; }
 
     public Uri? BaseAddress => http.BaseAddress;
+
+    /// <inheritdoc />
+    public event EventHandler? SessionExpired;
 
     // Health and login
 
@@ -287,17 +290,31 @@ public sealed class GymApiClient(HttpClient http)
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AccessToken);
         }
 
+        var sentToken = request.Headers.Authorization is not null;
         var response = await http.SendAsync(request, ct).ConfigureAwait(false);
         if (response.IsSuccessStatusCode)
         {
             return response;
         }
 
+        GymApiException error;
         using (response)
         {
-            throw await GymApiException.FromResponseAsync(response, ct).ConfigureAwait(false);
+            error = await GymApiException.FromResponseAsync(response, ct).ConfigureAwait(false);
         }
+
+        // A 401 on a request that carried a token means the login is no longer valid (not a wrong password).
+        if (error.StatusCode == HttpStatusCode.Unauthorized && sentToken && !IsLoginUrl(url))
+        {
+            SessionExpired?.Invoke(this, EventArgs.Empty);
+        }
+
+        throw error;
     }
+
+    private static bool IsLoginUrl(string url) =>
+        url.StartsWith("api/auth/login", StringComparison.OrdinalIgnoreCase)
+        || url.StartsWith("api/setup/", StringComparison.OrdinalIgnoreCase);
 
     private static string Query(params (string Name, object? Value)[] parameters)
     {

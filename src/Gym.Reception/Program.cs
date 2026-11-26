@@ -9,6 +9,6 @@ internal static class Program
     {
         var app = new App();
         app.InitializeComponent();
-        return AppHost.Run(app, args, language => new MainWindow(language));
+        return AppHost.Run(app, args, ReceptionApp.Definition);
     }
 }

@@ -8,11 +8,16 @@ namespace Gym.Client;
 /// <summary>
 /// The SignalR connection to the server's live updates. Each app subscribes to the events it shows
 /// (e.g. the dashboard to <see cref="CheckInRecorded"/>, the cashier screen to <see cref="StockChanged"/>).
-/// It reconnects by itself after a network drop. Events arrive on a background thread: dispatch to the UI.
+/// It reconnects by itself after a network drop; <see cref="Connect"/> also keeps retrying while the server is down.
+/// Events arrive on a background thread: dispatch to the UI.
 /// </summary>
-public sealed class GymLiveConnection : IAsyncDisposable
+public sealed class GymLiveConnection : ILiveConnection
 {
+    private static readonly TimeSpan RetryDelay = TimeSpan.FromSeconds(5);
+
     private readonly HubConnection connection;
+    private CancellationTokenSource? keepConnected;
+    private LiveStatus status = LiveStatus.Offline;
 
     /// <param name="serverAddress">The server, e.g. <c>http://admin-pc:5080/</c>.</param>
     /// <param name="accessTokenProvider">Returns the current login token (e.g. <c>() =&gt; Task.FromResult(api.AccessToken)</c>).</param>
@@ -56,21 +61,120 @@ public sealed class GymLiveConnection : IAsyncDisposable
     /// <summary>Connected, reconnecting or closed (for a status light in the apps).</summary>
     public event Action<HubConnectionState>? StateChanged;
 
+    /// <inheritdoc />
+    public event Action<LiveStatus>? StatusChanged;
+
     public HubConnectionState State => connection.State;
 
+    /// <inheritdoc />
+    public LiveStatus Status => status;
+
+    /// <summary>Connects once; throws when the server refuses or cannot be reached. See also <see cref="Connect"/>.</summary>
     public async Task StartAsync(CancellationToken cancellationToken = default)
     {
         await connection.StartAsync(cancellationToken).ConfigureAwait(false);
         await RaiseStateChanged().ConfigureAwait(false);
     }
 
-    public Task StopAsync(CancellationToken cancellationToken = default) => connection.StopAsync(cancellationToken);
+    /// <inheritdoc />
+    public void Connect()
+    {
+        if (keepConnected is not null)
+        {
+            return;
+        }
 
-    public ValueTask DisposeAsync() => connection.DisposeAsync();
+        keepConnected = new CancellationTokenSource();
+        _ = KeepConnectedAsync(keepConnected.Token);
+    }
+
+    public async Task StopAsync(CancellationToken cancellationToken = default)
+    {
+        CancelKeepConnected();
+        await connection.StopAsync(cancellationToken).ConfigureAwait(false);
+        await RaiseStateChanged().ConfigureAwait(false);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        CancelKeepConnected();
+        await connection.DisposeAsync().ConfigureAwait(false);
+    }
+
+    /// <summary>Starts the connection whenever it is down (first start, or closed after the automatic reconnects gave up).</summary>
+    private async Task KeepConnectedAsync(CancellationToken ct)
+    {
+        var firstAttempt = true;
+        while (!ct.IsCancellationRequested)
+        {
+            if (connection.State == HubConnectionState.Disconnected)
+            {
+                if (firstAttempt)
+                {
+                    SetStatus(LiveStatus.Connecting);
+                    firstAttempt = false;
+                }
+
+                try
+                {
+                    await connection.StartAsync(ct).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) when (ct.IsCancellationRequested)
+                {
+                    break;
+                }
+#pragma warning disable CA1031 // Any failure (server down, refused, 401) only means: try again after the delay.
+                catch (Exception)
+#pragma warning restore CA1031
+                {
+                }
+
+                await RaiseStateChanged().ConfigureAwait(false);
+            }
+
+            try
+            {
+                await Task.Delay(RetryDelay, ct).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+        }
+    }
+
+    private void CancelKeepConnected()
+    {
+        var cts = Interlocked.Exchange(ref keepConnected, null);
+        if (cts is not null)
+        {
+            cts.Cancel();
+            cts.Dispose();
+        }
+    }
 
     private Task RaiseStateChanged()
     {
-        StateChanged?.Invoke(connection.State);
+        var state = connection.State;
+        StateChanged?.Invoke(state);
+        SetStatus(state switch
+        {
+            HubConnectionState.Connected => LiveStatus.Connected,
+            HubConnectionState.Connecting => LiveStatus.Connecting,
+            HubConnectionState.Reconnecting => LiveStatus.Reconnecting,
+            _ => LiveStatus.Offline,
+        });
         return Task.CompletedTask;
+    }
+
+    private void SetStatus(LiveStatus value)
+    {
+        if (status == value)
+        {
+            return;
+        }
+
+        status = value;
+        StatusChanged?.Invoke(value);
     }
 }

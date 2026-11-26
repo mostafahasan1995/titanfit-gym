@@ -8,5 +8,6 @@
         <ResourceDictionary Source="/Gym.UI;component/Themes/Colors.xaml" />
         <ResourceDictionary Source="/Gym.UI;component/Themes/Styles.xaml" />
         <ResourceDictionary Source="/Gym.UI;component/Themes/Logo.xaml" />
+        <ResourceDictionary Source="/Gym.UI;component/Themes/Controls.xaml" />
     </ResourceDictionary.MergedDictionaries>
 </ResourceDictionary>

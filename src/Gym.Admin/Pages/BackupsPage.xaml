@@ -1,0 +1,15 @@
+<!--
+    AdminText.Backups: placeholder. Replace the PagePlaceholder with the real screen (design: design/Admin-Dashboard.dc.html).
+    Shared controls and their usage: Gym.UI/Shell/ControlsGalleryPage.xaml. Strings: AdminText.cs.
+-->
+<shell:PageView x:Class="Gym.Admin.Pages.BackupsPage"
+                xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                xmlns:ui="clr-namespace:Gym.UI;assembly=Gym.UI"
+                xmlns:shell="clr-namespace:Gym.UI.Shell;assembly=Gym.UI"
+                xmlns:controls="clr-namespace:Gym.UI.Controls;assembly=Gym.UI"
+                xmlns:local="clr-namespace:Gym.Admin">
+    <controls:PagePlaceholder x:Name="Placeholder" Icon="{x:Static ui:UiIcons.Database}"
+                              Title="{ui:Loc {x:Static local:AdminText.Backups}}"
+                              Text="{ui:Loc {x:Static local:AdminText.BackupsPlanned}}" />
+</shell:PageView>

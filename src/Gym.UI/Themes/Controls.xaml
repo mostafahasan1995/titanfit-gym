@@ -1,0 +1,388 @@
+<!--
+    Templates of the TITANFIT controls in Gym.UI.Controls (status pill, money, empty state, loading overlay,
+    search box, form field, avatar, page placeholder, toast, dialog frame).
+    Everything from the other dictionaries is used with DynamicResource (merged dictionaries cannot see each other).
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:ui="clr-namespace:Gym.UI"
+                    xmlns:controls="clr-namespace:Gym.UI.Controls">
+
+    <!-- Status pill: tone colours, icon and label. -->
+    <Style TargetType="controls:StatusPill">
+        <Setter Property="Background" Value="{DynamicResource Brush.AccentSoft}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Accent}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.AccentLine}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="10,3" />
+        <Setter Property="FontFamily" Value="{DynamicResource Font.Body}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="controls:StatusPill">
+                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="999" Padding="{TemplateBinding Padding}">
+                        <StackPanel Orientation="Horizontal">
+                            <controls:Icon Data="{TemplateBinding IconData}" Size="14" StrokeThickness="2.6" VerticalAlignment="Center" />
+                            <TextBlock Text="{TemplateBinding DisplayText}" Margin="6,0,0,0" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="DisplayTone" Value="Neutral">
+                <Setter Property="Background" Value="{DynamicResource Brush.Hover}" />
+                <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}" />
+            </Trigger>
+            <Trigger Property="DisplayTone" Value="Good">
+                <Setter Property="Background" Value="{DynamicResource Brush.GoodSoft}" />
+                <Setter Property="Foreground" Value="{DynamicResource Brush.Good}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource Brush.GoodLine}" />
+            </Trigger>
+            <Trigger Property="DisplayTone" Value="Warning">
+                <Setter Property="Background" Value="{DynamicResource Brush.WarningSoft}" />
+                <Setter Property="Foreground" Value="{DynamicResource Brush.Warning}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource Brush.WarningLine}" />
+            </Trigger>
+            <Trigger Property="DisplayTone" Value="Bad">
+                <Setter Property="Background" Value="{DynamicResource Brush.BadSoft}" />
+                <Setter Property="Foreground" Value="{DynamicResource Brush.Bad}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource Brush.BadLine}" />
+            </Trigger>
+            <Trigger Property="DisplayTone" Value="Gold">
+                <Setter Property="Background" Value="{DynamicResource Brush.GoldSoft}" />
+                <Setter Property="Foreground" Value="{DynamicResource Brush.Gold}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource Brush.GoldLine}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- Money: gold, Alexandria. -->
+    <Style TargetType="controls:MoneyText">
+        <Setter Property="FontFamily" Value="{DynamicResource Font.Heading}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Gold}" />
+        <Setter Property="TextTrimming" Value="None" />
+    </Style>
+
+    <!-- Empty state -->
+    <Style TargetType="controls:EmptyState">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="controls:EmptyState">
+                    <StackPanel MaxWidth="440" Margin="24">
+                        <Border Width="72" Height="72" CornerRadius="22" HorizontalAlignment="Center"
+                                Background="{DynamicResource Brush.Panel2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1">
+                            <controls:Icon Data="{TemplateBinding Icon}" Size="32" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource Brush.TextSecondary}" />
+                        </Border>
+                        <TextBlock Text="{TemplateBinding Title}" Style="{DynamicResource Text.H2}" HorizontalAlignment="Center"
+                                   TextAlignment="Center" TextWrapping="Wrap" TextTrimming="None" Margin="0,18,0,0" />
+                        <TextBlock Text="{TemplateBinding Text}" Style="{DynamicResource Text.Caption}" HorizontalAlignment="Center"
+                                   TextAlignment="Center" TextWrapping="Wrap" TextTrimming="None" Margin="0,6,0,0" FontSize="14" />
+                        <ContentPresenter HorizontalAlignment="Center" Margin="0,20,0,0" />
+                    </StackPanel>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Loading overlay -->
+    <Style TargetType="controls:LoadingOverlay">
+        <Setter Property="Visibility" Value="Collapsed" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="controls:LoadingOverlay">
+                    <Grid Background="{DynamicResource Brush.Scrim}">
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Grid Width="48" Height="48" HorizontalAlignment="Center">
+                                <Ellipse Stroke="{DynamicResource Brush.Line}" StrokeThickness="4" />
+                                <Path x:Name="PART_Spinner" Width="48" Height="48" Stretch="None" RenderTransformOrigin="0.5,0.5"
+                                      Stroke="{DynamicResource Brush.Accent}" StrokeThickness="4"
+                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M24,2 A22,22 0 0 1 46,24" />
+                            </Grid>
+                            <TextBlock Text="{TemplateBinding Message}" Margin="0,14,0,0" HorizontalAlignment="Center" FontSize="14"
+                                       Foreground="{DynamicResource Brush.TextTertiary}" FontFamily="{DynamicResource Font.Body}" />
+                        </StackPanel>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsActive" Value="True">
+                <Setter Property="Visibility" Value="Visible" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- Search box: icon, placeholder ("Search…" by default), clear button. -->
+    <Style TargetType="controls:SearchBox">
+        <Setter Property="FontFamily" Value="{DynamicResource Font.Body}" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+        <Setter Property="Background" Value="{DynamicResource Brush.Panel2}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CaretBrush" Value="{DynamicResource Brush.Text}" />
+        <Setter Property="SelectionBrush" Value="{DynamicResource Brush.Accent}" />
+        <Setter Property="Padding" Value="14,0,4,0" />
+        <Setter Property="MinHeight" Value="52" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="AllowDrop" Value="True" />
+        <Setter Property="ui:ThemeAssist.Placeholder" Value="{ui:Loc {x:Static ui:CommonText.SearchPlaceholder}}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="controls:SearchBox">
+                    <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="14" SnapsToDevicePixels="True">
+                        <Grid Margin="{TemplateBinding Padding}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <controls:Icon Grid.Column="0" Data="{x:Static ui:UiIcons.Search}" Size="20" Margin="0,0,10,0"
+                                           VerticalAlignment="Center" Foreground="{DynamicResource Brush.TextSecondary}" />
+                            <TextBlock x:Name="Placeholder" Grid.Column="1" Margin="2,0" Visibility="Collapsed" IsHitTestVisible="False"
+                                       VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush.TextSecondary}"
+                                       Text="{Binding Path=(ui:ThemeAssist.Placeholder), RelativeSource={RelativeSource TemplatedParent}}" />
+                            <ScrollViewer x:Name="PART_ContentHost" Grid.Column="1" Focusable="False" VerticalAlignment="Center"
+                                          HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden" />
+                            <Button x:Name="PART_ClearButton" Grid.Column="2" Style="{DynamicResource Button.Clear}" Focusable="False"
+                                    ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Close}" />
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Text" Value="">
+                            <Setter TargetName="Placeholder" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="PART_ClearButton" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.TextSecondary}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Bd" Property="Opacity" Value="0.5" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Form field: label, input, hint or error. -->
+    <Style TargetType="controls:FormField">
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="controls:FormField">
+                    <StackPanel>
+                        <TextBlock x:Name="LabelText" Text="{TemplateBinding Label}" Style="{DynamicResource Text.Label}" Margin="2,0,2,6" />
+                        <ContentPresenter />
+                        <TextBlock x:Name="HintText" Text="{TemplateBinding Hint}" Style="{DynamicResource Text.Caption}" Visibility="Collapsed"
+                                   TextWrapping="Wrap" TextTrimming="None" Margin="2,6,2,0" />
+                        <TextBlock x:Name="ErrorText" Text="{TemplateBinding Error}" Visibility="Collapsed" TextWrapping="Wrap"
+                                   FontSize="13" Margin="2,6,2,0" Foreground="{DynamicResource Brush.Bad}" FontFamily="{DynamicResource Font.Body}" />
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="HasLabel" Value="False">
+                            <Setter TargetName="LabelText" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="HasHint" Value="True">
+                            <Setter TargetName="HintText" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="HasError" Value="True">
+                            <Setter TargetName="ErrorText" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="HintText" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Avatar: photo or person icon. -->
+    <Style TargetType="controls:Avatar">
+        <Setter Property="Width" Value="48" />
+        <Setter Property="Height" Value="48" />
+        <Setter Property="Background" Value="{DynamicResource Brush.Panel2}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="ui:ThemeAssist.CornerRadius" Value="14" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="controls:Avatar">
+                    <Grid>
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="{Binding Path=(ui:ThemeAssist.CornerRadius), RelativeSource={RelativeSource TemplatedParent}}">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="2*" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="2*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Viewbox Grid.Row="1" Grid.Column="1">
+                                    <controls:Icon Data="{x:Static ui:UiIcons.User}" Size="24" />
+                                </Viewbox>
+                            </Grid>
+                        </Border>
+                        <Border x:Name="Photo" Visibility="Collapsed"
+                                CornerRadius="{Binding Path=(ui:ThemeAssist.CornerRadius), RelativeSource={RelativeSource TemplatedParent}}">
+                            <Border.Background>
+                                <ImageBrush ImageSource="{Binding Source, RelativeSource={RelativeSource TemplatedParent}}" Stretch="UniformToFill" />
+                            </Border.Background>
+                        </Border>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="HasPhoto" Value="True">
+                            <Setter TargetName="Photo" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Placeholder of a screen that comes next. -->
+    <Style TargetType="controls:PagePlaceholder">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="controls:PagePlaceholder">
+                    <Border Style="{DynamicResource Card}">
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="680">
+                            <Border Width="96" Height="96" CornerRadius="28" HorizontalAlignment="Center"
+                                    Background="{DynamicResource Brush.AccentSoft}" BorderBrush="{DynamicResource Brush.AccentLine}" BorderThickness="1">
+                                <controls:Icon Data="{TemplateBinding Icon}" Size="44" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource Brush.Accent}" />
+                            </Border>
+                            <TextBlock Text="{TemplateBinding Title}" Style="{DynamicResource Text.H1}" HorizontalAlignment="Center"
+                                       TextAlignment="Center" TextWrapping="Wrap" TextTrimming="None" Margin="0,24,0,0" />
+                            <TextBlock Text="{TemplateBinding Text}" Style="{DynamicResource Text.Body}" HorizontalAlignment="Center"
+                                       TextAlignment="Center" TextWrapping="Wrap" TextTrimming="None" Margin="0,10,0,0"
+                                       Foreground="{DynamicResource Brush.TextSecondary}" />
+                            <Border x:Name="DetailChip" Style="{DynamicResource Chip}" HorizontalAlignment="Center" Margin="0,22,0,0"
+                                    Visibility="Collapsed">
+                                <TextBlock Text="{TemplateBinding Detail}" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource Brush.Accent}" FontFamily="{DynamicResource Font.Body}" />
+                            </Border>
+                            <ContentPresenter HorizontalAlignment="Center" Margin="0,20,0,0" />
+                        </StackPanel>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="HasDetail" Value="True">
+                            <Setter TargetName="DetailChip" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Toast -->
+    <Style TargetType="controls:ToastView">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Margin" Value="0,8,0,0" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="controls:ToastView">
+                    <Border x:Name="Bd" MinHeight="52" MaxWidth="640" Padding="14,10,20,10" CornerRadius="14" BorderThickness="1"
+                            Background="{DynamicResource Brush.Panel2}" BorderBrush="{DynamicResource Brush.AccentLine}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border x:Name="IconTile" Width="30" Height="30" CornerRadius="9" VerticalAlignment="Center"
+                                    Background="{DynamicResource Brush.AccentSoft}">
+                                <controls:Icon x:Name="IconPart" Data="{x:Static ui:UiIcons.Info}" Size="18" StrokeThickness="2.2"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource Brush.Accent}" />
+                            </Border>
+                            <TextBlock Grid.Column="1" Text="{TemplateBinding Message}" Margin="12,0,0,0" VerticalAlignment="Center"
+                                       TextWrapping="Wrap" FontSize="14" FontFamily="{DynamicResource Font.Body}" Foreground="{DynamicResource Brush.Text}" />
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Kind" Value="Success">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.GoodLine}" />
+                            <Setter TargetName="IconTile" Property="Background" Value="{DynamicResource Brush.GoodSoft}" />
+                            <Setter TargetName="IconPart" Property="Foreground" Value="{DynamicResource Brush.Good}" />
+                            <Setter TargetName="IconPart" Property="Data" Value="{x:Static ui:UiIcons.Check}" />
+                        </Trigger>
+                        <Trigger Property="Kind" Value="Warning">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.WarningLine}" />
+                            <Setter TargetName="IconTile" Property="Background" Value="{DynamicResource Brush.WarningSoft}" />
+                            <Setter TargetName="IconPart" Property="Foreground" Value="{DynamicResource Brush.Warning}" />
+                            <Setter TargetName="IconPart" Property="Data" Value="{x:Static ui:UiIcons.Alert}" />
+                        </Trigger>
+                        <Trigger Property="Kind" Value="Error">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.BadLine}" />
+                            <Setter TargetName="IconTile" Property="Background" Value="{DynamicResource Brush.BadSoft}" />
+                            <Setter TargetName="IconPart" Property="Foreground" Value="{DynamicResource Brush.Bad}" />
+                            <Setter TargetName="IconPart" Property="Data" Value="{x:Static ui:UiIcons.Alert}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Dialog card -->
+    <Style TargetType="controls:DialogFrame">
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="KeyboardNavigation.TabNavigation" Value="Cycle" />
+        <Setter Property="KeyboardNavigation.DirectionalNavigation" Value="Contained" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="controls:DialogFrame">
+                    <Border Background="{DynamicResource Brush.Panel}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
+                            CornerRadius="20" Padding="28,24,28,24">
+                        <StackPanel>
+                            <TextBlock Text="{TemplateBinding Title}" Style="{DynamicResource Text.H2}" FontSize="20"
+                                       TextWrapping="Wrap" TextTrimming="None" />
+                            <TextBlock x:Name="MessageText" Text="{TemplateBinding Message}" Style="{DynamicResource Text.Body}" Visibility="Collapsed"
+                                       TextWrapping="Wrap" TextTrimming="None" Margin="0,8,0,0" Foreground="{DynamicResource Brush.TextSecondary}" />
+                            <ContentPresenter x:Name="ContentPart" Margin="0,20,0,0" />
+                            <ContentPresenter Content="{TemplateBinding Footer}" Margin="0,24,0,0" HorizontalAlignment="Right" />
+                        </StackPanel>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="HasMessage" Value="True">
+                            <Setter TargetName="MessageText" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="Content" Value="{x:Null}">
+                            <Setter TargetName="ContentPart" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

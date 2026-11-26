@@ -78,19 +78,22 @@ jobs:
           }
           Get-ChildItem dist | Format-Table Name, @{ Name = 'Size (MB)'; Expression = { [math]::Round($_.Length / 1MB, 1) } } -AutoSize
 
-      - name: Smoke screenshots (EN and AR)
+      # Each app renders its login, server settings, every registered page, the control gallery and a dialog on
+      # sample data (no server) and writes screenshots/<App>-<lang>.json listing them. A new page needs no change here.
+      - name: Smoke screenshots (every page, EN and AR)
         run: |
           New-Item -ItemType Directory -Force screenshots, smoke-logs | Out-Null
+          $out = (Resolve-Path screenshots).Path
           $failures = @()
           foreach ($app in 'Gym.Admin', 'Gym.Reception', 'Gym.Cafeteria') {
+            $id = $app.Substring(4)
             foreach ($lang in 'en', 'ar') {
-              $png = Join-Path $PWD "screenshots/$app-$lang.png"
               $log = Join-Path $PWD "smoke-logs/$app-$lang"
               $exe = (Resolve-Path "dist/$app.exe").Path
-              $proc = Start-Process -FilePath $exe -ArgumentList @('--smoke-screenshot', "`"$png`"", '--lang', $lang) `
+              $proc = Start-Process -FilePath $exe -ArgumentList @('--smoke-screenshots', "`"$out`"", '--lang', $lang) `
                 -NoNewWindow -PassThru -RedirectStandardOutput "$log.out.txt" -RedirectStandardError "$log.err.txt"
               $null = $proc.Handle  # keeps the exit code readable after the process ends
-              if (-not $proc.WaitForExit(180000)) {
+              if (-not $proc.WaitForExit(300000)) {
                 $proc.Kill()
                 $failures += "$app ($lang): timed out"
                 continue
@@ -100,11 +103,28 @@ jobs:
               Get-Content "$log.out.txt", "$log.err.txt" -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "  $_" }
               if ($proc.ExitCode -ne 0) {
                 $failures += "$app ($lang): exit code $($proc.ExitCode)"
-              } elseif (-not (Test-Path $png) -or (Get-Item $png).Length -lt 10KB) {
-                $failures += "$app ($lang): no screenshot"
-              } else {
-                Write-Host ("  OK: {0} ({1:N0} bytes)" -f $png, (Get-Item $png).Length)
               }
+              $manifestPath = Join-Path $out "$id-$lang.json"
+              if (-not (Test-Path $manifestPath)) {
+                $failures += "$app ($lang): no manifest $id-$lang.json"
+                continue
+              }
+              $manifest = Get-Content $manifestPath -Raw -Encoding utf8 | ConvertFrom-Json
+              if (@($manifest.screenshots).Count -lt 3) {
+                $failures += "$app ($lang): only $(@($manifest.screenshots).Count) screenshots"
+              }
+              foreach ($shot in @($manifest.screenshots)) {
+                $png = Join-Path $out $shot.file
+                if (-not $shot.ok) {
+                  $failures += "$app ($lang) $($shot.name): $((("$($shot.error)") -split "`n")[0])"
+                } elseif (-not (Test-Path $png) -or (Get-Item $png).Length -lt 10KB) {
+                  $failures += "$app ($lang) $($shot.name): missing or tiny PNG"
+                } else {
+                  Write-Host ("  OK: {0} ({1:N0} bytes)" -f $shot.file, (Get-Item $png).Length)
+                }
+              }
+              foreach ($problem in @($manifest.textProblems | Where-Object { $_ })) { $failures += "$app ($lang) text: $problem" }
+              foreach ($problem in @($manifest.unhandledErrors | Where-Object { $_ })) { $failures += "$app ($lang) unhandled: $problem" }
             }
           }
           if ($failures.Count -gt 0) {

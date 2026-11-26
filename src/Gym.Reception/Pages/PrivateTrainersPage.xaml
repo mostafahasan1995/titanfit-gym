@@ -1,0 +1,15 @@
+<!--
+    ReceptionText.PrivateTrainers: placeholder. Replace the PagePlaceholder with the real screen (design: design/Main.dc.html (check-in) and design/Reception-Register.dc.html (new member)).
+    Shared controls and their usage: Gym.UI/Shell/ControlsGalleryPage.xaml. Strings: ReceptionText.cs.
+-->
+<shell:PageView x:Class="Gym.Reception.Pages.PrivateTrainersPage"
+                xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                xmlns:ui="clr-namespace:Gym.UI;assembly=Gym.UI"
+                xmlns:shell="clr-namespace:Gym.UI.Shell;assembly=Gym.UI"
+                xmlns:controls="clr-namespace:Gym.UI.Controls;assembly=Gym.UI"
+                xmlns:local="clr-namespace:Gym.Reception">
+    <controls:PagePlaceholder x:Name="Placeholder" Icon="{x:Static ui:UiIcons.Dumbbell}"
+                              Title="{ui:Loc {x:Static local:ReceptionText.PrivateTrainers}}"
+                              Text="{ui:Loc {x:Static local:ReceptionText.PrivateTrainersPlanned}}" />
+</shell:PageView>
