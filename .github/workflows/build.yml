@@ -128,3 +128,51 @@ jobs:
           path: screenshots
           if-no-files-found: warn
           retention-days: 14
+
+  integration:
+    name: Integration tests (PostgreSQL, Linux)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    # GitHub service containers work only on Linux runners. This throwaway CI database is not a secret.
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    env:
+      GYM_TEST_POSTGRES: Host=localhost;Port=5432;Username=postgres;Password=postgres
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Integration tests (database + API)
+        run: >
+          dotnet test tests/Gym.IntegrationTests/Gym.IntegrationTests.csproj --configuration Release
+          --results-directory TestResults
+          --logger "trx;LogFileName=integration-test-results.trx"
+          --logger "console;verbosity=normal"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: integration-test-results
+          path: TestResults
+          if-no-files-found: warn
+          retention-days: 14
