@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <!-- Request/response types, roles and SignalR events shared by Gym.Api and Gym.Client. -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Gym.Domain\Gym.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

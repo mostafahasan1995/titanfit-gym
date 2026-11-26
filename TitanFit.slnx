@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Gym.Domain/Gym.Domain.csproj" />
+    <Project Path="src/Gym.Contracts/Gym.Contracts.csproj" />
     <Project Path="src/Gym.Infrastructure/Gym.Infrastructure.csproj" />
     <Project Path="src/Gym.Api/Gym.Api.csproj" />
     <Project Path="src/Gym.Client/Gym.Client.csproj" />
@@ -17,5 +18,6 @@
     <File Path="global.json" />
     <File Path=".editorconfig" />
     <File Path=".github/workflows/build.yml" />
+    <File Path=".github/workflows/ef-migration.yml" />
   </Folder>
 </Solution>
