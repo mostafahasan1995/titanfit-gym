@@ -1,0 +1,16 @@
+<Project>
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <!-- Nullable warnings are bugs: fail the build on them. Other warnings stay warnings. -->
+    <WarningsAsErrors>$(WarningsAsErrors);nullable</WarningsAsErrors>
+    <Deterministic>true</Deterministic>
+
+    <Version>0.1.0</Version>
+    <Company>TITANFIT</Company>
+    <Product>TitanFit Gym</Product>
+    <Copyright>Copyright © TITANFIT</Copyright>
+  </PropertyGroup>
+</Project>

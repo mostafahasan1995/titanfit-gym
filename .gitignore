@@ -1,0 +1,35 @@
+# Build output
+bin/
+obj/
+[Bb]in/
+[Oo]bj/
+publish/
+dist/
+artifacts/
+
+# Test output
+TestResults/
+*.trx
+coverage*.xml
+
+# Smoke screenshots and logs (CI uploads them as artifacts)
+screenshots/
+smoke-logs/
+
+# IDEs and tools
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userprefs
+*.DotSettings.user
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Local settings and secrets
+appsettings.*.local.json
+*.local.json
+.env
