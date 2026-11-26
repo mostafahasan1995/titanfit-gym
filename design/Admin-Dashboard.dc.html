@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Admin dashboard</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alexandria:wght@500;600;700;800&amp;family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0;background:#0D0F12}
+a{color:inherit}a:hover{color:#FFFFFF}
+button,input{font:inherit}
+:focus-visible{outline:2px solid #F1F3F6;outline-offset:2px}
+</style>
+</helmet>
+<div dir="{{dir}}" lang="{{lang}}" style="min-height: 980px; background: #0D0F12; color: #F1F3F6; font-family: 'IBM Plex Sans Arabic', system-ui, sans-serif; display: flex; flex-wrap: wrap;">
+
+<aside style="flex: 1 1 232px; box-sizing: border-box; padding: 24px 16px; background: #111317; border-inline-end: 1px solid #23272F; display: flex; flex-direction: column; gap: 32px;">
+<div style="display: flex; align-items: center; gap: 12px; padding: 0 8px;">
+<div style="width: 44px; height: 44px; flex: 0 0 44px; border-radius: 12px; background: #0B0D10; border: 1px solid #23272F; box-sizing: border-box; display: flex; align-items: center; justify-content: center;"><svg width="40" height="40" viewBox="58 -62 176 176" aria-hidden="true"><defs><linearGradient id="tfGoldAdm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F2CF6B"></stop><stop offset="0.55" stop-color="#D6A93A"></stop><stop offset="1" stop-color="#B8892A"></stop></linearGradient></defs><path fill="url(#tfGoldAdm)" d="M119 -9L115 -44L132 -27L146 -52L160 -27L177 -44L173 -9Z"></path><rect fill="url(#tfGoldAdm)" x="118" y="-8" width="56" height="7" rx="1"></rect><path fill="#22D8F0" d="M146 -33L152 -24L146 -15L140 -24Z M129 -24L133 -19L129 -14L125 -19Z M163 -24L167 -19L163 -14L159 -19Z"></path><path fill="#FFFFFF" d="M120 2h52v16h-11v46h-30v-46h-11z"></path><rect fill="#0B0D10" x="144.25" y="22" width="3.5" height="38" rx="1.75"></rect><rect fill="url(#tfGoldAdm)" x="116" y="66" width="60" height="12" rx="1.5"></rect><rect fill="url(#tfGoldAdm)" x="122" y="80" width="48" height="11" rx="1.5"></rect><rect fill="url(#tfGoldAdm)" x="128" y="93" width="36" height="10" rx="1.5"></rect><rect fill="#FFFFFF" x="135" y="105" width="22" height="7" rx="1"></rect></svg></div>
+<div style="display: flex; flex-direction: column; gap: 2px;">
+<span style="font-family: 'Alexandria', sans-serif; font-size: 16px; font-weight: 700;">TITAN<span style="color: {{brand}};">FIT</span></span>
+<span style="font-size: 13px; color: #A7AFBC;">{{t.app}}</span>
+</div>
+</div>
+<nav aria-label="{{t.navLabel}}" style="display: flex; flex-direction: column; gap: 4px;">
+<a href="Admin-Dashboard.dc.html" aria-current="page" style="display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 0 12px; border-radius: 10px; background: {{accentSoft}}; color: #F1F3F6; text-decoration: none; font-size: 15px; font-weight: 600;">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"></rect><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"></rect><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"></rect><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"></rect></svg>
+<span>{{t.nav1}}</span>
+</a>
+<a href="#members" style="display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 0 12px; border-radius: 10px; color: #A7AFBC; text-decoration: none; font-size: 15px; font-weight: 500;">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20c0-3 2.9-5.5 6.5-5.5s6.5 2.5 6.5 5.5M16 4.6a3.5 3.5 0 0 1 0 6.8M18.5 14.8c1.8.8 3 2.6 3 5.2"></path></svg>
+<span>{{t.nav2}}</span>
+</a>
+<a href="#plans" style="display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 0 12px; border-radius: 10px; color: #A7AFBC; text-decoration: none; font-size: 15px; font-weight: 500;">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 12V4.5A1.5 1.5 0 0 1 4.5 3H12l9 9-9 9z"></path><circle cx="8" cy="8" r="1.5"></circle></svg>
+<span>{{t.nav3}}</span>
+</a>
+<a href="#items" style="display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 0 12px; border-radius: 10px; color: #A7AFBC; text-decoration: none; font-size: 15px; font-weight: 500;">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 7.5L12 3l8.5 4.5v9L12 21l-8.5-4.5z"></path><path d="M3.5 7.5L12 12l8.5-4.5M12 12v9"></path></svg>
+<span>{{t.nav4}}</span>
+</a>
+<a href="#staff" style="display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 0 12px; border-radius: 10px; color: #A7AFBC; text-decoration: none; font-size: 15px; font-weight: 500;">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"></rect><circle cx="12" cy="10" r="3"></circle><path d="M8 17c.7-1.8 2.2-2.8 4-2.8s3.3 1 4 2.8"></path></svg>
+<span>{{t.nav5}}</span>
+</a>
+<a href="#reports" style="display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 0 12px; border-radius: 10px; color: #A7AFBC; text-decoration: none; font-size: 15px; font-weight: 500;">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 20V11M11 20V5M17 20v-7M3 20h18"></path></svg>
+<span>{{t.nav6}}</span>
+</a>
+<a href="#settings" style="display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 0 12px; border-radius: 10px; color: #A7AFBC; text-decoration: none; font-size: 15px; font-weight: 500;">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"></path><circle cx="16" cy="6" r="2"></circle><circle cx="10" cy="12" r="2"></circle><circle cx="18" cy="18" r="2"></circle></svg>
+<span>{{t.nav7}}</span>
+</a>
+</nav>
+<div style="margin-top: auto; display: flex; flex-direction: column; gap: 12px; padding: 16px 8px 0; border-top: 1px solid #23272F;">
+<div style="display: flex; flex-direction: column; gap: 2px;">
+<span style="font-size: 12px; color: #A7AFBC; letter-spacing: 0.04em;">{{t.station}}</span>
+<span style="font-size: 15px; font-weight: 600;">{{t.staff}}</span>
+<span style="font-size: 13px; color: #A7AFBC;">{{t.role}}</span>
+</div>
+<button type="button" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid #2E343E; background: transparent; color: #C9CFD8; font-size: 14px; cursor: pointer;">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"></path></svg>
+<span>{{t.logout}}</span>
+</button>
+</div>
+</aside>
+
+<main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column;">
+<header style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 20px 28px; border-bottom: 1px solid #23272F;">
+<div style="flex: 1 1 260px; display: flex; flex-direction: column; gap: 2px;">
+<h1 style="margin: 0; font-family: 'Alexandria', sans-serif; font-size: 26px; font-weight: 700;">{{t.title}}</h1>
+<span style="font-size: 13px; color: #A7AFBC;">{{t.sub}}</span>
+</div>
+<span style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: #C9CFD8;">
+<span style="width: 8px; height: 8px; border-radius: 50%; background: #3DD68C;"></span>
+{{t.stations}}
+</span>
+<div role="group" aria-label="{{t.langLabel}}" style="display: inline-flex; padding: 4px; gap: 4px; border-radius: 12px; background: #15181D; border: 1px solid #23272F;">
+<button type="button" lang="en" aria-pressed="{{isEn}}" onClick="{{setEn}}" style="min-width: 56px; height: 36px; padding: 0 12px; border: 0; border-radius: 8px; background: {{enBg}}; color: {{enColor}}; font-size: 14px; font-weight: 600; cursor: pointer;">EN</button>
+<button type="button" lang="ar" aria-pressed="{{isAr}}" onClick="{{setAr}}" style="min-width: 56px; height: 36px; padding: 0 12px; border: 0; border-radius: 8px; background: {{arBg}}; color: {{arColor}}; font-size: 14px; font-weight: 600; cursor: pointer;">عربي</button>
+</div>
+</header>
+
+<div style="padding: 20px 28px 24px; display: flex; flex-direction: column; gap: 20px;">
+
+<div style="display: flex; flex-wrap: wrap; gap: 12px;">
+<sc-for list="{{kpis}}" as="k" hint-placeholder-count="5">
+<div style="flex: 1 1 190px; min-width: 0; box-sizing: border-box; padding: 14px 16px; border-radius: 16px; background: #15181D; border: 1px solid #23272F; display: flex; flex-direction: column; gap: 6px;">
+<div style="display: flex; align-items: center; gap: 8px;">
+<span style="width: 26px; height: 26px; flex: 0 0 26px; border-radius: 8px; background: {{k.iconBg}}; color: {{k.iconColor}}; display: flex; align-items: center; justify-content: center;">
+<sc-if value="{{k.iScan}}" hint-placeholder-val="{{ true }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16M4 12h16"></path></svg></sc-if>
+<sc-if value="{{k.iUsers}}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20c0-3 2.9-5.5 6.5-5.5s6.5 2.5 6.5 5.5M16 4.6a3.5 3.5 0 0 1 0 6.8M18.5 14.8c1.8.8 3 2.6 3 5.2"></path></svg></sc-if>
+<sc-if value="{{k.iWarn}}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 8v4.5l2.5 1.5"></path></svg></sc-if>
+<sc-if value="{{k.iBad}}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"></path></svg></sc-if>
+<sc-if value="{{k.iCash}}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2"></rect><circle cx="12" cy="12" r="2.5"></circle></svg></sc-if>
+</span>
+<span style="font-size: 13px; color: #A7AFBC;">{{k.label}}</span>
+</div>
+<span style="display: inline-flex; align-items: baseline; gap: 6px;">
+<span style="font-family: 'Alexandria', sans-serif; font-size: 32px; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums;">{{k.value}}</span>
+<span style="font-size: 13px; color: #A7AFBC;">{{k.unit}}</span>
+</span>
+<span style="font-size: 12px; color: {{k.subColor}};">{{k.sub}}</span>
+</div>
+</sc-for>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: stretch;">
+<section style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 18px 20px; border-radius: 18px; background: #15181D; border: 1px solid #23272F; display: flex; flex-direction: column; gap: 12px;">
+<div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 12px; min-height: 28px;">
+<h2 style="margin: 0; font-family: 'Alexandria', sans-serif; font-size: 17px; font-weight: 600;">{{t.chartTitle}}</h2>
+<span aria-live="polite" style="font-size: 14px; color: #F1F3F6; font-weight: 600; font-variant-numeric: tabular-nums;">{{readout}}</span>
+</div>
+<div role="img" aria-label="{{t.chartAria}}" style="position: relative; height: 180px;">
+<sc-for list="{{grid}}" as="g" hint-placeholder-count="5">
+<div style="position: absolute; inset-inline: 0; bottom: {{g.pos}}; display: flex; align-items: center; gap: 8px; transform: translateY(50%);">
+<span style="width: 24px; text-align: end; font-size: 11px; color: #A7AFBC; font-variant-numeric: tabular-nums;">{{g.label}}</span>
+<span style="flex: 1 1 auto; height: 1px; background: {{g.line}};"></span>
+</div>
+</sc-for>
+<div style="position: absolute; top: 0; bottom: 0; inset-inline-start: 32px; inset-inline-end: 0; display: flex; align-items: flex-end; gap: 2px;">
+<sc-for list="{{bars}}" as="b" hint-placeholder-count="18">
+<button type="button" onMouseEnter="{{b.hover}}" onFocus="{{b.hover}}" onClick="{{b.hover}}" aria-label="{{b.aria}}" style="flex: 1 1 0; min-width: 0; height: 100%; padding: 0; border: 0; background: transparent; display: flex; align-items: flex-end; cursor: pointer;">
+<span style="display: block; width: 100%; height: {{b.h}}; border-radius: 4px 4px 0 0; background: {{b.color}};"></span>
+</button>
+</sc-for>
+</div>
+</div>
+<div style="display: flex; gap: 2px; padding-inline-start: 32px;">
+<sc-for list="{{bars}}" as="b" hint-placeholder-count="18">
+<span style="flex: 1 1 0; min-width: 0; text-align: center; font-size: 11px; color: #A7AFBC; font-variant-numeric: tabular-nums;">{{b.tick}}</span>
+</sc-for>
+</div>
+</section>
+
+<section style="flex: 1 1 320px; min-width: 0; box-sizing: border-box; padding: 18px 20px; border-radius: 18px; background: #15181D; border: 1px solid #23272F; display: flex; flex-direction: column; gap: 12px;">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; min-height: 28px;">
+<h2 style="margin: 0; font-family: 'Alexandria', sans-serif; font-size: 17px; font-weight: 600;">{{t.lowTitle}}</h2>
+<a href="#stock" style="font-size: 14px; color: {{accent}}; text-decoration: none; font-weight: 600;">{{t.openStock}}</a>
+</div>
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column;">
+<sc-for list="{{low}}" as="l" hint-placeholder-count="4">
+<li style="display: flex; align-items: center; gap: 12px; min-height: 52px; border-bottom: 1px solid #23272F;">
+<span style="width: 28px; height: 28px; flex: 0 0 28px; border-radius: 8px; background: rgba(245, 184, 61, 0.12); color: #F5B83D; display: flex; align-items: center; justify-content: center;">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4l9 16H3z"></path><path d="M12 10v4M12 17v.5"></path></svg>
+</span>
+<span style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px;">
+<span style="font-size: 14px; font-weight: 600;">{{l.name}}</span>
+<span aria-hidden="true" style="display: block; height: 4px; border-radius: 2px; background: #23272F; overflow: hidden;"><span style="display: block; height: 100%; width: {{l.pct}}; border-radius: 2px; background: #F5B83D;"></span></span>
+</span>
+<span style="font-size: 13px; color: #C9CFD8; white-space: nowrap;">{{l.sub}}</span>
+</li>
+</sc-for>
+</ul>
+</section>
+</div>
+
+<section style="box-sizing: border-box; padding: 18px 20px; border-radius: 18px; background: #15181D; border: 1px solid #23272F; display: flex; flex-direction: column; gap: 12px;">
+<div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px; min-height: 28px;">
+<h2 style="margin: 0; font-family: 'Alexandria', sans-serif; font-size: 17px; font-weight: 600;">{{t.expTitle}}</h2>
+<span style="font-size: 13px; color: #A7AFBC;">{{t.expCount}}</span>
+<a href="#members" style="margin-inline-start: auto; font-size: 14px; color: {{accent}}; text-decoration: none; font-weight: 600;">{{t.viewAll}}</a>
+</div>
+<div style="overflow-x: auto;">
+<table style="width: 100%; min-width: 640px; border-collapse: collapse; font-size: 14px;">
+<thead>
+<tr>
+<th scope="col" style="text-align: start; padding: 0 0 10px; padding-inline-end: 12px; font-size: 12px; font-weight: 500; color: #A7AFBC; border-bottom: 1px solid #23272F;">{{t.thMember}}</th>
+<th scope="col" style="text-align: start; padding: 0 0 10px; padding-inline-end: 12px; font-size: 12px; font-weight: 500; color: #A7AFBC; border-bottom: 1px solid #23272F;">{{t.thPhone}}</th>
+<th scope="col" style="text-align: start; padding: 0 0 10px; padding-inline-end: 12px; font-size: 12px; font-weight: 500; color: #A7AFBC; border-bottom: 1px solid #23272F;">{{t.thPlan}}</th>
+<th scope="col" style="text-align: start; padding: 0 0 10px; padding-inline-end: 12px; font-size: 12px; font-weight: 500; color: #A7AFBC; border-bottom: 1px solid #23272F;">{{t.thEnds}}</th>
+<th scope="col" style="text-align: start; padding: 0 0 10px 0; font-size: 12px; font-weight: 500; color: #A7AFBC; border-bottom: 1px solid #23272F;">{{t.thLeft}}</th>
+</tr>
+</thead>
+<tbody>
+<sc-for list="{{expiring}}" as="e" hint-placeholder-count="5">
+<tr>
+<td style="padding: 12px 0; padding-inline-end: 12px; border-bottom: 1px solid #23272F; font-weight: 600;">{{e.name}}</td>
+<td style="padding: 12px 0; padding-inline-end: 12px; border-bottom: 1px solid #23272F; color: #C9CFD8;"><span dir="ltr">{{e.phone}}</span></td>
+<td style="padding: 12px 0; padding-inline-end: 12px; border-bottom: 1px solid #23272F; color: #C9CFD8;">{{e.plan}}</td>
+<td style="padding: 12px 0; padding-inline-end: 12px; border-bottom: 1px solid #23272F; color: #C9CFD8;">{{e.ends}}</td>
+<td style="padding: 12px 0; border-bottom: 1px solid #23272F;">
+<span style="display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; background: rgba(245, 184, 61, 0.12); color: #F5B83D; font-size: 12px; font-weight: 600;">
+<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 8v4.5l2.5 1.5"></path></svg>
+{{e.left}}
+</span>
+</td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#22D8F0","options":["#22D8F0","#D6A93A","#5B8CFF"],"section":"Brand"},"language":{"editor":"enum","options":["en","ar"],"default":"en","section":"Brand"},"$preview":{"width":1440,"height":980}}'>
+class Component extends DCLogic {
+  tint(hex, a) {
+    var h = String(hex || '#22D8F0').replace('#', '');
+    if (h.length === 3) h = h.split('').map(function (c) { return c + c; }).join('');
+    var n = parseInt(h, 16);
+    return 'rgba(' + ((n >> 16) & 255) + ', ' + ((n >> 8) & 255) + ', ' + (n & 255) + ', ' + a + ')';
+  }
+
+  strings(lang) {
+    var en = {
+      app: 'Admin', navLabel: 'Admin menu', nav1: 'Dashboard', nav2: 'Members', nav3: 'Plans & prices',
+      nav4: 'Cafeteria items', nav5: 'Staff', nav6: 'Reports', nav7: 'Settings',
+      station: 'Admin PC · server', staff: 'Manager', role: 'Administrator', logout: 'Log out',
+      title: 'Dashboard', sub: 'Thursday 26 Nov 2026 · 18:42', stations: '4 of 4 stations online', langLabel: 'Language',
+      k1: 'Check-ins today', k1s: 'Busiest hour 18:00', k2: 'Active members', k2s: 'of 467 registered',
+      k3: 'Expiring in 3 days', k3s: 'Renew soon', k4: 'Expired, last 30 days', k4s: 'Not renewed',
+      k5: 'Revenue today', k5s: 'Subscriptions 1,900,000 · Cafeteria 550,000', currency: 'SYP',
+      chartTitle: 'Check-ins by hour · today', chartAria: 'Bar chart of check-ins per hour today',
+      readout: function (h, n) { return h + ':00 · ' + n + ' check-ins'; },
+      future: function (h) { return h + ':00 · not yet'; },
+      lowTitle: 'Low stock', openStock: 'Open stock',
+      lowRow: function (l, m) { return l + ' left · min ' + m; },
+      expTitle: 'Expiring in the next 3 days', expCount: '18 members', viewAll: 'View all',
+      thMember: 'Member', thPhone: 'Phone', thPlan: 'Plan', thEnds: 'Ends', thLeft: 'Time left',
+      days: function (n) { return n === 0 ? 'Today' : (n === 1 ? '1 day' : n + ' days'); },
+      months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+      planLabel: function (n) { return n === 1 ? '1 month' : n + ' months'; }
+    };
+    var ar = {
+      app: 'الإدارة', navLabel: 'قائمة الإدارة', nav1: 'لوحة التحكم', nav2: 'المشتركون', nav3: 'الخطط والأسعار',
+      nav4: 'أصناف الكافتيريا', nav5: 'الموظفون', nav6: 'التقارير', nav7: 'الإعدادات',
+      station: 'جهاز الإدارة · الخادم', staff: 'المدير', role: 'مسؤول النظام', logout: 'تسجيل الخروج',
+      title: 'لوحة التحكم', sub: 'الخميس 26 تشرين الثاني 2026 · 18:42', stations: '4 من 4 محطات متصلة', langLabel: 'اللغة',
+      k1: 'الدخول اليوم', k1s: 'ساعة الذروة 18:00', k2: 'المشتركون الفعّالون', k2s: 'من أصل 467 مسجّلًا',
+      k3: 'تنتهي خلال 3 أيام', k3s: 'بحاجة إلى تجديد', k4: 'منتهية خلال 30 يومًا', k4s: 'لم تُجدَّد',
+      k5: 'إيراد اليوم', k5s: 'الاشتراكات 1,900,000 · الكافتيريا 550,000', currency: 'ل.س',
+      chartTitle: 'الدخول حسب الساعة · اليوم', chartAria: 'مخطط أعمدة لعدد مرات الدخول في كل ساعة اليوم',
+      readout: function (h, n) { return h + ':00 · عدد الدخول: ' + n; },
+      future: function (h) { return h + ':00 · لم تبدأ بعد'; },
+      lowTitle: 'مخزون منخفض', openStock: 'فتح المخزون',
+      lowRow: function (l, m) { return 'المتبقي ' + l + ' · الحد الأدنى ' + m; },
+      expTitle: 'تنتهي خلال الأيام الثلاثة القادمة', expCount: '18 مشتركًا', viewAll: 'عرض الكل',
+      thMember: 'المشترك', thPhone: 'الهاتف', thPlan: 'الاشتراك', thEnds: 'ينتهي في', thLeft: 'المتبقي',
+      days: function (n) { return n === 0 ? 'اليوم' : (n === 1 ? 'يوم واحد' : (n === 2 ? 'يومان' : n + ' أيام')); },
+      months: ['كانون الثاني', 'شباط', 'آذار', 'نيسان', 'أيار', 'حزيران', 'تموز', 'آب', 'أيلول', 'تشرين الأول', 'تشرين الثاني', 'كانون الأول'],
+      planLabel: function (n) { return n === 1 ? 'شهر واحد' : (n <= 10 ? n + ' أشهر' : n + ' شهرًا'); }
+    };
+    return lang === 'ar' ? ar : en;
+  }
+
+  renderVals() {
+    var self = this;
+    var s = this.state || {};
+    var lang = s.lang || this.props.language || 'en';
+    var isAr = lang === 'ar';
+    var accent = this.props.accent ?? '#22D8F0';
+    var brand = '#22D8F0', gold = '#D6A93A', goldSoft = this.tint(gold, 0.16);
+    var accentSoft = this.tint(accent, 0.14);
+    var t = this.strings(lang);
+
+    var warnSoft = 'rgba(245, 184, 61, 0.12)', badSoft = 'rgba(242, 109, 109, 0.12)';
+    var kpis = [
+      { label: t.k1, value: '86', unit: '', sub: t.k1s, subColor: '#A7AFBC', iconBg: accentSoft, iconColor: accent, iScan: true },
+      { label: t.k2, value: '412', unit: '', sub: t.k2s, subColor: '#A7AFBC', iconBg: accentSoft, iconColor: accent, iUsers: true },
+      { label: t.k3, value: '18', unit: '', sub: t.k3s, subColor: '#F5B83D', iconBg: warnSoft, iconColor: '#F5B83D', iWarn: true },
+      { label: t.k4, value: '37', unit: '', sub: t.k4s, subColor: '#F26D6D', iconBg: badSoft, iconColor: '#F26D6D', iBad: true },
+      { label: t.k5, value: '2,450,000', unit: t.currency, sub: t.k5s, subColor: '#A7AFBC', iconBg: goldSoft, iconColor: gold, iCash: true }
+    ].map(function (k) {
+      return Object.assign({ iScan: false, iUsers: false, iWarn: false, iBad: false, iCash: false }, k);
+    });
+
+    var counts = [5, 10, 8, 6, 4, 2, 2, 3, 4, 6, 9, 12, 15, null, null, null, null, null];
+    var MAX = 20;
+    var hover = s.hover ?? 12;
+    var pad = function (h) { return h < 10 ? '0' + h : String(h); };
+    var bars = counts.map(function (v, i) {
+      var hour = pad(6 + i);
+      var on = i === hover;
+      var has = v !== null;
+      return {
+        h: has ? (v / MAX * 100) + '%' : '2px',
+        color: has ? (on ? accent : self.tint(accent, 0.55)) : '#2E343E',
+        tick: i % 2 === 0 ? hour : '',
+        aria: has ? t.readout(hour, v) : t.future(hour),
+        hover: function () { self.setState({ hover: i }); }
+      };
+    });
+    var hv = counts[hover];
+    var readout = hv !== null ? t.readout(pad(6 + hover), hv) : t.future(pad(6 + hover));
+
+    var grid = [0, 5, 10, 15, 20].map(function (v) {
+      return { label: String(v), pos: (v / MAX * 100) + '%', line: v === 0 ? '#3A414D' : '#23272F' };
+    });
+
+    var low = [
+      { en: 'Oat cookies', ar: 'كوكيز الشوفان', left: 2, min: 8 },
+      { en: 'Energy drink', ar: 'مشروب طاقة', left: 3, min: 10 },
+      { en: 'BCAA drink', ar: 'مشروب BCAA', left: 7, min: 10 },
+      { en: 'Banana shake', ar: 'مخفوق موز', left: 9, min: 10 }
+    ].map(function (l) {
+      return { name: isAr ? l.ar : l.en, sub: t.lowRow(l.left, l.min), pct: Math.round(l.left / l.min * 100) + '%' };
+    });
+
+    var fmt = function (d) { return d[0] + ' ' + t.months[d[1] - 1] + ' ' + d[2]; };
+    var expiring = [
+      { en: 'Karim Youssef', ar: 'كريم يوسف', phone: '0936 120 448', plan: 6, end: [26, 11, 2026], days: 0 },
+      { en: 'Hadi Mansour', ar: 'هادي منصور', phone: '0991 274 630', plan: 3, end: [27, 11, 2026], days: 1 },
+      { en: 'Lina Haddad', ar: 'لينا حداد', phone: '0933 558 201', plan: 1, end: [28, 11, 2026], days: 2 },
+      { en: 'Maya Sabbagh', ar: 'مايا صباغ', phone: '0947 803 115', plan: 1, end: [29, 11, 2026], days: 3 },
+      { en: 'Tareq Nasr', ar: 'طارق نصر', phone: '0959 661 372', plan: 1, end: [29, 11, 2026], days: 3 }
+    ].map(function (e) {
+      return { name: isAr ? e.ar : e.en, phone: e.phone, plan: t.planLabel(e.plan), ends: fmt(e.end), left: t.days(e.days) };
+    });
+
+    var activeBg = '#2A2F38';
+    return {
+      t: t, lang: lang, dir: isAr ? 'rtl' : 'ltr', accent: accent, brand: brand, gold: gold, goldSoft: goldSoft, accentSoft: accentSoft,
+      isEn: !isAr, isAr: isAr,
+      enBg: isAr ? 'transparent' : activeBg, enColor: isAr ? '#A7AFBC' : '#F1F3F6',
+      arBg: isAr ? activeBg : 'transparent', arColor: isAr ? '#F1F3F6' : '#A7AFBC',
+      setEn: function () { self.setState({ lang: 'en' }); },
+      setAr: function () { self.setState({ lang: 'ar' }); },
+      kpis: kpis, bars: bars, grid: grid, readout: readout, low: low, expiring: expiring
+    };
+  }
+}
+</script>
+</body>
+</html>

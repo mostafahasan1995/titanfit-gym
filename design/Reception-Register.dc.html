@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Reception new member</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alexandria:wght@500;600;700;800&amp;family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0;background:#0D0F12}
+a{color:inherit}a:hover{color:#FFFFFF}
+button,input{font:inherit}
+:focus-visible{outline:2px solid #F1F3F6;outline-offset:2px}
+</style>
+</helmet>
+<div dir="{{dir}}" lang="{{lang}}" style="min-height: 900px; background: #0D0F12; color: #F1F3F6; font-family: 'IBM Plex Sans Arabic', system-ui, sans-serif; display: flex; flex-wrap: wrap;">
+
+<aside style="flex: 1 1 232px; box-sizing: border-box; padding: 24px 16px; background: #111317; border-inline-end: 1px solid #23272F; display: flex; flex-direction: column; gap: 32px;">
+<div style="display: flex; align-items: center; gap: 12px; padding: 0 8px;">
+<div style="width: 44px; height: 44px; flex: 0 0 44px; border-radius: 12px; background: #0B0D10; border: 1px solid #23272F; box-sizing: border-box; display: flex; align-items: center; justify-content: center;"><svg width="40" height="40" viewBox="58 -62 176 176" aria-hidden="true"><defs><linearGradient id="tfGoldReg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F2CF6B"></stop><stop offset="0.55" stop-color="#D6A93A"></stop><stop offset="1" stop-color="#B8892A"></stop></linearGradient></defs><path fill="url(#tfGoldReg)" d="M119 -9L115 -44L132 -27L146 -52L160 -27L177 -44L173 -9Z"></path><rect fill="url(#tfGoldReg)" x="118" y="-8" width="56" height="7" rx="1"></rect><path fill="#22D8F0" d="M146 -33L152 -24L146 -15L140 -24Z M129 -24L133 -19L129 -14L125 -19Z M163 -24L167 -19L163 -14L159 -19Z"></path><path fill="#FFFFFF" d="M120 2h52v16h-11v46h-30v-46h-11z"></path><rect fill="#0B0D10" x="144.25" y="22" width="3.5" height="38" rx="1.75"></rect><rect fill="url(#tfGoldReg)" x="116" y="66" width="60" height="12" rx="1.5"></rect><rect fill="url(#tfGoldReg)" x="122" y="80" width="48" height="11" rx="1.5"></rect><rect fill="url(#tfGoldReg)" x="128" y="93" width="36" height="10" rx="1.5"></rect><rect fill="#FFFFFF" x="135" y="105" width="22" height="7" rx="1"></rect></svg></div>
+<div style="display: flex; flex-direction: column; gap: 2px;">
+<span style="font-family: 'Alexandria', sans-serif; font-size: 16px; font-weight: 700;">TITAN<span style="color: {{brand}};">FIT</span></span>
+<span style="font-size: 13px; color: #A7AFBC;">{{t.app}}</span>
+</div>
+</div>
+<nav aria-label="{{t.navLabel}}" style="display: flex; flex-direction: column; gap: 4px;">
+<a href="Main.dc.html" style="display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 0 12px; border-radius: 10px; color: #A7AFBC; text-decoration: none; font-size: 15px; font-weight: 500;">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16M4 12h16"></path></svg>
+<span>{{t.navCheckin}}</span>
+</a>
+<a href="Reception-Register.dc.html" aria-current="page" style="display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 0 12px; border-radius: 10px; background: {{accentSoft}}; color: #F1F3F6; text-decoration: none; font-size: 15px; font-weight: 600;">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="8" r="4"></circle><path d="M3 20c0-3.3 3.1-6 7-6 1.4 0 2.7.3 3.8.9M18 14v6M15 17h6"></path></svg>
+<span>{{t.navNew}}</span>
+</a>
+<a href="#members" style="display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 0 12px; border-radius: 10px; color: #A7AFBC; text-decoration: none; font-size: 15px; font-weight: 500;">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20c0-3 2.9-5.5 6.5-5.5s6.5 2.5 6.5 5.5M16 4.6a3.5 3.5 0 0 1 0 6.8M18.5 14.8c1.8.8 3 2.6 3 5.2"></path></svg>
+<span>{{t.navMembers}}</span>
+</a>
+<a href="#renewals" style="display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 0 12px; border-radius: 10px; color: #A7AFBC; text-decoration: none; font-size: 15px; font-weight: 500;">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.6-4.4L4 8.5M4 4v4.5h4.5M4 13a8 8 0 0 0 14.6 4.4l1.4-1.9M20 20v-4.5h-4.5"></path></svg>
+<span>{{t.navRenew}}</span>
+</a>
+</nav>
+<div style="margin-top: auto; display: flex; flex-direction: column; gap: 12px; padding: 16px 8px 0; border-top: 1px solid #23272F;">
+<div style="display: flex; flex-direction: column; gap: 2px;">
+<span style="font-size: 12px; color: #A7AFBC; letter-spacing: 0.04em;">{{t.station}}</span>
+<span style="font-size: 15px; font-weight: 600;">{{t.staff}}</span>
+<span style="font-size: 13px; color: #A7AFBC;">{{t.role}}</span>
+</div>
+<button type="button" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid #2E343E; background: transparent; color: #C9CFD8; font-size: 14px; cursor: pointer;">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"></path></svg>
+<span>{{t.logout}}</span>
+</button>
+</div>
+</aside>
+
+<main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column;">
+<header style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 20px 28px; border-bottom: 1px solid #23272F;">
+<div style="flex: 1 1 260px; display: flex; flex-direction: column; gap: 2px;">
+<h1 style="margin: 0; font-family: 'Alexandria', sans-serif; font-size: 26px; font-weight: 700;">{{t.title}}</h1>
+<span style="font-size: 13px; color: #A7AFBC;">{{t.sub}}</span>
+</div>
+<span style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: #C9CFD8;">
+<span style="width: 8px; height: 8px; border-radius: 50%; background: #3DD68C;"></span>
+{{t.online}}
+</span>
+<div role="group" aria-label="{{t.langLabel}}" style="display: inline-flex; padding: 4px; gap: 4px; border-radius: 12px; background: #15181D; border: 1px solid #23272F;">
+<button type="button" lang="en" aria-pressed="{{isEn}}" onClick="{{setEn}}" style="min-width: 56px; height: 36px; padding: 0 12px; border: 0; border-radius: 8px; background: {{enBg}}; color: {{enColor}}; font-size: 14px; font-weight: 600; cursor: pointer;">EN</button>
+<button type="button" lang="ar" aria-pressed="{{isAr}}" onClick="{{setAr}}" style="min-width: 56px; height: 36px; padding: 0 12px; border: 0; border-radius: 8px; background: {{arBg}}; color: {{arColor}}; font-size: 14px; font-weight: 600; cursor: pointer;">عربي</button>
+</div>
+</header>
+
+<div style="padding: 24px 28px 28px; display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start;">
+
+<div style="flex: 1 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 20px;">
+<section style="box-sizing: border-box; padding: 20px; border-radius: 18px; background: #15181D; border: 1px solid #23272F; display: flex; flex-direction: column; gap: 16px;">
+<div style="display: flex; align-items: center; gap: 12px;">
+<span style="width: 28px; height: 28px; flex: 0 0 28px; border-radius: 8px; background: {{accent}}; color: #0B0D10; display: flex; align-items: center; justify-content: center; font-family: 'Alexandria', sans-serif; font-size: 14px; font-weight: 700;">1</span>
+<h2 style="margin: 0; font-family: 'Alexandria', sans-serif; font-size: 18px; font-weight: 600;">{{t.s1}}</h2>
+<button type="button" style="margin-inline-start: auto; display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid #2E343E; background: #1C2027; color: #F1F3F6; font-size: 14px; font-weight: 500; cursor: pointer;">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7V5h3M17 5h3v2M20 17v2h-3M7 19H4v-2M7 9v6M10 9v6M13 9v6M16.5 9v6"></path></svg>
+<span>{{t.rescan}}</span>
+</button>
+</div>
+<div style="display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: 12px; background: rgba(61, 214, 140, 0.10); color: #3DD68C;">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: 0 0 18px; margin-top: 2px;"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+<span style="font-size: 14px; color: #C9CFD8;">{{t.scanned}}</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px;">
+<sc-for list="{{fields}}" as="f" hint-placeholder-count="7">
+<div style="display: flex; flex-direction: column; gap: 6px; grid-column: {{f.span}};">
+<label for="{{f.id}}" style="font-size: 13px; color: #A7AFBC;">{{f.label}}</label>
+<input id="{{f.id}}" type="text" value="{{f.value}}" dir="{{f.dir}}" style="height: 46px; box-sizing: border-box; padding: 0 14px; border-radius: 12px; border: 1px solid #2E343E; background: #0D0F12; color: #F1F3F6; font-size: 15px; text-align: start;">
+</div>
+</sc-for>
+</div>
+</section>
+
+<section style="box-sizing: border-box; padding: 20px; border-radius: 18px; background: #15181D; border: 1px solid #23272F; display: flex; flex-direction: column; gap: 16px;">
+<div style="display: flex; align-items: center; gap: 12px;">
+<span style="width: 28px; height: 28px; flex: 0 0 28px; border-radius: 8px; background: {{accent}}; color: #0B0D10; display: flex; align-items: center; justify-content: center; font-family: 'Alexandria', sans-serif; font-size: 14px; font-weight: 700;">2</span>
+<h2 style="margin: 0; font-family: 'Alexandria', sans-serif; font-size: 18px; font-weight: 600;">{{t.s2}}</h2>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px;">
+<label for="phone" style="font-size: 13px; color: #A7AFBC;">{{t.phoneLabel}}</label>
+<div dir="ltr" style="display: flex; gap: 8px;">
+<span style="display: inline-flex; align-items: center; height: 46px; padding: 0 14px; box-sizing: border-box; border-radius: 12px; border: 1px solid #2E343E; background: #1C2027; color: #C9CFD8; font-size: 15px;">+963</span>
+<input id="phone" type="tel" value="0944 765 210" aria-describedby="phone-help" style="flex: 1 1 auto; min-width: 0; height: 46px; box-sizing: border-box; padding: 0 14px; border-radius: 12px; border: 1.5px solid {{accent}}; background: #0D0F12; color: #F1F3F6; font-size: 15px;">
+</div>
+<span id="phone-help" style="font-size: 13px; color: #A7AFBC;">{{t.phoneHelp}}</span>
+</div>
+</section>
+</div>
+
+<div style="flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 20px;">
+<section style="box-sizing: border-box; padding: 20px; border-radius: 18px; background: #15181D; border: 1px solid #23272F; display: flex; flex-direction: column; gap: 16px;">
+<div style="display: flex; align-items: center; gap: 12px;">
+<span style="width: 28px; height: 28px; flex: 0 0 28px; border-radius: 8px; background: {{accent}}; color: #0B0D10; display: flex; align-items: center; justify-content: center; font-family: 'Alexandria', sans-serif; font-size: 14px; font-weight: 700;">3</span>
+<h2 style="margin: 0; font-family: 'Alexandria', sans-serif; font-size: 18px; font-weight: 600;">{{t.s3}}</h2>
+</div>
+<div style="position: relative; height: 244px; border-radius: 16px; background: #08090B; border: 1px solid #23272F; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+<span style="position: absolute; top: 12px; inset-inline-start: 12px; display: inline-flex; align-items: center; gap: 8px; padding: 4px 10px; border-radius: 999px; background: rgba(13,15,18,0.8); border: 1px solid #23272F; font-size: 12px; color: #C9CFD8;">
+<span style="width: 7px; height: 7px; border-radius: 50%; background: {{accent}};"></span>
+{{t.camName}}
+</span>
+<sc-if value="{{photo}}" hint-placeholder-val="{{ false }}">
+<div style="width: 150px; height: 188px; border-radius: 14px; background: #1C2027; border: 1px solid #2E343E; display: flex; align-items: flex-end; justify-content: center; overflow: hidden;">
+<svg width="140" height="150" viewBox="0 0 64 70" aria-hidden="true"><circle cx="32" cy="26" r="13" fill="#4A5260"></circle><path d="M6 70c2-15 12-24 26-24s24 9 26 24z" fill="#4A5260"></path></svg>
+</div>
+<span style="position: absolute; bottom: 12px; inset-inline-end: 12px; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: rgba(61, 214, 140, 0.14); color: #3DD68C; font-size: 12px; font-weight: 600;">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+{{t.photoSaved}}
+</span>
+</sc-if>
+<sc-if value="{{noPhoto}}" hint-placeholder-val="{{ true }}">
+<div style="width: 140px; height: 180px; border-radius: 50%; border: 2px dashed {{accent}}; display: flex; align-items: flex-end; justify-content: center; overflow: hidden;">
+<svg width="120" height="128" viewBox="0 0 64 70" aria-hidden="true"><circle cx="32" cy="26" r="13" fill="#262B33"></circle><path d="M6 70c2-15 12-24 26-24s24 9 26 24z" fill="#262B33"></path></svg>
+</div>
+<span style="position: absolute; bottom: 12px; left: 12px; right: 12px; text-align: center; font-size: 13px; color: #A7AFBC;">{{t.faceHint}}</span>
+</sc-if>
+</div>
+<button type="button" onClick="{{togglePhoto}}" style="display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 48px; padding: 0 18px; border-radius: 12px; border: {{photoBtnBorder}}; background: {{photoBtnBg}}; color: {{photoBtnColor}}; font-size: 15px; font-weight: 700; cursor: pointer;">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"></path><circle cx="12" cy="13" r="3.5"></circle></svg>
+<span>{{photoBtnLabel}}</span>
+</button>
+</section>
+
+<section style="box-sizing: border-box; padding: 20px; border-radius: 18px; background: #15181D; border: 1px solid #23272F; display: flex; flex-direction: column; gap: 16px;">
+<h2 style="margin: 0; font-family: 'Alexandria', sans-serif; font-size: 18px; font-weight: 600;">{{t.qrTitle}}</h2>
+<sc-if value="{{saved}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start;">
+<div role="img" aria-label="{{t.qrAlt}}" style="width: 156px; height: 156px; flex: 0 0 156px; box-sizing: border-box; padding: 10px; border-radius: 12px; background: #FFFFFF; display: grid; grid-template-columns: repeat(25, minmax(0, 1fr));">
+<sc-for list="{{qr}}" as="q" hint-placeholder-count="625">
+<div style="background: {{q.c}};"></div>
+</sc-for>
+</div>
+<div style="flex: 1 1 140px; min-width: 0; display: flex; flex-direction: column; gap: 10px;">
+<span style="font-family: 'Alexandria', sans-serif; font-size: 20px; font-weight: 700;">#00412</span>
+<span style="font-size: 13px; color: #A7AFBC;">{{t.qrHelp}}</span>
+<div style="display: flex; flex-wrap: wrap; gap: 8px;">
+<button type="button" style="min-height: 44px; padding: 0 14px; border-radius: 10px; border: 1px solid #2E343E; background: #1C2027; color: #F1F3F6; font-size: 14px; font-weight: 600; cursor: pointer;">{{t.copy}}</button>
+<button type="button" style="min-height: 44px; padding: 0 14px; border-radius: 10px; border: 1px solid #2E343E; background: #1C2027; color: #F1F3F6; font-size: 14px; font-weight: 600; cursor: pointer;">{{t.saveImg}}</button>
+</div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{notSaved}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; align-items: center; gap: 16px;">
+<div style="width: 96px; height: 96px; flex: 0 0 96px; border-radius: 12px; border: 1.5px dashed #3A414D; display: flex; align-items: center; justify-content: center; color: #3A414D;">
+<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><path d="M14 14h3v3h-3zM18 18h3v3h-3z"></path></svg>
+</div>
+<span style="font-size: 14px; color: #A7AFBC;">{{t.qrWait}}</span>
+</div>
+</sc-if>
+</section>
+</div>
+
+<section style="flex: 1 1 340px; min-width: 0; box-sizing: border-box; padding: 20px; border-radius: 18px; background: #15181D; border: 1px solid #23272F; display: flex; flex-direction: column; gap: 18px;">
+<div style="display: flex; align-items: center; gap: 12px;">
+<span style="width: 28px; height: 28px; flex: 0 0 28px; border-radius: 8px; background: {{accent}}; color: #0B0D10; display: flex; align-items: center; justify-content: center; font-family: 'Alexandria', sans-serif; font-size: 14px; font-weight: 700;">4</span>
+<h2 style="margin: 0; font-family: 'Alexandria', sans-serif; font-size: 18px; font-weight: 600;">{{t.s4}}</h2>
+</div>
+<div role="group" aria-label="{{t.duration}}" style="display: flex; flex-direction: column; gap: 8px;">
+<span style="font-size: 13px; color: #A7AFBC;">{{t.duration}}</span>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;">
+<sc-for list="{{plans}}" as="p" hint-placeholder-count="4">
+<button type="button" onClick="{{p.pick}}" aria-pressed="{{p.selected}}" style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-height: 72px; padding: 12px 14px; box-sizing: border-box; border-radius: 14px; border: 1.5px solid {{p.border}}; background: {{p.bg}}; color: #F1F3F6; text-align: start; cursor: pointer;">
+<span style="font-family: 'Alexandria', sans-serif; font-size: 18px; font-weight: 700;">{{p.label}}</span>
+<span style="font-size: 13px; color: #A7AFBC;">{{p.price}}</span>
+</button>
+</sc-for>
+</div>
+</div>
+<dl style="margin: 0; display: flex; flex-direction: column; gap: 0; border-top: 1px solid #23272F;">
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid #23272F;">
+<dt style="font-size: 14px; color: #A7AFBC;">{{t.starts}}</dt>
+<dd style="margin: 0; font-size: 15px; font-weight: 600;">{{t.startDate}}</dd>
+</div>
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid #23272F;">
+<dt style="font-size: 14px; color: #A7AFBC;">{{t.ends}}</dt>
+<dd style="margin: 0; font-size: 15px; font-weight: 600;">{{endDate}}</dd>
+</div>
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid #23272F;">
+<dt style="font-size: 14px; color: #A7AFBC;">{{t.payment}}</dt>
+<dd style="margin: 0; font-size: 15px; font-weight: 600;">{{t.cash}}</dd>
+</div>
+</dl>
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+<span style="font-size: 15px; color: #C9CFD8;">{{t.total}}</span>
+<span style="display: inline-flex; align-items: baseline; gap: 8px;">
+<span style="font-family: 'Alexandria', sans-serif; font-size: 34px; font-weight: 800; font-variant-numeric: tabular-nums; color: {{gold}};">{{total}}</span>
+<span style="font-size: 14px; color: #A7AFBC;">{{t.currency}}</span>
+</span>
+</div>
+<sc-if value="{{notSaved}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<button type="button" onClick="{{save}}" style="display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 56px; padding: 0 20px; border: 0; border-radius: 14px; background: {{accent}}; color: #0B0D10; font-size: 16px; font-weight: 700; cursor: pointer;">{{t.save}}</button>
+<sc-if value="{{needPhoto}}" hint-placeholder-val="{{ false }}">
+<span role="alert" style="display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: #F5B83D;">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 4l9 16H3z"></path><path d="M12 10v4M12 17v.5"></path></svg>
+{{t.needPhoto}}
+</span>
+</sc-if>
+</div>
+</sc-if>
+<sc-if value="{{saved}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<div role="status" style="display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 56px; border-radius: 14px; background: rgba(61, 214, 140, 0.12); color: #3DD68C; font-size: 16px; font-weight: 700;">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+{{t.saved}}
+</div>
+<button type="button" onClick="{{reset}}" style="min-height: 48px; padding: 0 18px; border-radius: 12px; border: 1px solid #2E343E; background: #1C2027; color: #F1F3F6; font-size: 15px; font-weight: 600; cursor: pointer;">{{t.another}}</button>
+</div>
+</sc-if>
+</section>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#22D8F0","options":["#22D8F0","#D6A93A","#5B8CFF"],"section":"Brand"},"language":{"editor":"enum","options":["en","ar"],"default":"en","section":"Brand"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  tint(hex, a) {
+    var h = String(hex || '#22D8F0').replace('#', '');
+    if (h.length === 3) h = h.split('').map(function (c) { return c + c; }).join('');
+    var n = parseInt(h, 16);
+    return 'rgba(' + ((n >> 16) & 255) + ', ' + ((n >> 8) & 255) + ', ' + (n & 255) + ', ' + a + ')';
+  }
+
+  strings(lang) {
+    var en = {
+      app: 'Reception', navLabel: 'Reception menu', navCheckin: 'Check-in', navNew: 'New member',
+      navMembers: 'Members', navRenew: 'Renewals', station: 'Reception 1', staff: 'Sara M.',
+      role: 'Receptionist', logout: 'Log out', online: 'Server online', langLabel: 'Language',
+      title: 'New member', sub: 'Scan ID · phone · photo · plan · save',
+      s1: 'ID card', rescan: 'Scan again',
+      scanned: 'ID scanned. Fields are filled from the card; check them before saving.',
+      fFirst: 'First name', fFather: "Father's name", fLast: 'Surname', fMother: "Mother's name",
+      fDob: 'Birth date', fPob: 'Birth place', fNat: 'National number',
+      vFirst: 'Nour', vFather: 'Khaled', vLast: 'Al-Masri', vMother: 'Hala', vDob: '14 Mar 1999', vPob: 'Damascus',
+      s2: 'Phone', phoneLabel: 'Mobile number', phoneHelp: 'Used to find the member at check-in.',
+      s3: 'Photo', camName: 'Camera 1', faceHint: 'Fit the face inside the oval',
+      take: 'Take photo', retake: 'Retake photo', photoSaved: 'Photo saved',
+      qrTitle: 'Member QR', qrAlt: 'Member QR code', qrWait: 'The QR code is created when you save.',
+      qrHelp: 'Show it on screen so the member can photograph it, or copy it into WhatsApp.',
+      copy: 'Copy image', saveImg: 'Save image',
+      s4: 'Subscription', duration: 'Duration', starts: 'Starts', startDate: '26 Nov 2026 (today)',
+      ends: 'Ends', payment: 'Payment', cash: 'Cash', total: 'Total', currency: 'SYP',
+      save: 'Save member', saved: 'Member saved', another: 'Register another member', needPhoto: 'Take a photo first.',
+      months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+      planLabel: function (n) { return n === 1 ? '1 month' : n + ' months'; }
+    };
+    var ar = {
+      app: 'الاستقبال', navLabel: 'قائمة الاستقبال', navCheckin: 'تسجيل الحضور', navNew: 'مشترك جديد',
+      navMembers: 'المشتركون', navRenew: 'التجديدات', station: 'الاستقبال 1', staff: 'سارة م.',
+      role: 'موظفة استقبال', logout: 'تسجيل الخروج', online: 'الخادم متصل', langLabel: 'اللغة',
+      title: 'مشترك جديد', sub: 'مسح الهوية · الهاتف · الصورة · الاشتراك · الحفظ',
+      s1: 'البطاقة الشخصية', rescan: 'إعادة المسح',
+      scanned: 'تمت قراءة الهوية. عُبّئت الحقول من البطاقة؛ تحقّق منها قبل الحفظ.',
+      fFirst: 'الاسم', fFather: 'اسم الأب', fLast: 'النسبة', fMother: 'اسم الأم',
+      fDob: 'تاريخ الولادة', fPob: 'مكان الولادة', fNat: 'الرقم الوطني',
+      vFirst: 'نور', vFather: 'خالد', vLast: 'المصري', vMother: 'هالة', vDob: '14 آذار 1999', vPob: 'دمشق',
+      s2: 'الهاتف', phoneLabel: 'رقم الموبايل', phoneHelp: 'يُستخدم للبحث عن المشترك عند الدخول.',
+      s3: 'الصورة', camName: 'الكاميرا 1', faceHint: 'اجعل الوجه داخل الإطار',
+      take: 'التقاط صورة', retake: 'إعادة الالتقاط', photoSaved: 'حُفظت الصورة',
+      qrTitle: 'رمز QR للمشترك', qrAlt: 'رمز QR للمشترك', qrWait: 'يُنشأ الرمز عند الحفظ.',
+      qrHelp: 'اعرضه على الشاشة ليصوّره المشترك بهاتفه، أو انسخه وأرسله عبر واتساب.',
+      copy: 'نسخ الصورة', saveImg: 'حفظ الصورة',
+      s4: 'الاشتراك', duration: 'المدة', starts: 'يبدأ', startDate: '26 تشرين الثاني 2026 (اليوم)',
+      ends: 'ينتهي', payment: 'الدفع', cash: 'نقدًا', total: 'المجموع', currency: 'ل.س',
+      save: 'حفظ المشترك', saved: 'تم حفظ المشترك', another: 'تسجيل مشترك آخر', needPhoto: 'التقط صورة أولًا.',
+      months: ['كانون الثاني', 'شباط', 'آذار', 'نيسان', 'أيار', 'حزيران', 'تموز', 'آب', 'أيلول', 'تشرين الأول', 'تشرين الثاني', 'كانون الأول'],
+      planLabel: function (n) { return n === 1 ? 'شهر واحد' : (n <= 10 ? n + ' أشهر' : n + ' شهرًا'); }
+    };
+    return lang === 'ar' ? ar : en;
+  }
+
+  qrCells() {
+    if (this._qr) return this._qr;
+    var N = 25, cells = [], seed = 7;
+    var rnd = function () { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+    for (var r = 0; r < N; r++) {
+      for (var c = 0; c < N; c++) {
+        var zone = (r < 8 && c < 8) || (r < 8 && c >= N - 8) || (r >= N - 8 && c < 8);
+        var on;
+        if (zone) {
+          var r0 = r < 8 ? 0 : N - 7, c0 = c < 8 ? 0 : N - 7;
+          var y = r - r0, x = c - c0;
+          var inside = y >= 0 && y < 7 && x >= 0 && x < 7;
+          on = inside && (y === 0 || y === 6 || x === 0 || x === 6 || (y >= 2 && y <= 4 && x >= 2 && x <= 4));
+        } else if (r === 6 || c === 6) {
+          on = (r + c) % 2 === 0;
+        } else {
+          on = rnd() > 0.5;
+        }
+        cells.push({ c: on ? '#0B0D10' : 'transparent' });
+      }
+    }
+    this._qr = cells;
+    return cells;
+  }
+
+  renderVals() {
+    var self = this;
+    var s = this.state || {};
+    var lang = s.lang || this.props.language || 'en';
+    var isAr = lang === 'ar';
+    var accent = this.props.accent ?? '#22D8F0';
+    var brand = '#22D8F0', gold = '#D6A93A', goldSoft = this.tint(gold, 0.16);
+    var accentSoft = this.tint(accent, 0.14);
+    var t = this.strings(lang);
+    var months = s.months ?? 3;
+    var photo = !!s.photo;
+    var saved = !!s.saved;
+    var money = function (n) { return n.toLocaleString('en-US'); };
+
+    var planData = [
+      { m: 1, price: 150000, end: [26, 12, 2026] },
+      { m: 3, price: 400000, end: [26, 2, 2027] },
+      { m: 6, price: 750000, end: [26, 5, 2027] },
+      { m: 12, price: 1400000, end: [26, 11, 2027] }
+    ];
+    var chosen = planData.filter(function (p) { return p.m === months; })[0];
+    var plans = planData.map(function (p) {
+      var on = p.m === months;
+      return {
+        label: t.planLabel(p.m), price: money(p.price) + ' ' + t.currency, selected: on,
+        border: on ? accent : '#2E343E', bg: on ? accentSoft : '#111317',
+        pick: function () { if (!saved) self.setState({ months: p.m }); }
+      };
+    });
+
+    var fields = [
+      { id: 'f-first', label: t.fFirst, value: t.vFirst, span: 'auto', dir: 'auto' },
+      { id: 'f-father', label: t.fFather, value: t.vFather, span: 'auto', dir: 'auto' },
+      { id: 'f-last', label: t.fLast, value: t.vLast, span: 'auto', dir: 'auto' },
+      { id: 'f-mother', label: t.fMother, value: t.vMother, span: 'auto', dir: 'auto' },
+      { id: 'f-dob', label: t.fDob, value: t.vDob, span: 'auto', dir: 'auto' },
+      { id: 'f-pob', label: t.fPob, value: t.vPob, span: 'auto', dir: 'auto' },
+      { id: 'f-nat', label: t.fNat, value: '01234567890', span: '1 / -1', dir: 'ltr' }
+    ];
+
+    var activeBg = '#2A2F38';
+    return {
+      t: t, lang: lang, dir: isAr ? 'rtl' : 'ltr', accent: accent, brand: brand, gold: gold, goldSoft: goldSoft, accentSoft: accentSoft,
+      isEn: !isAr, isAr: isAr,
+      enBg: isAr ? 'transparent' : activeBg, enColor: isAr ? '#A7AFBC' : '#F1F3F6',
+      arBg: isAr ? activeBg : 'transparent', arColor: isAr ? '#F1F3F6' : '#A7AFBC',
+      setEn: function () { self.setState({ lang: 'en' }); },
+      setAr: function () { self.setState({ lang: 'ar' }); },
+      fields: fields, plans: plans,
+      endDate: chosen.end[0] + ' ' + t.months[chosen.end[1] - 1] + ' ' + chosen.end[2],
+      total: money(chosen.price),
+      photo: photo, noPhoto: !photo, saved: saved, notSaved: !saved, needPhoto: !!s.needPhoto && !photo,
+      photoBtnLabel: photo ? t.retake : t.take,
+      photoBtnBg: photo ? '#1C2027' : accentSoft,
+      photoBtnColor: '#F1F3F6',
+      photoBtnBorder: photo ? '1px solid #2E343E' : '1.5px solid ' + accent,
+      togglePhoto: function () { if (!saved) self.setState({ photo: !photo, needPhoto: false }); },
+      save: function () { if (photo) self.setState({ saved: true }); else self.setState({ needPhoto: true }); },
+      reset: function () { self.setState({ saved: false, photo: false, needPhoto: false, months: 3 }); },
+      qr: this.qrCells()
+    };
+  }
+}
+</script>
+</body>
+</html>

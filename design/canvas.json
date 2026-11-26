@@ -1,0 +1,19 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-11-26T12:00:00Z" },
+  "title": "Gym System Mockups",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1440, "h": 900, "title": "Reception · Check-in", "expand": "fill", "is_interactive": true },
+    "Reception-Register.dc.html": { "x": 1520, "y": 0, "w": 1440, "h": 900, "title": "Reception · New member", "expand": "fill", "is_interactive": true },
+    "Cafeteria-POS.dc.html": { "x": 0, "y": 1020, "w": 1440, "h": 900, "title": "Cafeteria · Cashier", "expand": "fill", "is_interactive": true },
+    "Admin-Dashboard.dc.html": { "x": 1520, "y": 1020, "w": 1440, "h": 980, "title": "Admin · Dashboard", "expand": "fill", "is_interactive": true }
+  },
+  "order": ["Main.dc.html", "Reception-Register.dc.html", "Cafeteria-POS.dc.html", "Admin-Dashboard.dc.html"],
+  "notes": {
+    "title": { "x": 0, "y": -300, "text": "Gym system · UI direction", "kind": "title1", "maxW": 2960 },
+    "sample": { "x": 3040, "y": 0, "w": 320, "text": "All names, prices and numbers are sample data.\n\nBrand color: try the swatches in each screen's Tweaks. Gym name and logo come later.\n\nEvery screen has an EN / عربي switch.", "fill": "gray", "size": "m" }
+  },
+  "designSystems": []
+}
