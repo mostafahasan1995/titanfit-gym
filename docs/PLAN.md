@@ -7,12 +7,12 @@ The single source of truth for this project. Any session that continues the work
 | Step | What | Status |
 |---|---|---|
 | 1 | Design mockups | ✅ Done (`design/`, logo and name added) |
-| 2 | Core: skeleton, CI, database, API, login, subscription logic | 🔄 In progress (2.1–2.4 ✅ done, 2.5 installers next) |
+| 2 | Core: skeleton, CI, database, API, login, subscription logic, installers | ✅ Done (2.1–2.5) |
 | 3 | Reception app | Waiting (needs Syrian ID scan sample) |
 | 4 | Cafeteria app | Waiting |
 | 5 | Admin app + deployment | Waiting |
 
-**Next action:** step 2.5 (installers in CI + GitHub Release on tags), then the app screens (steps 3 to 5). The owner said on 2026-11-26 to execute all steps without stopping; report at milestones.
+**Next action:** the app screens (steps 3 to 5). The owner said on 2026-11-26 to execute all steps without stopping; report at milestones.
 
 ## Requirements (from the gym)
 
@@ -36,7 +36,7 @@ Admin PC (server, on all day)
  ├─ Gym.Api  ← ASP.NET Core + SignalR, runs as a Windows service
  │             (keeps working while nobody is logged in to the admin app)
  └─ Admin app
-        ▲  LAN only, HTTPS + SignalR, no internet needed
+        ▲  LAN only, HTTP + SignalR on port 5080 (HTTPS later, open item 12), no internet needed
         │
  ├─ Reception PC 1, Reception PC 2  → Reception app (webcam + ID scanner)
  └─ Cafeteria PC 1, Cafeteria PC 2  → Cafeteria app (barcode scanner + receipt printer)
@@ -78,7 +78,7 @@ src/
 tests/
   Gym.Tests              xUnit: domain rules, API without a database (Windows job)
   Gym.IntegrationTests   xUnit: PostgreSQL + API tests (Linux job, postgres service)
-installer/            Inno Setup scripts
+installer/            Inno Setup scripts (server.iss, station.iss), setup PowerShell scripts, CI build + install smoke test
 design/               UI mockups (step 1)
 docs/PLAN.md          this file
 .github/workflows/    CI build; ef-migration (generates EF migrations on a runner)
@@ -208,8 +208,8 @@ docs/PLAN.md          this file
 
 ## API overview (step 2.4)
 
-- **Server:** `Gym.Api`, `http://<admin-pc>:5080` (setting `Urls`). Runs as the Windows service "TitanFit API" (`UseWindowsService`) or as a console app for development. Swagger UI (`/swagger`) and `/openapi/v1.json` in Development only.
-- **Configuration** (appsettings.json, or environment variables such as `ConnectionStrings__Gym`; nothing secret is committed):
+- **Server:** `Gym.Api`, `http://<admin-pc>:5080` (setting `Urls`). Runs as the Windows service `TitanFitServer` ("TitanFit Server", `UseWindowsService`) or as a console app for development. Swagger UI (`/swagger`) and `/openapi/v1.json` in Development only.
+- **Configuration** (appsettings.json, then `%ProgramData%\TitanFit\server.json` written by the server setup, then environment variables such as `ConnectionStrings__Gym`; nothing secret is committed):
   - `ConnectionStrings:Gym`: PostgreSQL connection string.
   - `Database:MigrateOnStartup` (default true): apply migrations and default data at start.
   - `Storage:DataPath` (default `%ProgramData%\TitanFit`): member photos and the token signing key.
@@ -263,16 +263,14 @@ The workflow file is `.github/workflows/build.yml`. It is added in step 2.1.
   1. Set up .NET 10, then restore, build (Release) and test.
   2. Publish `Gym.Api`, `Gym.Admin`, `Gym.Reception`, `Gym.Cafeteria` as standalone exes: `-r win-x64 --self-contained -p:PublishSingleFile=true` (WPF apps also `-p:IncludeNativeLibrariesForSelfExtract=true`). The gym PCs need no .NET install.
   3. Smoke test: each WPF exe runs with `--smoke-screenshot <path.png> --lang en|ar`. It renders the main window offscreen at 1440×900, checks that the embedded fonts loaded, saves a PNG and exits (non-zero on error).
-  4. Build the installers with Inno Setup (step 2.5). It is not certain that the runner has it preinstalled: check, and install it with `choco install innosetup` if missing.
-- **Installers:**
-  - `TitanFit-Server-Setup.exe` (admin PC):
-    - Installs Gym.Api as a Windows service, plus the Admin app.
-    - Adds a firewall rule for the API port.
-    - PostgreSQL is installed once with its official installer (not bundled).
-  - `TitanFit-Station-Setup.exe`: choose Reception or Cafeteria, and enter the server address.
+- **Job `installers`** (`windows-latest`, after the Windows job): `installer/build-installers.ps1` builds both setups (see "Installers") from the `titanfit-exes` artifact.
+  - The runner has an Inno Setup 6 preinstalled (version not readable); the script installs the pinned 6.7.4 (SHA-256 checked) so the build does not depend on the runner image. PostgreSQL and Inno Setup are pinned in `installer/downloads.json` and cached with `actions/cache`.
+  - Version: `<Version>` in `Directory.Build.props`. On a tag, the tag must be `v<Version>` (or `v<Version>-suffix`, a pre-release), otherwise the job fails.
+- **Job `install-smoke`** (fresh `windows-latest`): `installer/tests/install-smoke.ps1` installs the Server setup silently, checks both services, the ports, the ACLs, the firewall rule, `/health`, the first admin (`POST /api/setup/admin`), login and a `pg_dump` backup; runs the setup again (upgrade); installs the Station setup with `/SERVERURL` (and checks that a bad URL is refused); uninstalls both (services and rule gone, `%ProgramData%\TitanFit` kept); reinstalls the server on the kept data.
+- **Job `release`** (tags `v*` only, after both): creates the GitHub Release (or updates its files) with the two setups and `SHA256SUMS.txt`, using the workflow's own token (`contents: write` on this job only).
 - **Outputs:**
-  - Every run uploads the artifacts `titanfit-exes` (the 4 exes), `screenshots` (EN + AR PNG per app), `test-results` and `integration-test-results` (trx). The setups join in step 2.5.
-  - A `v*` tag also attaches them to a GitHub Release.
+  - Every run uploads the artifacts `titanfit-exes` (the 4 exes), `screenshots` (EN + AR PNG per app), `test-results` and `integration-test-results` (trx), `titanfit-installers` (the 2 setups + `SHA256SUMS.txt`) and `install-logs` (setup logs, server-setup.log, PostgreSQL log, events).
+  - A `v*` tag also attaches the setups to a GitHub Release.
 - **Database tests:** GitHub service containers work only on Linux runners. The `integration` job (`ubuntu-latest`, `postgres:17` service) runs `tests/Gym.IntegrationTests` (database + API tests, each test class on its own new database) and uploads `integration-test-results`. The Windows job runs only `tests/Gym.Tests`.
 - **Migrations:** no .NET SDK is needed locally. Run the `ef-migration` workflow (Actions tab, input: migration name), download the `ef-migration` artifact and commit the files in `src/Gym.Infrastructure/Persistence/Migrations`. The integration tests fail if the model and the migrations differ.
 - **Fetching the files back:**
@@ -282,6 +280,35 @@ The workflow file is `.github/workflows/build.yml`. It is added in step 2.1.
   ```
 - **Unsigned exes:** Windows SmartScreen shows a warning (More info → Run anyway). A code-signing certificate can be added later.
 
+## Installers (step 2.5)
+
+Two Inno Setup 6 setups, built in CI (job `installers`), x64, admin rights, English and Arabic wizard, TITANFIT images and icon rendered from `Gym.UI` (logo + Alexandria). Sources: `installer/server.iss`, `installer/station.iss`, `installer/common.iss`, `installer/scripts/*.ps1`.
+
+**`TitanFit-Server-Setup-<version>.exe`** (admin PC, about 98 MB):
+- Installs to `C:\Program Files\TitanFit`: `Server\Gym.Api.exe` + `appsettings.json`, `pgsql\` (PostgreSQL 17.12 from the EDB Windows x64 binaries zip: bin, lib, share, incl. `pg_dump.exe` / `pg_restore.exe`; no pgAdmin; the Visual C++ runtime DLLs are copied next to it), and optionally `Admin\Gym.Admin.exe` (component, on by default; Start menu + desktop shortcuts).
+- **Database (first install only):** `initdb` in `%ProgramData%\TitanFit\pgdata` (UTF8, built-in `C.UTF-8` locale, data checksums, scram-sha-256), `listen_addresses = 'localhost'`, **port 5433** (no clash with another PostgreSQL). Service **`TitanFitDatabase`** ("TitanFit Database (PostgreSQL 17)", NetworkService, automatic, restart on failure). A `titanfit` role owns the `titanfit` database. Both passwords are random (32 characters) and never leave the PC. The data folder is readable only by SYSTEM, Administrators and the database service.
+- **Config:** `%ProgramData%\TitanFit\server.json` (connection string, data path) and `database-admin.json` (PostgreSQL superuser), both readable only by SYSTEM and Administrators. The `keys` folder (token signing key) is locked the same way.
+- **Server service:** **`TitanFitServer`** ("TitanFit Server", LocalSystem, automatic, depends on the database service, restarts after 5 s / 15 s / 60 s). Migrations run when it starts.
+- **Firewall:** inbound TCP **5080**, remote address **LocalSubnet** only, **Private and Domain** profiles (rule `TitanFit-Server-TCP-5080`). The gym network of the server PC must be set to Private, or the stations cannot connect.
+- **End of the wizard:** the setup waits (up to 3 minutes) until `http://localhost:5080/health` answers, then shows a **"First administrator"** page that calls `POST /api/setup/admin` (only while no admin exists; it can be skipped and comes back on the next run), then the server address for the stations (`http://<PC name>:5080`). If the server does not start, it says so and points to `%ProgramData%\TitanFit\logs\server-setup.log`.
+- **Upgrade:** run the newer setup. It stops both services, replaces the files, keeps `server.json`, the database and the data, then starts the services (the server applies new migrations) and waits for `/health`. A different PostgreSQL major version is refused (needs a manual upgrade).
+- **Uninstall:** stops and removes both services and the firewall rule, removes the program files. It **keeps `%ProgramData%\TitanFit`** (database, photos, keys, settings, logs) and says so on the confirm screen. Installing again reuses that data (same logins).
+- **Silent:** `/VERYSILENT /SUPPRESSMSGBOXES /NORESTART [/COMPONENTS="server"] [/LOG=file]`. Exit code 20 = files installed but the server did not start. Log: `%ProgramData%\TitanFit\logs\server-setup.log` (never contains a password).
+
+**`TitanFit-Station-Setup-<version>.exe`** (reception and cafeteria PCs, about 126 MB: all three apps are inside, only the chosen ones are installed):
+- Components: Reception, Cafeteria, Admin (none preselected; at least one). Each goes to `C:\Program Files\TitanFit\<App>\` with Start menu + desktop shortcuts.
+- Asks for the server address (default `http://SERVER-PC:5080`, or the one already in `station.json`), checks the form (`http(s)://host[:port]`, no path) and tries `/health` (a server that does not answer only gives a warning).
+- Writes `%ProgramData%\TitanFit\station.json`: `{ "serverUrl": "http://SERVER-PC:5080" }` (other fields in the file are kept). The server setup writes `http://localhost:5080` there for the Admin app if the file does not exist.
+- Uninstall removes the apps and shortcuts and keeps `station.json`.
+- **Silent:** `/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /COMPONENTS="reception,cafeteria" /SERVERURL=http://SERVER-PC:5080`. Exit code 1 = invalid `/SERVERURL`, 7 = no app chosen.
+
+**Why the binaries zip and not the EDB installer:** the zip is checksum-pinned and unpacks to our own folder, port and service, so it cannot clash with another PostgreSQL on the PC, upgrades with our files, and keeps the setup small (no pgAdmin / StackBuilder, about 35 MB compressed instead of about 360 MB). The EDB installer would add its own uninstall entry, a default service on port 5432 and its own failure modes in unattended mode.
+
+**Cutting a release:**
+1. Set `<Version>` in `Directory.Build.props` (e.g. `0.2.0`), commit and push to `master`.
+2. Tag that commit and push the tag: `git tag v0.2.0 && git push origin v0.2.0` (`v0.2.0-rc1` gives a pre-release).
+3. The `build` workflow builds, tests, runs the install smoke test and creates the GitHub Release with both setups and `SHA256SUMS.txt`. Download: `gh release download v0.2.0 -R mostafahasan1995/titanfit-gym`.
+
 ## Steps
 
 1. **Design mockups.** ✅ Done.
@@ -290,7 +317,7 @@ The workflow file is `.github/workflows/build.yml`. It is added in step 2.1.
    2. Domain: subscription dates and `GetStatus` + unit tests. ✅ Done.
    3. Database: EF Core model + first migration + PostgreSQL integration tests. ✅ Done.
    4. API: endpoints, SignalR hub, staff login with roles + tests. ✅ Done (see "API overview"). CI: 165 unit tests (Windows job) and 49 PostgreSQL/API integration tests (Linux job).
-   5. Installers (Inno Setup) in CI + GitHub Release on tags.
+   5. Installers (Inno Setup) in CI + GitHub Release on tags. ✅ Done (see "Installers"): server and station setups, install smoke test on a Windows runner.
 3. **Reception app:**
    - Theme in `Gym.UI`.
    - Camera photo, ID scan, new member, QR create (copy/save).
@@ -350,7 +377,7 @@ Answers received during step 2.1. Private trainers, staff types and ratings are 
 9. **Repo is public:** the owner is considering making it private.
 10. **Fingerprint reader model:** confirm before coding (e.g. ZKTeco ZK9500).
 11. **Negative stock:** refused for now (see "Business rules"). The owner can ask to allow selling with a warning instead.
-12. **HTTPS on the LAN:** the API listens on `http://0.0.0.0:5080` for now; the certificate and HTTPS setup come with the server installer (step 2.5).
+12. **HTTPS on the LAN:** still plain HTTP: the API listens on `http://0.0.0.0:5080`, and the firewall rule lets only the local subnet in (Private and Domain networks). Logins and data cross the gym LAN unencrypted. HTTPS (a local certificate the stations trust, installed by the setups) comes later.
 
 ## Working rules
 
