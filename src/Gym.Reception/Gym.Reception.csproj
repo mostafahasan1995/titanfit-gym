@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <!-- Program.Main handles the normal start and the CI screenshot smoke mode. -->
+    <StartupObject>Gym.Reception.Program</StartupObject>
+    <AssemblyTitle>TITANFIT Reception</AssemblyTitle>
+    <!-- Reception app (2 reception PCs: members, ID scan, photos, QR check-in). -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Gym.UI\Gym.UI.csproj" />
+    <ProjectReference Include="..\Gym.Client\Gym.Client.csproj" />
+  </ItemGroup>
+
+</Project>

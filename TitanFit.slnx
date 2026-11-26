@@ -1,0 +1,21 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Gym.Domain/Gym.Domain.csproj" />
+    <Project Path="src/Gym.Infrastructure/Gym.Infrastructure.csproj" />
+    <Project Path="src/Gym.Api/Gym.Api.csproj" />
+    <Project Path="src/Gym.Client/Gym.Client.csproj" />
+    <Project Path="src/Gym.UI/Gym.UI.csproj" />
+    <Project Path="src/Gym.Admin/Gym.Admin.csproj" />
+    <Project Path="src/Gym.Reception/Gym.Reception.csproj" />
+    <Project Path="src/Gym.Cafeteria/Gym.Cafeteria.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Gym.Tests/Gym.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path="Directory.Build.props" />
+    <File Path="global.json" />
+    <File Path=".editorconfig" />
+    <File Path=".github/workflows/build.yml" />
+  </Folder>
+</Solution>
