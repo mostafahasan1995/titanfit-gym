@@ -2,11 +2,25 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
+    <!-- REST + SignalR server. Runs as a Windows service on the admin PC, or as a console app for development. -->
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.15" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.15" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="10.0.15" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.3.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Gym.Domain\Gym.Domain.csproj" />
+    <ProjectReference Include="..\Gym.Contracts\Gym.Contracts.csproj" />
     <ProjectReference Include="..\Gym.Infrastructure\Gym.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Gym.Tests" />
+    <InternalsVisibleTo Include="Gym.IntegrationTests" />
   </ItemGroup>
 
 </Project>

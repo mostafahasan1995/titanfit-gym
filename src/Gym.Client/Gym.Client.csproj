@@ -2,7 +2,15 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <!-- Shared typed API client used by the Admin, Reception and Cafeteria apps. -->
+    <!-- Typed client for Gym.Api and the SignalR live-updates connection. Used by the Admin, Reception and Cafeteria apps. -->
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.15" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Gym.Contracts\Gym.Contracts.csproj" />
+  </ItemGroup>
 
 </Project>
