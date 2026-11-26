@@ -72,7 +72,7 @@ public sealed class StockService(GymDbContext db, GymClock clock)
         }
         else
         {
-            var ids = productIds.ToArray();
+            var ids = productIds.ToList();
             query = query.Where(p => ids.Contains(p.Id));
         }
 
@@ -111,10 +111,13 @@ public sealed class StockService(GymDbContext db, GymClock clock)
     internal Task<List<Product>> LockProductsAsync(int[] productIds, CancellationToken ct) =>
         db.Products.FromSql($"SELECT * FROM products WHERE id = ANY({productIds}) ORDER BY id FOR UPDATE").ToListAsync(ct);
 
-    internal Task<Dictionary<int, int>> CurrentStockAsync(int[] productIds, CancellationToken ct) =>
-        db.StockMovements
-            .Where(m => productIds.Contains(m.ProductId))
+    internal Task<Dictionary<int, int>> CurrentStockAsync(IReadOnlyCollection<int> productIds, CancellationToken ct)
+    {
+        var ids = productIds.ToList();
+        return db.StockMovements
+            .Where(m => ids.Contains(m.ProductId))
             .GroupBy(m => m.ProductId)
             .Select(g => new { ProductId = g.Key, Quantity = g.Sum(m => m.Quantity) })
             .ToDictionaryAsync(x => x.ProductId, x => x.Quantity, ct);
+    }
 }
