@@ -1,0 +1,130 @@
+name: build
+
+on:
+  push:
+    branches: [master]
+    tags: ['v*']
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+jobs:
+  windows:
+    name: Build, test, publish (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Show .NET version
+        run: dotnet --version
+
+      - name: Restore
+        run: dotnet restore TitanFit.slnx
+
+      - name: Build (Release)
+        run: dotnet build TitanFit.slnx --configuration Release --no-restore
+
+      - name: Test
+        run: >
+          dotnet test TitanFit.slnx --configuration Release --no-build
+          --results-directory TestResults
+          --logger "trx;LogFileName=test-results.trx"
+          --logger "console;verbosity=normal"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results
+          path: TestResults
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Publish standalone exes (win-x64, self-contained, single file)
+        run: |
+          $common = @('--configuration', 'Release', '--runtime', 'win-x64', '--self-contained', '-p:PublishSingleFile=true')
+          dotnet publish src/Gym.Api/Gym.Api.csproj @common --output publish/Gym.Api
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          foreach ($app in 'Gym.Admin', 'Gym.Reception', 'Gym.Cafeteria') {
+            dotnet publish "src/$app/$app.csproj" @common -p:IncludeNativeLibrariesForSelfExtract=true --output "publish/$app"
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+          New-Item -ItemType Directory -Force dist | Out-Null
+          foreach ($app in 'Gym.Api', 'Gym.Admin', 'Gym.Reception', 'Gym.Cafeteria') {
+            Copy-Item "publish/$app/$app.exe" dist/
+          }
+          Get-ChildItem dist | Format-Table Name, @{ Name = 'Size (MB)'; Expression = { [math]::Round($_.Length / 1MB, 1) } } -AutoSize
+
+      - name: Smoke screenshots (EN and AR)
+        run: |
+          New-Item -ItemType Directory -Force screenshots, smoke-logs | Out-Null
+          $failures = @()
+          foreach ($app in 'Gym.Admin', 'Gym.Reception', 'Gym.Cafeteria') {
+            foreach ($lang in 'en', 'ar') {
+              $png = Join-Path $PWD "screenshots/$app-$lang.png"
+              $log = Join-Path $PWD "smoke-logs/$app-$lang"
+              $exe = (Resolve-Path "dist/$app.exe").Path
+              $proc = Start-Process -FilePath $exe -ArgumentList @('--smoke-screenshot', "`"$png`"", '--lang', $lang) `
+                -NoNewWindow -PassThru -RedirectStandardOutput "$log.out.txt" -RedirectStandardError "$log.err.txt"
+              $null = $proc.Handle  # keeps the exit code readable after the process ends
+              if (-not $proc.WaitForExit(180000)) {
+                $proc.Kill()
+                $failures += "$app ($lang): timed out"
+                continue
+              }
+              $proc.WaitForExit()
+              Write-Host "---- $app ($lang): exit code $($proc.ExitCode)"
+              Get-Content "$log.out.txt", "$log.err.txt" -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "  $_" }
+              if ($proc.ExitCode -ne 0) {
+                $failures += "$app ($lang): exit code $($proc.ExitCode)"
+              } elseif (-not (Test-Path $png) -or (Get-Item $png).Length -lt 10KB) {
+                $failures += "$app ($lang): no screenshot"
+              } else {
+                Write-Host ("  OK: {0} ({1:N0} bytes)" -f $png, (Get-Item $png).Length)
+              }
+            }
+          }
+          if ($failures.Count -gt 0) {
+            $failures | ForEach-Object { Write-Host "::error::$_" }
+            exit 1
+          }
+
+      - name: Upload exes
+        uses: actions/upload-artifact@v7
+        with:
+          name: titanfit-exes
+          path: dist/*.exe
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: screenshots
+          path: screenshots
+          if-no-files-found: warn
+          retention-days: 14
