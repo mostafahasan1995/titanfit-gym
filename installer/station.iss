@@ -5,7 +5,7 @@
 ; Exit code 1 = invalid /SERVERURL, 7 = no app chosen, 21 = station.json could not be written,
 ; 22 = the Visual C++ runtime for the Reception camera could not be installed (the apps are installed).
 ; With the Reception app it installs the bundled Visual C++ v14 x64 runtime (vc_redist.x64.exe /install /quiet /norestart)
-; when it is missing or older; OpenCV (the camera) needs it. The setup log says what it did ("VC++ runtime x64: ...").
+; when it is missing or older, for OpenCV (the camera). The setup log says what it did ("VC++ runtime x64: ...").
 
 #ifndef AppVersion
   #define AppVersion "0.0.0-dev"
@@ -369,7 +369,8 @@ begin
     end;
 end;
 
-{ The Reception camera (OpenCV) needs the Visual C++ v14 x64 runtime (Visual C++ 2015-2022 and later). Runs the bundled
+{ For the Reception camera: OpenCV builds of OpenCvSharp have needed the Visual C++ v14 x64 runtime (2015-2022 and later;
+  the current one links it statically, CI lists its imports), so the setup makes sure it is there. Runs the bundled
   vc_redist.x64.exe when the runtime is missing or older than it. Exit codes 0, 1638 (a newer one is installed) and
   3010 (Windows must restart) are success. The uninstaller never removes it (other programs share it). }
 procedure InstallVCRuntime;

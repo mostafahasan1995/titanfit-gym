@@ -107,8 +107,9 @@ jobs:
           }
 
       # Which apps need the Microsoft Visual C++ runtime on a clean gym PC: the imports of each exe and of every native
-      # file its bundle unpacks, read with dumpbin. (WPF brings its own vcruntime140_cor3.dll.) The Station setup
-      # installs the runtime for the Reception app (installer/station.iss): a new dependency anywhere else fails here.
+      # file its bundle unpacks, read with dumpbin and listed. (WPF brings its own vcruntime140_cor3.dll.) The Station
+      # setup installs the runtime with the Reception app (installer/station.iss): an app without a setup that installs
+      # it fails here as soon as one of its native files imports it.
       - name: Native dependencies (Visual C++ runtime)
         run: |
           $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
@@ -120,16 +121,18 @@ jobs:
           foreach ($app in 'Gym.Admin', 'Gym.Reception', 'Gym.Cafeteria') {
             $files = @(Get-Item "dist/$app.exe") + @(Get-ChildItem "bundle-extract/$app" -Recurse -File -Include *.dll, *.exe -ErrorAction SilentlyContinue)
             $needs = @()
+            $lines = @()
             foreach ($file in $files) {
-              $imports = @(& $dumpbin /nologo /dependents $file.FullName | ForEach-Object { if ($_ -match '^\s+(\S+\.dll)\s*$') { $Matches[1] } })
-              $vc = @($imports | Where-Object { $_ -match $vcRuntime } | Sort-Object -Unique)
+              $imports = @(& $dumpbin /nologo /dependents $file.FullName | ForEach-Object { if ($_ -match '^\s+(\S+\.dll)\s*$') { $Matches[1] } } | Sort-Object -Unique)
+              if ($imports.Count -eq 0) { $failures += "${app}: dumpbin found no imports in $($file.Name)" }
+              $vc = @($imports | Where-Object { $_ -match $vcRuntime })
               if ($vc.Count -gt 0) { $needs += "$($file.Name) imports $($vc -join ', ')" }
+              $lines += "    $($file.Name): $(@($imports | Where-Object { $_ -notmatch '^api-ms-win-' }) -join ', ')"
             }
-            $verdict = if ($needs.Count -gt 0) { 'NEEDS the Visual C++ runtime' } else { 'does not need the Visual C++ runtime' }
-            Write-Host "${app}: $verdict ($($files.Count) files: $((($files | ForEach-Object Name) | Sort-Object) -join ', '))"
-            $needs | ForEach-Object { Write-Host "    $_" }
+            $verdict = if ($needs.Count -gt 0) { "NEEDS the Visual C++ runtime ($($needs -join '; '))" } else { 'does not import the Visual C++ runtime' }
+            Write-Host "${app}: $verdict"
+            $lines | ForEach-Object { Write-Host $_ }
             if ($needs.Count -gt 0 -and $app -notin $setupInstallsIt) { $failures += "${app} needs the Visual C++ runtime, but no setup installs it for this app" }
-            if ($needs.Count -eq 0 -and $app -in $setupInstallsIt) { Write-Host "::warning::${app} no longer needs the Visual C++ runtime" }
           }
           if ($failures.Count -gt 0) {
             $failures | ForEach-Object { Write-Host "::error::$_" }

@@ -319,10 +319,15 @@ try {
     } else {
         Assert-True ([version]$vcStep.installed -ge $bundled) "VC++ runtime step skipped correctly: installed $($vcStep.installed) >= bundled $bundled"
     }
-    $registered = @(foreach ($key in 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\VisualStudio\14.0\VC\Runtimes\x64', 'HKLM:\SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64') {
+    $registered = @()
+    foreach ($key in 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\VisualStudio\14.0\VC\Runtimes\x64', 'HKLM:\SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64') {
         $value = Get-ItemProperty $key -ErrorAction SilentlyContinue
-        if ($value -and $value.Installed -eq 1) { [version]('{0}.{1}.{2}.{3}' -f $value.Major, $value.Minor, $value.Bld, $(if ($null -ne $value.Rbld) { $value.Rbld } else { 0 })) }
-    } | Sort-Object -Descending)
+        if ($value -and $value.Installed -eq 1) {
+            $rbld = if ($null -ne $value.Rbld) { $value.Rbld } else { 0 }
+            $registered += [version]('{0}.{1}.{2}.{3}' -f $value.Major, $value.Minor, $value.Bld, $rbld)
+        }
+    }
+    $registered = @($registered | Sort-Object -Descending)
     Assert-True ($registered.Count -gt 0 -and $registered[0] -ge $bundled) "VC++ runtime x64 registered: $($registered -join ', ') (bundled $bundled)"
     Assert-True (-not (Test-Path "$appDir\Reception\vc_redist.x64.exe") -and -not (Test-Path "$appDir\Setup\vc_redist.x64.exe")) 'vc_redist.x64.exe not left in the program folder'
 

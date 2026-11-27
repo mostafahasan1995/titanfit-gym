@@ -13,9 +13,9 @@ namespace Gym.Reception;
 
 /// <summary>
 /// The Reception app's <c>--self-test</c> checks (see <see cref="SelfTest"/>), without a camera, scanner or sound:
-/// the OpenCV native library (it needs the Visual C++ 2015-2022 x64 runtime, which the Station setup installs; without
-/// it the camera card says "Camera not available"), a camera-like frame through OpenCV and ZXing back to the member
-/// code, the member QR image (QRCoder PNG read back by ZXing) and the embedded check-in sounds (read, not played).
+/// the OpenCV native library (when it does not load, the camera card says "Camera not available"), a camera-like frame
+/// through OpenCV and ZXing back to the member code, the member QR image (QRCoder PNG read back by ZXing) and the
+/// embedded check-in sounds (read, not played).
 /// </summary>
 internal static class ReceptionSelfTest
 {
