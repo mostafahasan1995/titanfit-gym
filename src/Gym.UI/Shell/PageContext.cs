@@ -46,6 +46,26 @@ public sealed class PageContext
     /// <summary>This PC's settings (station name, camera, printer). Updated when the server settings are saved.</summary>
     public StationSettings Station { get; internal set; }
 
+    /// <summary>
+    /// Changes this PC's settings and saves station.json, e.g. <c>Context.SaveStation(s =&gt; s with { PrinterName = name })</c>
+    /// for the printer or camera picker. <see cref="Station"/> has the new values at once. False when the file could not
+    /// be written. Nothing is written in the smoke screenshots.
+    /// </summary>
+    public bool SaveStation(Func<StationSettings, StationSettings> change)
+    {
+        ArgumentNullException.ThrowIfNull(change);
+        if (StationSaver is { } save)
+        {
+            return save(change);
+        }
+
+        Station = change(Station);
+        return true;
+    }
+
+    /// <summary>Set by the window: applies a change to its settings and writes the file.</summary>
+    internal Func<Func<StationSettings, StationSettings>, bool>? StationSaver { get; set; }
+
     /// <summary>The station name to send with check-ins, sales and shifts.</summary>
     public string StationName => string.IsNullOrWhiteSpace(Station.StationName) ? App.DefaultStationName : Station.StationName.Trim();
 

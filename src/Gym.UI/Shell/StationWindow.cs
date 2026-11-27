@@ -223,7 +223,10 @@ public sealed class StationWindow : Window
         StopLive();
         live = services.CreateLive(api);
         live.StatusChanged += OnLiveStatusChanged;
-        context = new PageContext(App, api, live, new UserSession(response), Settings, Overlay, services.IsSample);
+        context = new PageContext(App, api, live, new UserSession(response), Settings, Overlay, services.IsSample)
+        {
+            StationSaver = SaveStationSettings,
+        };
         var shell = new AppShell(App, context);
         shell.LogoutRequested += (_, _) => ShowLogin(null);
         shell.ServerSettingsRequested += async (_, _) => await OpenServerSettingsAsync(firstRun: false).ConfigureAwait(true);
@@ -235,6 +238,19 @@ public sealed class StationWindow : Window
         live.Connect();
         UpdateTitle();
         await shell.ShowPageAsync(App.Pages[0]).ConfigureAwait(true);
+    }
+
+    /// <summary>A page changed a station setting (printer, camera): keep it here too, so a later save does not undo it.</summary>
+    private bool SaveStationSettings(Func<StationSettings, StationSettings> change)
+    {
+        Settings = change(Settings);
+        if (context is not null)
+        {
+            context.Station = Settings;
+            Shell?.UpdateStation();
+        }
+
+        return services.IsSample || services.Store.TrySave(Settings);
     }
 
     private void StopLive()

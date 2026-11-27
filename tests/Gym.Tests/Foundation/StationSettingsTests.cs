@@ -1,4 +1,8 @@
+using Gym.Client.Sample;
+using Gym.Contracts;
+using Gym.Domain;
 using Gym.UI;
+using Gym.UI.Shell;
 using Gym.UI.Station;
 
 namespace Gym.Tests.Foundation;
@@ -119,5 +123,47 @@ public sealed class StationSettingsTests : IDisposable
         var settings = new StationSettings { ServerUrl = "http://192.168.1.10:5080" };
 
         Assert.Equal("http://192.168.1.10:5080/", settings.ServerUri.ToString());
+    }
+
+    [Fact]
+    public void A_page_saves_a_station_setting_through_the_window()
+    {
+        var context = NewContext(new StationSettings { StationName = "Cafeteria 2" });
+        StationSettings? saved = null;
+        context.StationSaver = change =>
+        {
+            saved = change(context.Station);
+            return true;
+        };
+
+        Assert.True(context.SaveStation(s => s with { PrinterName = "EPSON TM-T20III" }));
+
+        Assert.Equal("EPSON TM-T20III", saved?.PrinterName);
+        Assert.Equal("Cafeteria 2", saved?.StationName);
+    }
+
+    [Fact]
+    public void Without_a_window_a_station_change_stays_in_memory()
+    {
+        var context = NewContext(new StationSettings());
+
+        Assert.True(context.SaveStation(s => s with { CameraName = "USB Camera" }));
+
+        Assert.Equal("USB Camera", context.Station.CameraName);
+    }
+
+    private static PageContext NewContext(StationSettings station)
+    {
+        var api = new SampleGymApi();
+        var app = new AppDefinition
+        {
+            App = GymApp.Cafeteria,
+            AppName = new LocalText("Cafeteria", "الكافتيريا"),
+            NavLabel = new LocalText("Menu", "القائمة"),
+            DefaultStationName = "Cafeteria 1",
+            Pages = [],
+        };
+        var staff = new StaffDto(4, "Ahmad", null, StaffType.Cashier, true, "ahmad", StaffRole.Cashier, true, DateTime.UtcNow, null);
+        return new PageContext(app, api, api.Live, new UserSession(new LoginResponse("token", DateTime.UtcNow.AddHours(1), staff)), station, null!, isSample: true);
     }
 }
