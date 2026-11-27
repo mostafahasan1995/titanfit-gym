@@ -262,6 +262,19 @@ public sealed class GymApiClient(HttpClient http) : IGymApi
     public Task<SettingsDto> UpdateSettingsAsync(SettingsDto settings, CancellationToken ct = default) =>
         SendAsync<SettingsDto>(HttpMethod.Put, "api/settings", settings, ct);
 
+    // Backups
+
+    public Task<BackupStatusDto> GetBackupStatusAsync(CancellationToken ct = default) => GetAsync<BackupStatusDto>("api/backups/status", ct);
+
+    public Task<IReadOnlyList<BackupFileDto>> GetBackupsAsync(CancellationToken ct = default) => GetAsync<IReadOnlyList<BackupFileDto>>("api/backups", ct);
+
+    public Task<BackupRunDto> RunBackupAsync(CancellationToken ct = default) => PostAsync<BackupRunDto>("api/backups", null, ct);
+
+    public Task<BackupSettingsDto> GetBackupSettingsAsync(CancellationToken ct = default) => GetAsync<BackupSettingsDto>("api/backups/settings", ct);
+
+    public Task<BackupSettingsDto> UpdateBackupSettingsAsync(SaveBackupSettingsRequest request, CancellationToken ct = default) =>
+        SendAsync<BackupSettingsDto>(HttpMethod.Put, "api/backups/settings", request, ct);
+
     // Plumbing
 
     private Task<T> GetAsync<T>(string url, CancellationToken ct) => SendAsync<T>(HttpMethod.Get, url, null, ct);

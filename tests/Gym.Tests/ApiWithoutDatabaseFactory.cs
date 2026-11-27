@@ -16,6 +16,7 @@ public sealed class ApiWithoutDatabaseFactory : WebApplicationFactory<Program>
         {
             ["Database:MigrateOnStartup"] = "false",
             ["Storage:DataPath"] = dataPath,
+            ["Backup:ScheduleEnabled"] = "false",
         }));
     }
 

@@ -14,5 +14,6 @@ internal static class ApiEndpoints
         api.MapStaffEndpoints();
         api.MapCafeteriaEndpoints();
         api.MapAdminEndpoints();
+        api.MapBackupEndpoints();
     }
 }

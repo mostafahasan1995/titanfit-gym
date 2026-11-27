@@ -173,4 +173,20 @@ public interface IGymApi
     Task<SettingsDto> GetSettingsAsync(CancellationToken ct = default);
 
     Task<SettingsDto> UpdateSettingsAsync(SettingsDto settings, CancellationToken ct = default);
+
+    // Backups (Admin)
+
+    /// <summary>Last run, last good backup, next run and the warning to show.</summary>
+    Task<BackupStatusDto> GetBackupStatusAsync(CancellationToken ct = default);
+
+    /// <summary>The backup files in the backup folder, newest first.</summary>
+    Task<IReadOnlyList<BackupFileDto>> GetBackupsAsync(CancellationToken ct = default);
+
+    /// <summary>Backs up the database now. A failed run comes back with <c>Succeeded = false</c>; 409 <c>backup_running</c> while one runs.</summary>
+    Task<BackupRunDto> RunBackupAsync(CancellationToken ct = default);
+
+    Task<BackupSettingsDto> GetBackupSettingsAsync(CancellationToken ct = default);
+
+    /// <summary>The folder must exist and be writable on the server PC (codes <c>backup_folder_missing</c>, <c>backup_folder_not_writable</c>).</summary>
+    Task<BackupSettingsDto> UpdateBackupSettingsAsync(SaveBackupSettingsRequest request, CancellationToken ct = default);
 }

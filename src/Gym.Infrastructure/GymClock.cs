@@ -17,6 +17,19 @@ public sealed class GymClock(TimeProvider time)
 
     public DateOnly ToLocalDate(DateTime utc) => DateOnly.FromDateTime(ToLocal(utc));
 
+    /// <summary>The UTC instant of a local time (a time skipped by daylight saving moves forward to the next valid one).</summary>
+    public DateTime LocalToUtc(DateTime local)
+    {
+        var zone = time.LocalTimeZone;
+        local = DateTime.SpecifyKind(local, DateTimeKind.Unspecified);
+        while (zone.IsInvalidTime(local))
+        {
+            local = local.AddMinutes(30);
+        }
+
+        return TimeZoneInfo.ConvertTimeToUtc(local, zone);
+    }
+
     /// <summary>The UTC instant the local <paramref name="day"/> starts.</summary>
     public DateTime StartOfDayUtc(DateOnly day)
     {

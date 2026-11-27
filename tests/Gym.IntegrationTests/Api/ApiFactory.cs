@@ -24,6 +24,11 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     private readonly SemaphoreSlim adminGate = new(1, 1);
     private string? adminToken;
 
+    /// <summary>pg_dump for the backup tests; must match the server's major version (CI: postgresql-client-17).</summary>
+    public const string PgDumpVariable = "GYM_TEST_PG_DUMP";
+
+    public static string? PgDump => Environment.GetEnvironmentVariable(PgDumpVariable) is { Length: > 0 } path ? path : null;
+
     public TestTimeProvider Time { get; } = new(TestTimeProvider.DefaultStart);
 
     public DateOnly Today => Time.Today;
@@ -36,6 +41,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
             ["ConnectionStrings:Gym"] = database.ConnectionString,
             ["Database:MigrateOnStartup"] = "true",
             ["Storage:DataPath"] = dataPath,
+            ["Backup:ScheduleEnabled"] = "false",
+            ["Backup:PgDumpPath"] = PgDump,
         }));
         builder.ConfigureLogging(logging => logging.SetMinimumLevel(LogLevel.Warning));
         builder.ConfigureTestServices(services =>

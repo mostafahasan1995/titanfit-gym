@@ -1,7 +1,9 @@
 using Gym.Api;
 using Gym.Api.Auth;
+using Gym.Api.Backups;
 using Gym.Api.Endpoints;
 using Gym.Api.Live;
+using Gym.Infrastructure.Backups;
 using Gym.Infrastructure.Storage;
 using Microsoft.Extensions.Hosting.WindowsServices;
 
@@ -11,6 +13,8 @@ using Microsoft.Extensions.Hosting.WindowsServices;
 //   Storage:DataPath             photos and the token key (default %ProgramData%\TitanFit)
 //   Jwt:Key                      optional signing key (32+ bytes); by default one is generated in Storage:DataPath/keys
 //   Jwt:LifetimeHours            login lifetime (default 12)
+//   Backup:ScheduleEnabled       the daily database backup (default true); the admin's backup settings are in
+//                                Storage:DataPath/backup-settings.json. Backup:PgDumpPath overrides where pg_dump is.
 // The server installer writes the machine values (connection string, data path) to %ProgramData%\TitanFit\server.json.
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 {
@@ -22,6 +26,9 @@ builder.Configuration.AddServerSettingsFile(args);
 builder.Services.AddWindowsService(options => options.ServiceName = "TitanFitServer");
 builder.Services.Configure<StorageOptions>(builder.Configuration.GetSection(StorageOptions.SectionName));
 builder.Services.AddGymInfrastructure(services => services.GetRequiredService<IConfiguration>().GetConnectionString("Gym"));
+builder.Services.Configure<BackupOptions>(builder.Configuration.GetSection(BackupOptions.SectionName));
+builder.Services.AddGymBackups(services => services.GetRequiredService<IConfiguration>().GetConnectionString("Gym"));
+builder.Services.AddHostedService<BackupScheduler>();
 builder.Services.ConfigureHttpJsonOptions(options => GymJson.Configure(options.SerializerOptions));
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GymExceptionHandler>();

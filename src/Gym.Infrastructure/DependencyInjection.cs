@@ -1,8 +1,11 @@
+using Gym.Infrastructure.Backups;
 using Gym.Infrastructure.Services;
 using Gym.Infrastructure.Storage;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Gym.Infrastructure;
 
@@ -31,6 +34,24 @@ public static class DependencyInjection
         services.AddScoped<ShiftService>();
         services.AddScoped<DashboardService>();
         services.AddScoped<ReportService>();
+        return services;
+    }
+
+    /// <summary>
+    /// Registers the database backups (<see cref="BackupService"/>, one for the server). Configure
+    /// <see cref="BackupOptions"/> (section "Backup") and <see cref="StorageOptions"/> as well.
+    /// </summary>
+    /// <param name="connectionString">The database to back up, read at each run.</param>
+    public static IServiceCollection AddGymBackups(this IServiceCollection services, Func<IServiceProvider, string?> connectionString)
+    {
+        ArgumentNullException.ThrowIfNull(connectionString);
+        services.AddOptions<BackupOptions>();
+        services.TryAddSingleton(sp => new BackupService(
+            sp.GetRequiredService<IOptions<StorageOptions>>(),
+            sp.GetRequiredService<IOptions<BackupOptions>>(),
+            sp.GetRequiredService<GymClock>(),
+            sp.GetRequiredService<ILogger<BackupService>>(),
+            () => connectionString(sp)));
         return services;
     }
 }
