@@ -15,7 +15,7 @@ namespace Gym.UI;
 
 /// <summary>
 /// <c>--smoke-screenshots &lt;dir&gt; [--lang en|ar]</c>: runs the app on <see cref="SampleGymApi"/> (no server),
-/// renders the login screen, the server settings dialog, every page of the app, the control gallery and a dialog
+/// renders the login screen, the server settings dialog, every page of the app (and its extra smoke states), the control gallery and a dialog
 /// offscreen at 1440 x 900, saves <c>&lt;dir&gt;/&lt;App&gt;-&lt;page&gt;-&lt;lang&gt;.png</c> and a manifest
 /// <c>&lt;dir&gt;/&lt;App&gt;-&lt;lang&gt;.json</c>, and exits. A page that throws, a missing translation or a font that
 /// did not load fails the run. Exit code 0 = all fine, 1 = something failed, 2 = bad arguments.
@@ -158,6 +158,31 @@ public static class SmokeScreenshot
         {
             var error = await shell.ShowPageAsync(page).ConfigureAwait(true);
             await CaptureAsync(page.Id, error).ConfigureAwait(true);
+        }
+
+        // Extra states of the pages (AppDefinition.SmokeStates).
+        foreach (var state in definition.SmokeStates)
+        {
+            var page = definition.Pages.FirstOrDefault(p => p.Id == state.PageId);
+            var error = page is null
+                ? new InvalidOperationException($"The smoke state {state.Id} names no page: {state.PageId}.")
+                : await shell.ShowPageAsync(page).ConfigureAwait(true);
+            if (error is null && shell.CurrentView is { } view)
+            {
+                try
+                {
+                    await SettleAsync(host).ConfigureAwait(true);
+                    await state.Prepare(view).ConfigureAwait(true);
+                }
+#pragma warning disable CA1031 // Reported as a failed screenshot.
+                catch (Exception ex)
+#pragma warning restore CA1031
+                {
+                    error = ex;
+                }
+            }
+
+            await CaptureAsync(state.Id, error).ConfigureAwait(true);
         }
 
         // The control gallery and a dialog over the first page.

@@ -76,6 +76,12 @@ public sealed class AppDefinition
     /// </summary>
     public Func<SampleGymApi, Task>? SampleSetup { get; init; }
 
+    /// <summary>
+    /// Optional, smoke screenshots only: more states of a page (a filled-in form, another check-in result). Each is
+    /// shown and captured after the pages as <c>&lt;App&gt;-&lt;Id&gt;-&lt;lang&gt;.png</c>.
+    /// </summary>
+    public IReadOnlyList<SmokeState> SmokeStates { get; init; } = [];
+
     /// <summary>"Reception": the prefix of the screenshot files.</summary>
     public string Id => App.ToString();
 }
@@ -89,3 +95,10 @@ public sealed record ShellPage(string Id, Geometry Icon, LocalText Label, Func<P
     /// <summary>The header title when it differs from the sidebar label.</summary>
     public LocalText? Title { get; init; }
 }
+
+/// <summary>
+/// A smoke-screenshot-only state of a page: the shell shows the page <paramref name="PageId"/> (running its
+/// <see cref="IShellPage.OnShownAsync"/>), then <paramref name="Prepare"/> gets its view to put it in the state
+/// (e.g. fill in the form). The screenshot is <c>&lt;App&gt;-&lt;Id&gt;-&lt;lang&gt;.png</c>.
+/// </summary>
+public sealed record SmokeState(string Id, string PageId, Func<FrameworkElement, Task> Prepare);
