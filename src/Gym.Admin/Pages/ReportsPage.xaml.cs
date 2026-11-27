@@ -204,6 +204,19 @@ public partial class ReportsPage : PageView
         Render();
     }
 
+    /// <summary>Smoke screenshots: the attendance or the sales report of this week.</summary>
+    internal Task ShowForSmokeAsync(bool sales)
+    {
+        updating = true;
+        (sales ? SalesButton : AttendanceButton).IsChecked = true;
+        WeekButton.IsChecked = true;
+        updating = false;
+        kind = sales ? ReportKind.Sales : ReportKind.Attendance;
+        preset = ReportPreset.ThisWeek;
+        SetDates(ReportPeriod.For(preset, Today));
+        return LoadAsync(CancellationToken.None);
+    }
+
     private async Task ReloadAsync()
     {
         try

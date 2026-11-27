@@ -5,6 +5,7 @@ using System.Windows.Threading;
 using Gym.Admin.Logic;
 using Gym.Client;
 using Gym.Contracts;
+using Gym.Domain;
 using Gym.UI;
 using Gym.UI.Controls;
 using Gym.UI.Shell;
@@ -152,6 +153,18 @@ public partial class DashboardPage : PageView
     }
 
     public override void OnLanguageChanged() => Show();
+
+    /// <summary>Smoke screenshots: a failed backup (drive unplugged) and the dashboard's warning.</summary>
+    internal async Task ShowBackupFailureForSmokeAsync()
+    {
+        if (Context.Api is Client.Sample.SampleGymApi sample)
+        {
+            sample.FailNextBackup = true;
+            await sample.RunBackupAsync().ConfigureAwait(true);
+        }
+
+        await OnShownAsync(CancellationToken.None).ConfigureAwait(true);
+    }
 
     private async Task LoadAsync(CancellationToken ct)
     {

@@ -293,6 +293,15 @@ public partial class CafeteriaItemsPage : PageView
         }).ConfigureAwait(true);
     }
 
+    /// <summary>Smoke screenshots: the stock dialog of the first low item (not awaited: the dialog stays open).</summary>
+    internal void StockForSmoke()
+    {
+        if ((products.OrderBy(p => p.Stock).FirstOrDefault(p => p.IsLowStock) ?? products.FirstOrDefault()) is { } product)
+        {
+            _ = StockAsync(product);
+        }
+    }
+
     private static string CategoryName(CategoryDto c, AppLanguage language) => language == AppLanguage.Arabic ? c.NameAr : c.NameEn;
 
     private static FlowDirection Direction(string? text) => BidiText.HasRtl(text) ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;

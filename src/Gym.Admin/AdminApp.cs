@@ -27,5 +27,24 @@ internal static class AdminApp
             new("reports", UiIcons.Reports, AdminText.Reports, context => new ReportsPage(context)),
             new("backups", UiIcons.Database, AdminText.Backups, context => new BackupsPage(context)),
         ],
+
+        // Smoke screenshots only: the dialogs and the warning states, so CI shows them too.
+        SmokeStates =
+        [
+            new("members-edit", "members", view => Open(() => ((MembersPage)view).EditForSmoke())),
+            new("cafeteria-items-stock", "cafeteria-items", view => Open(() => ((CafeteriaItemsPage)view).StockForSmoke())),
+            new("staff-edit", "staff", view => Open(() => ((StaffPage)view).EditSelectedForSmoke())),
+            new("staff-rating", "staff", view => Open(() => ((StaffPage)view).RateSelectedForSmoke())),
+            new("reports-attendance", "reports", view => ((ReportsPage)view).ShowForSmokeAsync(sales: false)),
+            new("reports-sales", "reports", view => ((ReportsPage)view).ShowForSmokeAsync(sales: true)),
+            new("dashboard-backup-warning", "dashboard", view => ((DashboardPage)view).ShowBackupFailureForSmokeAsync()),
+            new("backups-failed", "backups", _ => Task.CompletedTask),
+        ],
     };
+
+    private static Task Open(Action open)
+    {
+        open();
+        return Task.CompletedTask;
+    }
 }

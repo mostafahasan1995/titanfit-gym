@@ -240,7 +240,7 @@ public partial class MembersPage : PageView
         ListEmpty.Visibility = rows.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         var first = r.Total == 0 ? 0 : ((r.Page - 1) * r.PageSize) + 1;
         var last = Math.Min(r.Total, r.Page * r.PageSize);
-        PageText.Text = MembersText.PageOf.Format(language, NumberText.Format(first), NumberText.Format(last), NumberText.Format(r.Total));
+        PageText.Text = BidiText.FixNumbers(MembersText.PageOf.Format(language, NumberText.Format(first), NumberText.Format(last), NumberText.Format(r.Total)), language);
         PreviousButton.IsEnabled = r.Page > 1;
         NextButton.IsEnabled = last < r.Total;
     }
@@ -354,6 +354,9 @@ public partial class MembersPage : PageView
         { DaysLeft: 0 } s => MembersText.ExpiresToday.Format(language, DateText.ShortDate(s.EndDate, language)),
         { } s => MembersText.ActiveUntil.Format(language, DateText.ShortDate(s.EndDate, language), AdminText.Days(s.DaysLeft, language)),
     };
+
+    /// <summary>Smoke screenshots: the edit dialog of the chosen member (not awaited: the dialog stays open).</summary>
+    internal void EditForSmoke() => _ = EditAsync();
 
     private async Task EditAsync()
     {

@@ -467,6 +467,24 @@ public partial class StaffPage : PageView
         }).ConfigureAwait(true);
     }
 
+    /// <summary>Smoke screenshots: the edit dialog of the chosen person (not awaited: the dialog stays open).</summary>
+    internal void EditSelectedForSmoke()
+    {
+        if (Selected is { } person)
+        {
+            _ = EditAsync(person);
+        }
+    }
+
+    /// <summary>Smoke screenshots: the rating dialog of the chosen club trainer.</summary>
+    internal void RateSelectedForSmoke()
+    {
+        if (Selected is { Type: StaffType.ClubTrainer } person)
+        {
+            _ = RateAsync(person);
+        }
+    }
+
     private async Task ResetPasswordAsync(StaffDto person)
     {
         var language = Context.Language;
