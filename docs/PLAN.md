@@ -11,7 +11,7 @@ The single source of truth for this project. Any session that continues the work
 | B0 | App foundation: API abstraction + sample data, station.json, login and roles, page shell, shared controls, smoke screenshots per page | ✅ Done (see "App foundation") |
 | 3 | Reception app | ✅ Done (see "Reception app"); the ID barcode parser is a placeholder until a real scan arrives (open item 1) |
 | 4 | Cafeteria app | ✅ Done (see "Cafeteria app"); receipt printer and scanner still to test on site |
-| 5 | Admin app + deployment | Waiting |
+| 5 | Admin app + deployment | ✅ Admin app and daily backups done (see "Admin app", "Backups"); on-site hardware test waiting |
 
 **Next action:** the Admin app (step 5, inside its own project; follow "App foundation"), then the on-site hardware checks (open items 1, 13 and 14). The owner said on 2026-11-26 to execute all steps without stopping; report at milestones.
 
@@ -264,12 +264,42 @@ Everything shared is in `Gym.UI` and `Gym.Client`. An app agent adds files only 
   - Low-stock warning: the shell has no badge on the sidebar items, so the Sell screen shows a banner and the Stock screen a count.
   - Smoke screenshots: no printer and no scanner are touched (`Context.IsSample`); the Sell screen shows a filled cart with cash typed in.
 
+## Admin app (step 5)
+
+The Admin app (`src/Gym.Admin`, Admin role only) has these pages; each one is in the smoke screenshots (`Admin-<page>-en|ar.png`).
+- **Dashboard** (`GET /api/dashboard` + this month's reports + backup status): today's check-ins (busiest hour), active / expiring / expired members, revenue today (subscriptions and cafeteria) and this month (memberships, private training, cafeteria), check-ins by hour (LiveCharts2 column chart, SkiaSharp, theme colours), members expiring within the threshold, low stock. A banner warns when the last backup failed or is older than 2 days. It refreshes on the live events (check-ins, members, sales, stock, products, settings) and once a minute.
+- **Members:** search (name, phone, national number, member number), status filter (all, active, expiring, expired), type filter (regular, private trainers), pages of 20; the chosen member's status line, details, private trainer service and linked clients (or his trainer), payments and the check-ins of the last 30 days. Edit changes the member data (names, birth, national number, phone, type, notes); renewals, photos, QR codes and trainer links stay in the Reception app. No delete, no refund.
+- **Plans & prices:** list, add and edit (months 1 to 120, price, active). A new price applies to new payments only.
+- **Cafeteria items:** search, category filter, inactive items on demand; add and edit (names EN / AR, category, price, barcode, low-stock minimum, active); "Stock" takes in a delivery or sets the counted quantity (stocktake). The stock never goes below 0.
+- **Staff & ratings:** staff list (job, login and role, phone, active); add and edit (job type, optional login with username, role and password; a club trainer with a login needs an explicit role); reset password. The server refuses to remove the last admin (`last_admin`) and signs a person out on every PC when his login, role, password or active flag changes. Club trainers get one rating a month (1 to 5 stars + note); rating a month again replaces it; the history stays.
+- **Settings:** the expiring-soon threshold (0 to 60 days) and the private training monthly fee, with a worked example; the server version (`/health`), address, this PC and the signed-in admin; a summary of the daily backup.
+- **Reports:** subscriptions, attendance or sales for today, this week (from Saturday), this month, last month or custom dates: totals and tables; Export CSV (UTF-8 with BOM, so Excel shows Arabic) and Print.
+- **Backups:** see "Backups".
+- **First admin:** the server setup wizard creates the first admin (`POST /api/setup/admin`). If it was skipped, the Admin app's login shows "Create the first admin" instead; when the admin was created elsewhere meanwhile, the form goes back to sign-in.
+- Logic with unit tests is in `src/Gym.Admin/Logic` (report periods and tables, CSV, rating months, form checks); `tests/Gym.Tests` references the Admin app.
+
+## Backups (step 5)
+
+- **Daily job:** the server (`BackupScheduler` in Gym.Api) checks every minute; at the daily time (default **02:00**, server PC local time) it runs `pg_dump --format=custom` with the server's own connection (`server.json`; the password goes in `PGPASSWORD`, never on the command line). A run that was missed while the PC was off happens as soon as the server is back. A new install waits for the first 02:00. "Back up now" in the Admin app runs the same backup at once.
+- **pg_dump:** the one installed with the server (`C:\Program Files\TitanFit\pgsql\bin\pg_dump.exe`, found next to `Server\`), else the path in the backup settings or `Backup:PgDumpPath`, else the PATH. It must be the server's major version (17).
+- **Folder:** `%ProgramData%\TitanFit\backups` by default (created by the server setup for SYSTEM and Administrators only: the dumps hold member data). For the external drive (open item 8) choose a folder on the Backups page; the server checks that it exists and that it can write there. When the drive is unplugged the run fails with `backup_folder_missing` and the warning shows.
+- **Files and retention:** `titanfit-YYYYMMDD-HHmm.dump` (`-2`, `-3` for a second one in the same minute). After a good backup only the newest N stay (setting, default **30**, 1 to 365). Nothing else in the folder is ever deleted (other files, `.partial` leftovers, the `titanfit-before-restore-*` copies).
+- **Settings and results:** `%ProgramData%\TitanFit\backup-settings.json` and `backup-state.json` (not in the database, so they survive a restore); each run is also logged to `%ProgramData%\TitanFit\logs\backup.log` and the server log.
+- **Warning:** the dashboard and the Backups page warn when the last run failed, when the last good backup is older than **2 days**, or when there is none yet.
+- **Restore (on the server PC, never from the app):**
+  1. Pick the file (Backups page list, or the folder on the drive).
+  2. Open PowerShell **as administrator** and run `& 'C:\Program Files\TitanFit\Setup\restore-backup.ps1' -BackupFile 'E:\TitanFit-Backups\titanfit-20261127-0200.dump'`, then type `YES`.
+  3. The script checks the file (`pg_restore --list`), saves the current data as `%ProgramData%\TitanFit\backups\titanfit-before-restore-<time>.dump`, stops the TitanFit Server service, drops and recreates the `titanfit` database, restores it with `pg_restore --no-owner --role=titanfit` as the PostgreSQL superuser from `database-admin.json`, starts the service (newer migrations apply) and waits for `/health`. Log: `%ProgramData%\TitanFit\logs\restore.log`.
+  4. Everything in the database goes back to the time of the backup (members, payments, check-ins, staff and logins, products, stock, sales). Photos, keys and settings files stay as they are.
+  - By hand, without the script: stop `TitanFitServer`, then with the superuser password from `database-admin.json`: `psql -h localhost -p 5433 -U postgres -d postgres -c "DROP DATABASE titanfit WITH (FORCE)"`, `... -c "CREATE DATABASE titanfit OWNER titanfit"`, `pg_restore -h localhost -p 5433 -U postgres -d titanfit --no-owner --role=titanfit <file>`, start `TitanFitServer`.
+- **Tests:** unit tests (names, retention, schedule with a fake clock, warning, settings checks); integration tests with the real pg_dump 17 (the Linux job installs `postgresql-client-17` from the PGDG apt repo); the install smoke test runs "Back up now" on the real Windows install, checks the file and its ACL, reads it with `pg_restore --list`, then restores it with `restore-backup.ps1` and checks that later changes are gone.
+
 ## Security
 
 - The QR holds no personal data (random code only).
 - Role-based access on every API endpoint.
 - Passwords are stored hashed.
-- Data stays on the LAN. Daily backups.
+- Data stays on the LAN. Daily backups (see "Backups"; the backup folder is for SYSTEM and Administrators only).
 - Never commit passwords, connection strings with secrets, or member data. **This repo is public.**
 
 ## API overview (step 2.4)
@@ -318,6 +348,8 @@ Roles: **A** = Admin, **R** = Reception, **C** = Cashier. Admin can call everyth
 | `GET /api/reports/subscriptions`, `/attendance`, `/sales` `?from=&to=` | A | reports over local days, both ends included |
 | `GET /api/settings` | A R C | expiring-soon threshold, private training fee |
 | `PUT /api/settings` | A | change the settings |
+| `GET /api/backups`, `GET /api/backups/status`, `POST /api/backups` | A | backup files (newest first); last run, last good backup, next run, warning; back up now (a failed run answers `succeeded: false` + `errorCode`; 409 `backup_running`) |
+| `GET/PUT /api/backups/settings` | A | backup folder (must exist and be writable: `backup_folder_missing`, `backup_folder_not_writable`), daily time, how many to keep, pg_dump path |
 | `/hubs/gym` (SignalR) | A R C | live updates |
 
 ## Build and release (GitHub Actions)
@@ -332,7 +364,7 @@ The workflow file is `.github/workflows/build.yml`. It is added in step 2.1.
 - **Job `installers`** (`windows-latest`, after the Windows job): `installer/build-installers.ps1` builds both setups (see "Installers") from the `titanfit-exes` artifact.
   - The runner has an Inno Setup 6 preinstalled (version not readable); the script installs the pinned 6.7.4 (SHA-256 checked) so the build does not depend on the runner image. PostgreSQL and Inno Setup are pinned in `installer/downloads.json` and cached with `actions/cache`.
   - Version: `<Version>` in `Directory.Build.props`. On a tag, the tag must be `v<Version>` (or `v<Version>-suffix`, a pre-release), otherwise the job fails.
-- **Job `install-smoke`** (fresh `windows-latest`): `installer/tests/install-smoke.ps1` installs the Server setup silently, checks both services, the ports, the ACLs, the firewall rule, `/health`, the first admin (`POST /api/setup/admin`), login and a `pg_dump` backup; runs the setup again (upgrade); installs the Station setup with `/SERVERURL` (and checks that a bad URL is refused); uninstalls both (services and rule gone, `%ProgramData%\TitanFit` kept); reinstalls the server on the kept data.
+- **Job `install-smoke`** (fresh `windows-latest`): `installer/tests/install-smoke.ps1` installs the Server setup silently, checks both services, the ports, the ACLs, the firewall rule, `/health`, the first admin (`POST /api/setup/admin`), login, a `pg_dump` backup, "Back up now" through the API (file, ACL, `pg_restore --list`) and `restore-backup.ps1`; runs the setup again (upgrade); installs the Station setup with `/SERVERURL` (and checks that a bad URL is refused); uninstalls both (services and rule gone, `%ProgramData%\TitanFit` kept); reinstalls the server on the kept data.
 - **Job `release`** (tags `v*` only, after both): creates the GitHub Release (or updates its files) with the two setups and `SHA256SUMS.txt`, using the workflow's own token (`contents: write` on this job only).
 - **Outputs:**
   - Every run uploads the artifacts `titanfit-exes` (the 4 exes), `screenshots` (EN + AR PNG of every screen per app, with the manifests), `test-results` and `integration-test-results` (trx), `titanfit-installers` (the 2 setups + `SHA256SUMS.txt`) and `install-logs` (setup logs, server-setup.log, PostgreSQL log, events).
@@ -353,7 +385,7 @@ Two Inno Setup 6 setups, built in CI (job `installers`), x64, admin rights, Engl
 **`TitanFit-Server-Setup-<version>.exe`** (admin PC, about 98 MB):
 - Installs to `C:\Program Files\TitanFit`: `Server\Gym.Api.exe` + `appsettings.json`, `pgsql\` (PostgreSQL 17.12 from the EDB Windows x64 binaries zip: bin, lib, share, incl. `pg_dump.exe` / `pg_restore.exe`; no pgAdmin; the Visual C++ runtime DLLs are copied next to it), and optionally `Admin\Gym.Admin.exe` (component, on by default; Start menu + desktop shortcuts).
 - **Database (first install only):** `initdb` in `%ProgramData%\TitanFit\pgdata` (UTF8, built-in `C.UTF-8` locale, data checksums, scram-sha-256), `listen_addresses = 'localhost'`, **port 5433** (no clash with another PostgreSQL). Service **`TitanFitDatabase`** ("TitanFit Database (PostgreSQL 17)", NetworkService, automatic, restart on failure). A `titanfit` role owns the `titanfit` database. Both passwords are random (32 characters) and never leave the PC. The data folder is readable only by SYSTEM, Administrators and the database service.
-- **Config:** `%ProgramData%\TitanFit\server.json` (connection string, data path) and `database-admin.json` (PostgreSQL superuser), both readable only by SYSTEM and Administrators. The `keys` folder (token signing key) is locked the same way.
+- **Config:** `%ProgramData%\TitanFit\server.json` (connection string, data path) and `database-admin.json` (PostgreSQL superuser), both readable only by SYSTEM and Administrators. The `keys` folder (token signing key) and the `backups` folder (default target of the daily backup) are locked the same way. `Setup\restore-backup.ps1` restores a backup (see "Backups").
 - **Server service:** **`TitanFitServer`** ("TitanFit Server", LocalSystem, automatic, depends on the database service, restarts after 5 s / 15 s / 60 s). Migrations run when it starts.
 - **Firewall:** inbound TCP **5080**, remote address **LocalSubnet** only, **Private and Domain** profiles (rule `TitanFit-Server-TCP-5080`). The gym network of the server PC must be set to Private, or the stations cannot connect.
 - **End of the wizard:** the setup waits (up to 3 minutes) until `http://localhost:5080/health` answers, then shows a **"First administrator"** page that calls `POST /api/setup/admin` (only while no admin exists; it can be skipped and comes back on the next run), then the server address for the stations (`http://<PC name>:5080`). If the server does not start, it says so and points to `%ProgramData%\TitanFit\logs\server-setup.log`.
@@ -387,8 +419,8 @@ Two Inno Setup 6 setups, built in CI (job `installers`), x64, admin rights, Engl
 3. **Reception app.** ✅ Done (see "Reception app"): QR check-in with the webcam, USB scanner and member number; new member with ID scan, photo, plan and QR (copy, save, print); search, details and renew; private trainers. The ID barcode parser waits for a real scan (open item 1).
 4. **Cafeteria app:** cashier screen, stock, low-stock warnings, receipts, shift close. ✅ Done (see "Cafeteria app").
 5. **Admin app and deployment:**
-   - Dashboard, management screens, reports, backups.
-   - Final installers, and an on-site hardware test.
+   - Dashboard, management screens, reports, backups. ✅ Done (see "Admin app" and "Backups").
+   - Final installers, and an on-site hardware test. Waiting (on site).
 
 ## Data model (as built in step 2.3)
 
@@ -436,13 +468,14 @@ Answers received during step 2.1. Private trainers, staff types and ratings are 
 5. ~~**Early renewal**~~ decided: the new period starts the day after the old end date (see "Business rules").
 6. **Expiring threshold:** 3 days, a setting the admin can change (`PUT /api/settings`).
 7. **Arabic digits:** 0-9 now. It can be switched to ٠-٩.
-8. **Backup target:** which external drive.
+8. **Backup target:** which external drive (letter and folder). Until it is set on the Backups page, the daily backup goes to `%ProgramData%\TitanFit\backups` on the same disk as the database, which does not survive a disk failure. Best: a USB drive that stays connected, plus a second copy taken home now and then.
 9. **Repo is public:** the owner is considering making it private.
 10. **Fingerprint reader model:** confirm before coding (e.g. ZKTeco ZK9500).
 11. **Negative stock:** refused for now (see "Business rules"). The owner can ask to allow selling with a warning instead.
 12. **HTTPS on the LAN:** still plain HTTP: the API listens on `http://0.0.0.0:5080`, and the firewall rule lets only the local subnet in (Private and Domain networks). Logins and data cross the gym LAN unencrypted. HTTPS (a local certificate the stations trust, installed by the setups) comes later.
 13. **Barcode scanner on site:** check that it is in USB keyboard mode with Enter after the code, and that it types fast enough for the Sell screen (at most 60 ms between characters; otherwise change `BarcodeWedge.DefaultMaxGapMs`). Also check the barcodes on the real products.
 14. **Reception hardware on site:** check with the real webcam and phones how far and how fast the QR reads (screen brightness, autofocus), that the camera opens on the reception PCs (the OpenCV native library may need the Visual C++ 2015-2022 x64 runtime; without it the card says "Camera not available"), and that the USB scanner is in keyboard mode with Enter after the code.
+15. **Admin app gaps (owner decides):** plans have no name of their own (they are shown by their months, "3 months"; names need a database change); members cannot be deactivated or deleted (no API, and no refunds by design); product categories are seeded and not edited in the Admin app (the API can); there is no "gym name on receipts" setting yet.
 
 ## Working rules
 
