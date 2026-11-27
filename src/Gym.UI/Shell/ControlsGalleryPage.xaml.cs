@@ -83,7 +83,7 @@ public partial class ControlsGalleryPage : PageView
     public override void OnLanguageChanged()
     {
         var language = UiLanguage.Current;
-        PhoneField.Error = GalleryText.PhoneTooShort.For(language);
+        PhoneField.Error = BidiText.FixNumbers(GalleryText.PhoneTooShort.For(language), language);
         var selected = PlanBox.SelectedIndex;
         PlanBox.ItemsSource = plans.Select(p => p.Months == 1
             ? GalleryText.OneMonth.Format(language, Money.Format(p.Price, language))
