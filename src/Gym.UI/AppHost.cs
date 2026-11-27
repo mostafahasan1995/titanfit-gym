@@ -6,6 +6,7 @@ namespace Gym.UI;
 /// <summary>
 /// Shared startup for the WPF apps. Normal run: station.json, login, then the app's pages.
 /// <c>--smoke-screenshots &lt;dir&gt; --lang en|ar</c>: the CI screenshot mode (see <see cref="SmokeScreenshot"/>).
+/// <c>--self-test</c>: loads the native and critical libraries, prints one line per check and exits (see <see cref="SelfTest"/>).
 /// <c>--lang en|ar</c> alone overrides the language saved in station.json.
 /// </summary>
 public static class AppHost
@@ -16,6 +17,11 @@ public static class AppHost
         ArgumentNullException.ThrowIfNull(args);
         ArgumentNullException.ThrowIfNull(definition);
         ThemeAssist.Initialize();
+
+        if (SelfTest.IsRequested(args))
+        {
+            return SelfTest.Run(definition);
+        }
 
         if (SmokeScreenshot.IsRequested(args))
         {

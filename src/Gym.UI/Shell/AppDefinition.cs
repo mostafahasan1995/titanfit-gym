@@ -82,6 +82,12 @@ public sealed class AppDefinition
     /// </summary>
     public IReadOnlyList<SmokeState> SmokeStates { get; init; } = [];
 
+    /// <summary>
+    /// The app's own <c>--self-test</c> checks (its native libraries and critical dependencies; no hardware), run after
+    /// the shared font and rendering checks. See <see cref="SelfTest"/>.
+    /// </summary>
+    public IReadOnlyList<SelfTestCheck> SelfTestChecks { get; init; } = [];
+
     /// <summary>"Reception": the prefix of the screenshot files.</summary>
     public string Id => App.ToString();
 }

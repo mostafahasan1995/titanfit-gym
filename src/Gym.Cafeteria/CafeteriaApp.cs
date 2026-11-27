@@ -37,6 +37,7 @@ internal static class CafeteriaApp
             new("stock-adjust", "stock", view => ((StockPage)view).OpenAdjustForScreenshotAsync()),
             new("shift-report", "shift-close", view => ((ShiftClosePage)view).OpenReportForScreenshot()),
         ],
+        SelfTestChecks = CafeteriaSelfTest.Checks,
     };
 
     /// <summary>The receipt printer: nothing is printed in the smoke screenshots (no hardware in CI).</summary>

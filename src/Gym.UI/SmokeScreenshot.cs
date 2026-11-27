@@ -281,8 +281,14 @@ public static class SmokeScreenshot
         encoder.Save(stream);
     }
 
-    /// <summary>Fails when an embedded font did not load (WPF would silently fall back to a system font).</summary>
-    private static void VerifyEmbeddedFont(string resourceKey, FontWeight weight)
+    private static void VerifyEmbeddedFont(string resourceKey, FontWeight weight) =>
+        Console.WriteLine($"Font {resourceKey} {weight}: {EmbeddedFontUri(resourceKey, weight)}");
+
+    /// <summary>
+    /// The file of an embedded font; throws when it did not load (WPF would silently fall back to a system font).
+    /// Also used by <see cref="SelfTest"/>.
+    /// </summary>
+    internal static string EmbeddedFontUri(string resourceKey, FontWeight weight)
     {
         var family = (FontFamily)Application.Current.FindResource(resourceKey);
         var typeface = new Typeface(family, FontStyles.Normal, weight, FontStretches.Normal);
@@ -292,11 +298,12 @@ public static class SmokeScreenshot
         }
 
         var uri = glyphs.FontUri.ToString();
-        Console.WriteLine($"Font {resourceKey} {weight}: {uri}");
         if (!uri.Contains("Fonts/", StringComparison.OrdinalIgnoreCase) || uri.Contains("Windows", StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidOperationException($"Font {resourceKey} ({weight}) fell back to a system font: {uri}");
         }
+
+        return uri;
     }
 
     private sealed record SmokeShot(string Name, string File, bool Ok, string? Error);

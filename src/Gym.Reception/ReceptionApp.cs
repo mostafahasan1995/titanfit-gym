@@ -35,5 +35,6 @@ internal static class ReceptionApp
             new("members-qr", "members", view => ((MembersPage)view).ShowQrSampleAsync()),
             new("private-trainers-pay", "private-trainers", view => ((PrivateTrainersPage)view).ShowPaySampleAsync()),
         ],
+        SelfTestChecks = ReceptionSelfTest.Checks,
     };
 }

@@ -2,7 +2,10 @@
 ; shortcuts, and %ProgramData%\TitanFit\station.json with the server address. Built in CI by installer/build-installers.ps1.
 ; Silent: TitanFit-Station-Setup-x.y.z.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /COMPONENTS="reception,cafeteria"
 ;         /SERVERURL=http://SERVER-PC:5080 [/LOG=file]
-; Exit code 1 = invalid /SERVERURL, 7 = no app chosen, 21 = station.json could not be written.
+; Exit code 1 = invalid /SERVERURL, 7 = no app chosen, 21 = station.json could not be written,
+; 22 = the Visual C++ runtime for the Reception camera could not be installed (the apps are installed).
+; With the Reception app it installs the bundled Visual C++ v14 x64 runtime (vc_redist.x64.exe /install /quiet /norestart)
+; when it is missing or older; OpenCV (the camera) needs it. The setup log says what it did ("VC++ runtime x64: ...").
 
 #ifndef AppVersion
   #define AppVersion "0.0.0-dev"
@@ -15,6 +18,9 @@
 #endif
 #ifndef BrandDir
   #error Define BrandDir: the folder with the wizard images and titanfit.ico
+#endif
+#ifndef VCRedistVersion
+  #error Define VCRedistVersion: the file version of PayloadDir\vc_redist.x64.exe, e.g. 14.44.35211.0
 #endif
 
 [Setup]
@@ -86,6 +92,10 @@ en.ServerUnreachable=The server %1 does not answer right now.%n%nInstall anyway?
 ar.ServerUnreachable=الخادم %1 لا يستجيب الآن.%n%nهل تريد التثبيت على أي حال؟ تتصل التطبيقات عندما يعمل الخادم ويستطيع هذا الجهاز الوصول إليه.
 en.ConfigFailed=The station settings %1 could not be written (error %2).
 ar.ConfigFailed=تعذرت كتابة إعدادات المحطة %1 (الخطأ %2).
+en.StatusVCRuntime=Installing the Microsoft Visual C++ runtime for the camera...
+ar.StatusVCRuntime=جارٍ تثبيت مكتبة Microsoft Visual C++ اللازمة للكاميرا...
+en.VCRuntimeFailed=The Microsoft Visual C++ runtime could not be installed (error %1). The apps are installed, but the camera of the Reception app may show "Camera not available" until it is installed.%n%nRun this setup again, or install vc_redist.x64.exe from Microsoft. Details: %2
+ar.VCRuntimeFailed=تعذر تثبيت مكتبة Microsoft Visual C++ (الخطأ %1). تم تثبيت التطبيقات، لكن كاميرا تطبيق الاستقبال قد تُظهر "الكاميرا غير متاحة" حتى يتم تثبيتها.%n%nشغّل هذا الإعداد مرة أخرى، أو ثبّت vc_redist.x64.exe من Microsoft. التفاصيل: %2
 en.LaunchReception=Open Reception
 ar.LaunchReception=فتح الاستقبال
 en.LaunchCafeteria=Open Cafeteria
@@ -111,6 +121,8 @@ Source: "{#PayloadDir}\Gym.Cafeteria.exe"; DestDir: "{app}\Cafeteria"; Component
 Source: "{#PayloadDir}\Gym.Admin.exe"; DestDir: "{app}\Admin"; Components: admin; Flags: ignoreversion sharedfile uninsnosharedfileprompt
 Source: "scripts\station-config.ps1"; DestDir: "{app}\Setup"; Flags: ignoreversion sharedfile uninsnosharedfileprompt
 Source: "{#BrandDir}\titanfit.ico"; DestDir: "{app}\Setup"; Flags: ignoreversion sharedfile uninsnosharedfileprompt
+; Microsoft Visual C++ v14 x64 runtime installer (signature checked in CI): only unpacked when it must run.
+Source: "{#PayloadDir}\vc_redist.x64.exe"; DestDir: "{tmp}"; Flags: dontcopy
 
 [Icons]
 Name: "{group}\TitanFit Reception"; Filename: "{app}\Reception\Gym.Reception.exe"; IconFilename: "{app}\Setup\titanfit.ico"; Components: reception
@@ -130,11 +142,15 @@ Filename: "{app}\Admin\Gym.Admin.exe"; Description: "{cm:LaunchAdmin}"; Componen
 
 const
   DefaultServerUrl = 'http://SERVER-PC:5080';
+  VCRuntimeKey = 'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64';
+  VCRedistVersion = '{#VCRedistVersion}';
 
 var
   ServerPage: TInputQueryWizardPage;
   ConfigureRan: Boolean;
   ConfigOk: Boolean;
+  VCRuntimeFailed: Boolean;
+  VCRuntimeRestart: Boolean;
 
 function StationConfigPath: String;
 begin
@@ -299,12 +315,126 @@ begin
     Result := CustomMessage('NoComponent');
 end;
 
+{ The Visual C++ v14 x64 runtime in one registry view: Installed = 1 and the version from Major, Minor, Bld and Rbld
+  (or the Version text, "v14.44.35211.00"). }
+function ReadVCRuntime(RootKey: Integer; var Version: Int64; var Text: String): Boolean;
+var
+  Installed, Major, Minor, Bld, Rbld: Cardinal;
+  VersionText: String;
+begin
+  Result := False;
+  if not RegQueryDWordValue(RootKey, VCRuntimeKey, 'Installed', Installed) then
+    exit;
+  if Installed <> 1 then
+    exit;
+  if RegQueryDWordValue(RootKey, VCRuntimeKey, 'Major', Major) and RegQueryDWordValue(RootKey, VCRuntimeKey, 'Minor', Minor) and
+    RegQueryDWordValue(RootKey, VCRuntimeKey, 'Bld', Bld) then
+  begin
+    if not RegQueryDWordValue(RootKey, VCRuntimeKey, 'Rbld', Rbld) then
+      Rbld := 0;
+    Text := IntToStr(Major) + '.' + IntToStr(Minor) + '.' + IntToStr(Bld) + '.' + IntToStr(Rbld);
+  end
+  else if RegQueryStringValue(RootKey, VCRuntimeKey, 'Version', VersionText) then
+  begin
+    Text := Trim(VersionText);
+    if (Length(Text) > 0) and ((Text[1] = 'v') or (Text[1] = 'V')) then
+      Text := Copy(Text, 2, Length(Text));
+  end
+  else
+    exit;
+  Result := StrToVersion(Text, Version);
+end;
+
+{ The installed runtime: the redistributable registers it in the 32-bit registry view (WOW6432Node); the 64-bit view
+  is read too, and the newer of the two counts. }
+function InstalledVCRuntime(var Version: Int64; var Text: String): Boolean;
+var
+  Version32, Version64: Int64;
+  Text32, Text64: String;
+  Has32, Has64: Boolean;
+begin
+  Has32 := ReadVCRuntime(HKLM32, Version32, Text32);
+  Has64 := ReadVCRuntime(HKLM64, Version64, Text64);
+  Result := Has32 or Has64;
+  if Has32 then
+  begin
+    Version := Version32;
+    Text := Text32;
+  end;
+  if Has64 then
+    if (not Has32) or (ComparePackedVersion(Version64, Version32) > 0) then
+    begin
+      Version := Version64;
+      Text := Text64;
+    end;
+end;
+
+{ The Reception camera (OpenCV) needs the Visual C++ v14 x64 runtime (Visual C++ 2015-2022 and later). Runs the bundled
+  vc_redist.x64.exe when the runtime is missing or older than it. Exit codes 0, 1638 (a newer one is installed) and
+  3010 (Windows must restart) are success. The uninstaller never removes it (other programs share it). }
+procedure InstallVCRuntime;
+var
+  Installed, Bundled: Int64;
+  InstalledText, LogDir, LogFile: String;
+  Code: Integer;
+begin
+  if not WizardIsComponentSelected('reception') then
+  begin
+    Log('VC++ runtime x64: not needed (the Reception app is not chosen), step skipped.');
+    exit;
+  end;
+  if not StrToVersion(VCRedistVersion, Bundled) then
+    Bundled := 0;
+  if InstalledVCRuntime(Installed, InstalledText) then
+  begin
+    if ComparePackedVersion(Installed, Bundled) >= 0 then
+    begin
+      Log('VC++ runtime x64: installed ' + InstalledText + ', bundled ' + VCRedistVersion + ': up to date, step skipped.');
+      exit;
+    end;
+  end
+  else
+    InstalledText := 'none';
+
+  Log('VC++ runtime x64: installed ' + InstalledText + ', bundled ' + VCRedistVersion +
+    ': running vc_redist.x64.exe /install /quiet /norestart');
+  WizardForm.StatusLabel.Caption := CustomMessage('StatusVCRuntime');
+  WizardForm.FilenameLabel.Caption := '';
+  ExtractTemporaryFile('vc_redist.x64.exe');
+  LogDir := ExpandConstant('{commonappdata}\TitanFit\logs');
+  ForceDirectories(LogDir);
+  LogFile := LogDir + '\vc_redist-x64.log';
+  if not Exec(ExpandConstant('{tmp}\vc_redist.x64.exe'), '/install /quiet /norestart /log "' + LogFile + '"', '',
+    SW_HIDE, ewWaitUntilTerminated, Code) then
+  begin
+    Log('VC++ runtime x64: vc_redist.x64.exe did not start: ' + SysErrorMessage(Code));
+    VCRuntimeFailed := True;
+  end
+  else if Code = 0 then
+    Log('VC++ runtime x64: vc_redist.x64.exe exit code 0: installed.')
+  else if Code = 1638 then
+    Log('VC++ runtime x64: vc_redist.x64.exe exit code 1638: a newer version is already installed.')
+  else if Code = 3010 then
+  begin
+    Log('VC++ runtime x64: vc_redist.x64.exe exit code 3010: installed; Windows must restart before the camera works.');
+    VCRuntimeRestart := True;
+  end
+  else
+  begin
+    Log('VC++ runtime x64: vc_redist.x64.exe exit code ' + IntToStr(Code) + ': FAILED (log ' + LogFile + ').');
+    VCRuntimeFailed := True;
+  end;
+  if VCRuntimeFailed then
+    SuppressibleMsgBox(FmtMessage(CustomMessage('VCRuntimeFailed'), [IntToStr(Code), LogFile]), mbError, MB_OK, IDOK);
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   Code: Integer;
 begin
   if CurStep <> ssPostInstall then
     exit;
+  InstallVCRuntime;
   Code := RunPowerShellScript(ExpandConstant('{app}\Setup\station-config.ps1'),
     '-ServerUrl "' + NormalizeServerUrl(ServerPage.Values[0]) + '"');
   ConfigureRan := True;
@@ -313,9 +443,19 @@ begin
     SuppressibleMsgBox(FmtMessage(CustomMessage('ConfigFailed'), [StationConfigPath, IntToStr(Code)]), mbError, MB_OK, IDOK);
 end;
 
+{ vc_redist.x64.exe answered 3010: the finished page asks to restart Windows (a silent /NORESTART install does not). }
+function NeedRestart: Boolean;
+begin
+  Result := VCRuntimeRestart;
+  if Result then
+    Log('A restart of Windows is needed for the Visual C++ runtime.');
+end;
+
 function GetCustomSetupExitCode: Integer;
 begin
   Result := 0;
   if ConfigureRan and not ConfigOk then
-    Result := 21;
+    Result := 21
+  else if VCRuntimeFailed then
+    Result := 22;
 end;

@@ -9,6 +9,9 @@
       checked by SHA-256. Downloads are kept in -DownloadDir (cached by the workflow).
     - The PostgreSQL payload keeps bin, lib and share (no pgAdmin, StackBuilder, docs or headers) and gets the
       Visual C++ runtime DLLs from the runner's Visual Studio redist folder (app-local), so no VC++ install is needed.
+    - The Station setup bundles Microsoft's vc_redist.x64.exe (for OpenCV, the Reception camera), downloaded from the
+      permalink in downloads.json into -VCRedistDir (cached by the workflow). Microsoft publishes no stable hash for it,
+      so it is accepted only with a valid Authenticode signature by Microsoft Corporation and an x64 14.x version.
     - The wizard images and the icon are rendered from src/Gym.UI (logo + font) by branding/make-branding.ps1.
 #>
 param(
@@ -16,6 +19,7 @@ param(
     [Parameter(Mandatory = $true)][string]$OutDir,
     [string]$Tag = '',
     [string]$DownloadDir = 'artifacts/downloads',
+    [string]$VCRedistDir = 'artifacts/vcredist',
     [string]$WorkDir = 'artifacts/installer-build'
 )
 
@@ -25,8 +29,9 @@ $PSNativeCommandUseErrorActionPreference = $false
 
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 Set-Location $repo
-foreach ($dir in $DownloadDir, $WorkDir, $OutDir) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
+foreach ($dir in $DownloadDir, $VCRedistDir, $WorkDir, $OutDir) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
 $DownloadDir = (Resolve-Path $DownloadDir).Path
+$VCRedistDir = (Resolve-Path $VCRedistDir).Path
 $WorkDir = (Resolve-Path $WorkDir).Path
 $OutDir = (Resolve-Path $OutDir).Path
 $ExesDir = (Resolve-Path $ExesDir).Path
@@ -58,6 +63,54 @@ function Get-VerifiedDownload($Pin) {
     }
     Write-Host ("Downloaded {0} ({1:N1} MB, SHA-256 OK)" -f $Pin.file, ((Get-Item $path).Length / 1MB))
     return $path
+}
+
+# The Visual C++ redistributable has no published hash (the permalink always serves the latest build). Accept it only
+# with a valid Authenticode signature whose signer is Microsoft Corporation, as the x64 Visual C++ 14.x redistributable.
+function Test-VCRedist([string]$Path) {
+    $signature = Get-AuthenticodeSignature -FilePath $Path
+    $signer = $signature.SignerCertificate
+    $info = (Get-Item $Path).VersionInfo
+    $problems = @()
+    if ($signature.Status -ne 'Valid') { $problems += "signature status $($signature.Status) ($($signature.StatusMessage))" }
+    $signerName = if ($signer) { $signer.GetNameInfo([System.Security.Cryptography.X509Certificates.X509NameType]::SimpleName, $false) } else { '' }
+    if ($signerName -ne 'Microsoft Corporation' -or "$($signer.Subject)" -notmatch '(^|,\s*)O=Microsoft Corporation(,|$)') {
+        $problems += "signer '$($signer.Subject)' is not Microsoft Corporation"
+    }
+    if ("$($info.ProductName)" -notmatch 'Visual C\+\+' -or "$($info.ProductName)" -notmatch 'x64') {
+        $problems += "product '$($info.ProductName)' is not the x64 Visual C++ redistributable"
+    }
+    $version = $null
+    if (-not [version]::TryParse("$($info.FileVersion)".Trim(), [ref]$version) -or $version.Major -ne 14) {
+        $problems += "file version '$($info.FileVersion)' is not 14.x"
+    }
+    [pscustomobject]@{ Ok = ($problems.Count -eq 0); Problems = $problems; Version = $version; Signer = "$($signer.Subject)"; Product = $info.ProductName }
+}
+
+function Get-SignedVCRedist($Pin) {
+    $path = Join-Path $VCRedistDir $Pin.file
+    if (Test-Path $path) {
+        $check = Test-VCRedist $path
+        if ($check.Ok) {
+            Write-Host "From cache: $($Pin.file)"
+        } else {
+            Write-Host "Cached $($Pin.file) rejected ($($check.Problems -join '; ')): downloading again."
+            Remove-Item $path -Force
+        }
+    }
+    if (-not (Test-Path $path)) {
+        Write-Host "Downloading $($Pin.url)"
+        Invoke-WebRequest -Uri $Pin.url -OutFile $path -MaximumRetryCount 3 -RetryIntervalSec 5
+        $check = Test-VCRedist $path
+        if (-not $check.Ok) {
+            Remove-Item $path -Force
+            throw "The downloaded $($Pin.file) is rejected: $($check.Problems -join '; ')"
+        }
+    }
+    Write-Host ("{0}: {1}, version {2}, {3:N1} MB, SHA-256 {4}" -f $Pin.file, $check.Product, $check.Version,
+        ((Get-Item $path).Length / 1MB), (Get-FileHash $path -Algorithm SHA256).Hash.ToLowerInvariant())
+    Write-Host "  Authenticode signature valid, signer: $($check.Signer)"
+    [pscustomobject]@{ Path = $path; Version = $check.Version }
 }
 
 # --- Version ---------------------------------------------------------------------------------------------------
@@ -135,6 +188,10 @@ if ($LASTEXITCODE -ne 0) { throw 'postgres.exe --version failed' }
 $pgFiles = Get-ChildItem $pg -Recurse -File
 Write-Host ("PostgreSQL payload: {0:N0} files, {1:N1} MB" -f $pgFiles.Count, (($pgFiles | Measure-Object Length -Sum).Sum / 1MB))
 
+Write-Step 'Visual C++ v14 x64 redistributable (Station setup: OpenCV for the Reception camera)'
+$vcRedist = Get-SignedVCRedist $pins.vcredist
+Copy-Item $vcRedist.Path (Join-Path $payload 'vc_redist.x64.exe')
+
 # --- Branding --------------------------------------------------------------------------------------------------
 Write-Step 'Branding (wizard images and icon from src/Gym.UI)'
 $brand = Join-Path $WorkDir 'branding'
@@ -167,7 +224,7 @@ Write-Host "Using $iscc ($((Get-Item $iscc).VersionInfo.ProductVersion))"
 # --- Compile ---------------------------------------------------------------------------------------------------
 Get-ChildItem $OutDir -File | Remove-Item -Force
 $defines = @("/DAppVersion=$setupVersion", "/DFileVersion=$fileVersion", "/DPayloadDir=$payload", "/DBrandDir=$brand",
-    "/DRepoDir=$repo", "/O$OutDir")
+    "/DRepoDir=$repo", "/DVCRedistVersion=$($vcRedist.Version)", "/O$OutDir")
 foreach ($script in 'server', 'station') {
     Write-Step "Compile $script.iss"
     Invoke-Checked $iscc (@('/Qp') + $defines + @((Join-Path $PSScriptRoot "$script.iss")))

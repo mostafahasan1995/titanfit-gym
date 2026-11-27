@@ -5,9 +5,13 @@
 
     1. Server setup, silent: both services run, the database listens on localhost:5433 only, /health is ok,
        server.json is readable only by SYSTEM and Administrators, firewall rule, first admin, login, pg_dump,
-       "Back up now" through the API (file in the protected backups folder) and restore-backup.ps1.
+       "Back up now" through the API (file in the protected backups folder) and restore-backup.ps1; the installed
+       Admin app's --self-test (SkiaSharp, HarfBuzz, the dashboard chart).
     2. Server setup again (upgrade): config, data and login are kept.
-    3. Station setup, silent: a bad /SERVERURL is refused; a good one writes station.json; apps and shortcuts.
+    3. Station setup, silent: a bad /SERVERURL is refused; a good one writes station.json; apps and shortcuts; the
+       Visual C++ runtime step in its log (ran with exit code 0 / 1638 / 3010, or skipped because the installed
+       runtime is at least the bundled one) and the runtime registered; the installed Reception (OpenCV, ZXing,
+       QRCoder, sounds) and Cafeteria (receipt drawing, XPS print document) apps' --self-test.
     4. Uninstall both: services, firewall rule and program files are gone; %ProgramData%\TitanFit is kept.
     5. Server setup once more: the kept database is used again (same admin login works).
     Never prints a password.
@@ -130,6 +134,30 @@ function Assert-Login([string]$When) {
     Assert-True ($me.fullName -eq $adminName -and $me.role -eq 'Admin') "GET /api/auth/me: Arabic full name and role Admin ($When)"
 }
 
+# Runs an installed app with --self-test (no window, camera or printer): exit code 0, every expected check passed.
+function Assert-SelfTest([string]$Exe, [string[]]$Expected) {
+    $name = [IO.Path]::GetFileNameWithoutExtension($Exe)
+    $out = Join-Path $LogDir "$name-self-test.txt"
+    $process = Start-Process -FilePath $Exe -ArgumentList '--self-test' -NoNewWindow -PassThru `
+        -RedirectStandardOutput $out -RedirectStandardError "$out.err"
+    $null = $process.Handle   # keeps the exit code readable after the process ends
+    if (-not $process.WaitForExit(180000)) {
+        $process.Kill()
+        throw "FAILED: $name --self-test timed out"
+    }
+    $process.WaitForExit()
+    $lines = @(Get-Content $out -ErrorAction SilentlyContinue) + @(Get-Content "$out.err" -ErrorAction SilentlyContinue)
+    $lines | ForEach-Object { Write-Host "    | $_" }
+    Assert-True ($process.ExitCode -eq 0) "$name --self-test exit code $($process.ExitCode) (installed exe)"
+    $all = $Expected.Count + 3   # + embedded fonts, WPF rendering, Visual C++ runtime in use
+    Assert-True (@($lines | Where-Object { $_ -match "self-test: all $all checks passed\.$" }).Count -eq 1) "$name self-test: all $all checks passed"
+    $missing = @(@('Embedded fonts', 'WPF rendering', 'Visual C++ runtime in use') + $Expected | Where-Object {
+        $check = $_
+        @($lines | Where-Object { $_.StartsWith("PASS  $check", [StringComparison]::Ordinal) }).Count -ne 1
+    })
+    Assert-True ($missing.Count -eq 0) "$name self-test PASS lines: $(($Expected) -join ', ') $(if ($missing) { "(missing: $($missing -join ', '))" })"
+}
+
 function Assert-ServicesGone {
     $deadline = (Get-Date).AddMinutes(1)
     while ((Get-Service TitanFitServer, TitanFitDatabase -ErrorAction SilentlyContinue) -and (Get-Date) -lt $deadline) { Start-Sleep 1 }
@@ -186,6 +214,7 @@ try {
     foreach ($tool in 'pg_dump', 'pg_restore', 'psql') { Assert-True (Test-Path "$pgBin\$tool.exe") "$tool.exe installed" }
     Assert-True (Test-Path "$appDir\Admin\Gym.Admin.exe") 'Admin app installed (default component)'
     Assert-True ((Test-Path "$startMenu\TitanFit Admin.lnk") -and (Test-Path "$desktop\TitanFit Admin.lnk")) 'Admin app shortcuts (Start menu + desktop)'
+    Assert-SelfTest "$appDir\Admin\Gym.Admin.exe" @('SkiaSharp native library', 'HarfBuzz native library', 'Dashboard chart')
     Assert-True ((Get-Content -Raw $stationJson | ConvertFrom-Json).serverUrl -eq 'http://localhost:5080') 'station.json for the Admin app on the server: http://localhost:5080'
 
     $locale = Invoke-Pg 'psql' @('-d', 'titanfit', '-At', '-c', "SELECT pg_encoding_to_char(encoding) || ' ' || datlocprovider::text || ' ' || coalesce(datlocale, '') FROM pg_database WHERE datname = 'titanfit'")
@@ -272,6 +301,33 @@ try {
         Assert-True (Test-Path "$appDir\$app\Gym.$app.exe") "$app app installed"
         Assert-True ((Test-Path "$startMenu\TitanFit $app.lnk") -and (Test-Path "$desktop\TitanFit $app.lnk")) "$app shortcuts (Start menu + desktop)"
     }
+
+    # The Visual C++ runtime for OpenCV (Reception camera): the setup ran vc_redist.x64.exe, or skipped it because the
+    # installed runtime is at least the bundled one. Either way the runtime is registered afterwards.
+    $vcLines = @(Get-Content (Join-Path $LogDir 'station-install.log') | Where-Object { $_ -match 'VC\+\+ runtime x64: ' } |
+        ForEach-Object { ($_ -split 'VC\+\+ runtime x64: ', 2)[1] })
+    $vcLines | ForEach-Object { Write-Host "    | $_" }
+    $plan = @($vcLines | Where-Object { $_ -match '^installed \S+, bundled \d+(\.\d+){3}: (up to date|running)' })
+    Assert-True ($plan.Count -eq 1) "station setup log: the VC++ runtime step ($($vcLines -join ' | '))"
+    $null = $plan[0] -match '^installed (?<installed>\S+), bundled (?<bundled>[\d.]+): (?<action>up to date|running)'
+    $vcStep = $Matches
+    $bundled = [version]$vcStep.bundled
+    if ($vcStep.action -eq 'running') {
+        $result = @($vcLines | Where-Object { $_ -match '^vc_redist\.x64\.exe exit code (\d+)' })
+        $vcCode = if ($result.Count -eq 1 -and $result[0] -match 'exit code (\d+)') { [int]$Matches[1] } else { -1 }
+        Assert-True ($vcCode -in 0, 1638, 3010) "VC++ runtime step ran: installed $($vcStep.installed) was older than $bundled, vc_redist.x64.exe exit code $vcCode"
+    } else {
+        Assert-True ([version]$vcStep.installed -ge $bundled) "VC++ runtime step skipped correctly: installed $($vcStep.installed) >= bundled $bundled"
+    }
+    $registered = @(foreach ($key in 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\VisualStudio\14.0\VC\Runtimes\x64', 'HKLM:\SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64') {
+        $value = Get-ItemProperty $key -ErrorAction SilentlyContinue
+        if ($value -and $value.Installed -eq 1) { [version]('{0}.{1}.{2}.{3}' -f $value.Major, $value.Minor, $value.Bld, $(if ($null -ne $value.Rbld) { $value.Rbld } else { 0 })) }
+    } | Sort-Object -Descending)
+    Assert-True ($registered.Count -gt 0 -and $registered[0] -ge $bundled) "VC++ runtime x64 registered: $($registered -join ', ') (bundled $bundled)"
+    Assert-True (-not (Test-Path "$appDir\Reception\vc_redist.x64.exe") -and -not (Test-Path "$appDir\Setup\vc_redist.x64.exe")) 'vc_redist.x64.exe not left in the program folder'
+
+    Assert-SelfTest "$appDir\Reception\Gym.Reception.exe" @('OpenCV native library', 'Camera frame to member code', 'Member QR image', 'Check-in sounds')
+    Assert-SelfTest "$appDir\Cafeteria\Gym.Cafeteria.exe" @('Receipt drawing', 'Receipt print document')
 
     # 4. Uninstall ----------------------------------------------------------------------------------------------
     Write-Step '4. Uninstall station and server (silent)'

@@ -12,5 +12,11 @@
     "url": "https://github.com/jrsoftware/issrc/releases/download/is-6_7_4/innosetup-6.7.4.exe",
     "sha256": "a549929319f9120716677c685535ca4671e4b937b5fdc87e2585f32d8eb30e8c",
     "sha256Source": "GitHub release asset digest of jrsoftware/issrc is-6_7_4"
+  },
+  "vcredist": {
+    "file": "vc_redist.x64.exe",
+    "url": "https://aka.ms/vc14/vc_redist.x64.exe",
+    "urlSource": "https://learn.microsoft.com/cpp/windows/latest-supported-vc-redist (latest supported v14, x64)",
+    "check": "no published hash: Authenticode signature by Microsoft Corporation, x64, version 14.x (build-installers.ps1)"
   }
 }

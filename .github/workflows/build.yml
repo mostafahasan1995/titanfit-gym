@@ -78,6 +78,64 @@ jobs:
           }
           Get-ChildItem dist | Format-Table Name, @{ Name = 'Size (MB)'; Expression = { [math]::Round($_.Length / 1MB, 1) } } -AutoSize
 
+      # Each exe loads its native and critical libraries (fonts, WPF, OpenCV + ZXing + QRCoder + sounds, SkiaSharp +
+      # HarfBuzz + LiveCharts, receipt + XPS) and exits: no window, camera or printer. The bundles unpack into
+      # bundle-extract/ for the next step. (The runner has the Visual C++ runtime; the clean-PC case is the next step.)
+      - name: Self-test (published exes)
+        env:
+          DOTNET_BUNDLE_EXTRACT_BASE_DIR: ${{ github.workspace }}\bundle-extract
+        run: |
+          $failures = @()
+          foreach ($app in 'Gym.Reception', 'Gym.Admin', 'Gym.Cafeteria') {
+            $out = Join-Path $env:RUNNER_TEMP "$app-self-test.txt"
+            $proc = Start-Process -FilePath (Resolve-Path "dist/$app.exe").Path -ArgumentList '--self-test' `
+              -NoNewWindow -PassThru -RedirectStandardOutput $out -RedirectStandardError "$out.err"
+            $null = $proc.Handle  # keeps the exit code readable after the process ends
+            if (-not $proc.WaitForExit(180000)) {
+              $proc.Kill()
+              $failures += "${app} --self-test timed out"
+              continue
+            }
+            $proc.WaitForExit()
+            Write-Host "---- $app --self-test: exit code $($proc.ExitCode)"
+            Get-Content $out, "$out.err" -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "  $_" }
+            if ($proc.ExitCode -ne 0) { $failures += "${app} --self-test: exit code $($proc.ExitCode)" }
+          }
+          if ($failures.Count -gt 0) {
+            $failures | ForEach-Object { Write-Host "::error::$_" }
+            exit 1
+          }
+
+      # Which apps need the Microsoft Visual C++ runtime on a clean gym PC: the imports of each exe and of every native
+      # file its bundle unpacks, read with dumpbin. (WPF brings its own vcruntime140_cor3.dll.) The Station setup
+      # installs the runtime for the Reception app (installer/station.iss): a new dependency anywhere else fails here.
+      - name: Native dependencies (Visual C++ runtime)
+        run: |
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+          $dumpbin = & $vswhere -latest -products * -find 'VC\Tools\MSVC\**\bin\Hostx64\x64\dumpbin.exe' | Select-Object -First 1
+          if (-not $dumpbin) { throw 'dumpbin.exe not found on the runner' }
+          $vcRuntime = '^(msvcp140(_\d+|_atomic_wait|_codecvt_ids)?|vcruntime140(_1|_threads)?|concrt140|vcomp140|vccorlib140|mfc140u?)\.dll$'
+          $setupInstallsIt = @('Gym.Reception')
+          $failures = @()
+          foreach ($app in 'Gym.Admin', 'Gym.Reception', 'Gym.Cafeteria') {
+            $files = @(Get-Item "dist/$app.exe") + @(Get-ChildItem "bundle-extract/$app" -Recurse -File -Include *.dll, *.exe -ErrorAction SilentlyContinue)
+            $needs = @()
+            foreach ($file in $files) {
+              $imports = @(& $dumpbin /nologo /dependents $file.FullName | ForEach-Object { if ($_ -match '^\s+(\S+\.dll)\s*$') { $Matches[1] } })
+              $vc = @($imports | Where-Object { $_ -match $vcRuntime } | Sort-Object -Unique)
+              if ($vc.Count -gt 0) { $needs += "$($file.Name) imports $($vc -join ', ')" }
+            }
+            $verdict = if ($needs.Count -gt 0) { 'NEEDS the Visual C++ runtime' } else { 'does not need the Visual C++ runtime' }
+            Write-Host "${app}: $verdict ($($files.Count) files: $((($files | ForEach-Object Name) | Sort-Object) -join ', '))"
+            $needs | ForEach-Object { Write-Host "    $_" }
+            if ($needs.Count -gt 0 -and $app -notin $setupInstallsIt) { $failures += "${app} needs the Visual C++ runtime, but no setup installs it for this app" }
+            if ($needs.Count -eq 0 -and $app -in $setupInstallsIt) { Write-Host "::warning::${app} no longer needs the Visual C++ runtime" }
+          }
+          if ($failures.Count -gt 0) {
+            $failures | ForEach-Object { Write-Host "::error::$_" }
+            exit 1
+          }
+
       # Each app renders its login, server settings, every registered page, the control gallery and a dialog on
       # sample data (no server) and writes screenshots/<App>-<lang>.json listing them. A new page needs no change here.
       - name: Smoke screenshots (every page, EN and AR)
@@ -237,6 +295,18 @@ jobs:
         with:
           path: artifacts/downloads
           key: installer-downloads-${{ hashFiles('installer/downloads.json') }}
+
+      # Microsoft's vc_redist.x64.exe permalink always serves the latest build (no fixed hash): cached for a month,
+      # its Authenticode signature is checked on every build.
+      - name: Month (cache key of the Visual C++ redistributable)
+        id: month
+        run: '"month=$(Get-Date -Format yyyy-MM)" | Add-Content $env:GITHUB_OUTPUT'
+
+      - name: Cache the Visual C++ redistributable
+        uses: actions/cache@v6
+        with:
+          path: artifacts/vcredist
+          key: vcredist-x64-${{ steps.month.outputs.month }}
 
       - name: Build the setups
         env:

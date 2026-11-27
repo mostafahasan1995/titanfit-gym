@@ -40,6 +40,7 @@ internal static class AdminApp
             new("dashboard-backup-warning", "dashboard", view => ((DashboardPage)view).ShowBackupFailureForSmokeAsync()),
             new("backups-failed", "backups", _ => Task.CompletedTask),
         ],
+        SelfTestChecks = AdminSelfTest.Checks,
     };
 
     private static Task Open(Action open)
