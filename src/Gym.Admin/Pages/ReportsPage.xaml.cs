@@ -285,7 +285,7 @@ public partial class ReportsPage : PageView
                 Binding = new Binding($"[{i}].Display") { Mode = BindingMode.OneWay },
                 Width = i == 0
                     ? new DataGridLength(1, DataGridLengthUnitType.Star)
-                    : new DataGridLength(column.Kind == ReportColumnKind.Money ? 140 : 84),
+                    : new DataGridLength(column.Kind == ReportColumnKind.Money ? 140 : 104),
                 ElementStyle = CellStyle(column.Kind),
             });
         }

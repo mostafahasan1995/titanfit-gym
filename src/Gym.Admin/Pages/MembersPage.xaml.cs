@@ -224,6 +224,10 @@ public partial class MembersPage : PageView
         }
 
         var language = Context.Language;
+
+        // English status labels are longer ("No subscription"), Arabic dates are longer ("28 تشرين الثاني 2026").
+        StatusColumn.Width = new DataGridLength(language == AppLanguage.Arabic ? 140 : 178);
+        EndsColumn.Width = new DataGridLength(language == AppLanguage.Arabic ? 172 : 128);
         var rows = r.Items.Select(m => new MemberRow(
             m,
             m.FullName,

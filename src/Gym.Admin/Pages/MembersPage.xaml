@@ -85,7 +85,7 @@
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:MembersText.Phone}}" Width="140">
+                            <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:MembersText.Phone}}" Width="132">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding Phone}" Style="{DynamicResource Text.Body}" FontSize="14" Foreground="{DynamicResource Brush.TextTertiary}"
@@ -93,14 +93,14 @@
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:MembersText.Status}}" Width="158">
+                            <DataGridTemplateColumn x:Name="StatusColumn" Header="{ui:Loc {x:Static pages:MembersText.Status}}" Width="178">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <controls:StatusPill Status="{Binding Status}" HorizontalAlignment="Left" />
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:MembersText.ValidUntil}}" Width="140">
+                            <DataGridTemplateColumn x:Name="EndsColumn" Header="{ui:Loc {x:Static pages:MembersText.ValidUntil}}" Width="128">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding Ends}" Style="{DynamicResource Text.Body}" FontSize="14" Foreground="{DynamicResource Brush.TextTertiary}" />
