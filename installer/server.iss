@@ -141,6 +141,7 @@ Source: "{#PayloadDir}\pgsql\*"; DestDir: "{app}\pgsql"; Components: server; Fla
 Source: "{#PayloadDir}\Gym.Admin.exe"; DestDir: "{app}\Admin"; Components: admin; Flags: ignoreversion sharedfile uninsnosharedfileprompt
 Source: "scripts\server-setup.ps1"; DestDir: "{app}\Setup"; Flags: ignoreversion
 Source: "scripts\station-config.ps1"; DestDir: "{app}\Setup"; Flags: ignoreversion sharedfile uninsnosharedfileprompt
+Source: "scripts\restore-backup.ps1"; DestDir: "{app}\Setup"; Components: server; Flags: ignoreversion
 Source: "{#BrandDir}\titanfit.ico"; DestDir: "{app}\Setup"; Flags: ignoreversion sharedfile uninsnosharedfileprompt
 
 [Icons]

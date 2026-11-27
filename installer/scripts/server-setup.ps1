@@ -52,6 +52,7 @@ $PgData = Join-Path $DataRoot 'pgdata'
 $ServerConfig = Join-Path $DataRoot 'server.json'
 $DbAdminConfig = Join-Path $DataRoot 'database-admin.json'
 $KeysDir = Join-Path $DataRoot 'keys'
+$BackupDir = Join-Path $DataRoot 'backups'
 $LogDir = Join-Path $DataRoot 'logs'
 $LogFile = Join-Path $LogDir 'server-setup.log'
 $PgBin = Join-Path $AppDir 'pgsql\bin'
@@ -418,8 +419,9 @@ function Invoke-Install {
     # Leftover PG* variables (PGPORT, PGDATA, PGPASSWORD...) must not change what the tools do.
     Get-ChildItem Env: | Where-Object { $_.Name -like 'PG*' } | ForEach-Object { Remove-Item -LiteralPath ('Env:' + $_.Name) }
 
-    New-Item -ItemType Directory -Force -Path $DataRoot, $KeysDir | Out-Null
+    New-Item -ItemType Directory -Force -Path $DataRoot, $KeysDir, $BackupDir | Out-Null
     Protect-Path $KeysDir -Folder   # the token signing key
+    Protect-Path $BackupDir -Folder   # the default folder of the daily database backups (member data)
 
     $newSuperPassword = Initialize-Cluster
     Register-DatabaseService
@@ -455,7 +457,7 @@ function Invoke-Uninstall {
     try {
         Remove-NetFirewallRule -Name $FirewallRule -ErrorAction SilentlyContinue
     } catch { Write-Log "ERROR: $($_.Exception.Message)"; $failed = $true }
-    Write-Log "Kept: $DataRoot (database, photos, keys, settings). Delete it by hand only if the data is no longer needed."
+    Write-Log "Kept: $DataRoot (database, backups, photos, keys, settings). Delete it by hand only if the data is no longer needed."
     if ($failed) { exit 1 }
 }
 

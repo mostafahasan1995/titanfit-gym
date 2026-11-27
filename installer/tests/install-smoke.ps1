@@ -4,7 +4,8 @@
       ./installer/tests/install-smoke.ps1 -InstallersDir artifacts/installers -LogDir artifacts/install-logs
 
     1. Server setup, silent: both services run, the database listens on localhost:5433 only, /health is ok,
-       server.json is readable only by SYSTEM and Administrators, firewall rule, first admin, login, pg_dump.
+       server.json is readable only by SYSTEM and Administrators, firewall rule, first admin, login, pg_dump,
+       "Back up now" through the API (file in the protected backups folder) and restore-backup.ps1.
     2. Server setup again (upgrade): config, data and login are kept.
     3. Station setup, silent: a bad /SERVERURL is refused; a good one writes station.json; apps and shortcuts.
     4. Uninstall both: services, firewall rule and program files are gone; %ProgramData%\TitanFit is kept.
@@ -75,12 +76,18 @@ function Get-Json([string]$Path, [string]$Token) {
     Invoke-RestMethod -Uri "$api$Path" -Headers $headers -TimeoutSec 20
 }
 
-function Send-Json([string]$Path, $Body) {
+function Send-Json([string]$Path, $Body, [string]$Token, [string]$Method = 'Post') {
     $status = 0
+    $headers = @{}
+    if ($Token) { $headers.Authorization = "Bearer $Token" }
     $json = $Body | ConvertTo-Json -Compress
-    $response = Invoke-RestMethod -Method Post -Uri "$api$Path" -ContentType 'application/json; charset=utf-8' -Body $json `
-        -SkipHttpErrorCheck -StatusCodeVariable status -TimeoutSec 30
+    $response = Invoke-RestMethod -Method $Method -Uri "$api$Path" -Headers $headers -ContentType 'application/json; charset=utf-8' -Body $json `
+        -SkipHttpErrorCheck -StatusCodeVariable status -TimeoutSec 120
     [pscustomobject]@{ Status = [int]$status; Body = $response }
+}
+
+function Get-Sids([string]$Path) {
+    @((Get-Acl $Path).Access | ForEach-Object { $_.IdentityReference.Translate([Security.Principal.SecurityIdentifier]).Value } | Sort-Object -Unique)
 }
 
 function Get-AppConnection {
@@ -199,6 +206,41 @@ try {
     Assert-True ((($list -join "`n") -match 'TABLE public members') -and (Get-Item $dump).Length -gt 1KB) "pg_dump backup + pg_restore --list ($((Get-Item $dump).Length) bytes)"
     Remove-Item $dump -Force
 
+    # Daily backups: "Back up now" through the API writes a pg_dump file into the protected default folder, and the
+    # restore helper brings the database back to it.
+    $token = $created.Body.token
+    $backupDir = Join-Path $dataRoot 'backups'
+    Assert-True (((Get-Sids $backupDir) -join ',') -eq 'S-1-5-18,S-1-5-32-544') "backups folder readable only by SYSTEM and Administrators ($((Get-Sids $backupDir) -join ','))"
+    $settings = Get-Json '/api/backups/settings' $token
+    Assert-True ($settings.isDefaultFolder -and $settings.folder -eq $backupDir) "backup settings: default folder $($settings.folder), daily at $($settings.time), keep $($settings.keepLast)"
+    Assert-True ($settings.resolvedPgDumpPath -eq "$pgBin\pg_dump.exe") "the server finds pg_dump: $($settings.resolvedPgDumpPath)"
+    for ($try = 1; $try -le 5; $try++) {
+        $backup = Send-Json '/api/backups' @{} $token
+        if ($backup.Status -ne 409) { break }
+        Start-Sleep -Seconds 5   # the daily job is running right now
+    }
+    Assert-True ($backup.Status -eq 200 -and $backup.Body.succeeded) "POST /api/backups (back up now): HTTP $($backup.Status), $($backup.Body.fileName) $($backup.Body.errorCode) $($backup.Body.error)"
+    $backupFile = Join-Path $backupDir $backup.Body.fileName
+    Assert-True ((Test-Path $backupFile) -and (Get-Item $backupFile).Length -gt 1KB -and $backup.Body.fileName -match '^titanfit-\d{8}-\d{4}(-\d+)?\.dump$') "backup file written: $backupFile ($((Get-Item $backupFile).Length) bytes)"
+    Assert-True (((Get-Sids $backupFile) -join ',') -eq 'S-1-5-18,S-1-5-32-544') 'backup file readable only by SYSTEM and Administrators'
+    $listed = @(Get-Json '/api/backups' $token)
+    Assert-True ($listed[0].name -eq $backup.Body.fileName) "GET /api/backups lists it first ($($listed.Count) backups)"
+    $status = Get-Json '/api/backups/status' $token
+    Assert-True ($status.warning -eq 'None' -and $status.lastSuccess.fileName -eq $backup.Body.fileName) "GET /api/backups/status: warning $($status.warning), next run $($status.nextRunAt)"
+    $list = Invoke-Pg 'pg_restore' @('--list', $backupFile)
+    Assert-True (($list -join "`n") -match 'TABLE public members') 'pg_restore --list reads the backup'
+
+    $marker = Send-Json '/api/plans' @{ months = 7; price = 777000; isActive = $true } $token
+    Assert-True ($marker.Status -eq 201) "a plan added after the backup (HTTP $($marker.Status))"
+    $restoreScript = Join-Path $appDir 'Setup\restore-backup.ps1'
+    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $restoreScript -BackupFile $backupFile -Force *>&1 | ForEach-Object { Write-Host "    $_" }
+    Assert-True ($LASTEXITCODE -eq 0) "restore-backup.ps1 (Windows PowerShell 5.1) exit code $LASTEXITCODE"
+    Assert-ServerRunning 'after the restore'
+    $plansAfter = @(Get-Json '/api/plans?includeInactive=true' $token)
+    Assert-True (-not ($plansAfter | Where-Object { $_.months -eq 7 })) "restored: the plan added after the backup is gone ($($plansAfter.Count) plans)"
+    Assert-Login 'after the restore'
+    Assert-True (@(Get-ChildItem $backupDir -Filter 'titanfit-before-restore-*.dump').Count -eq 1) 'the restore saved the data from before it'
+
     # 2. Upgrade (same setup again) -----------------------------------------------------------------------------
     Write-Step '2. Server setup again (upgrade over the running server)'
     $configHash = (Get-FileHash $serverJson).Hash
@@ -239,7 +281,7 @@ try {
     Assert-ServicesGone
     Assert-True (-not (Get-NetFirewallRule -Name 'TitanFit-Server-TCP-5080' -ErrorAction SilentlyContinue)) 'firewall rule removed'
     Assert-True (-not (Test-Path "$appDir\Server\Gym.Api.exe") -and -not (Test-Path "$pgBin\postgres.exe")) 'server and PostgreSQL program files removed'
-    foreach ($kept in 'pgdata\PG_VERSION', 'server.json', 'database-admin.json', 'keys\jwt-signing.key', 'station.json') {
+    foreach ($kept in 'pgdata\PG_VERSION', 'server.json', 'database-admin.json', 'keys\jwt-signing.key', 'station.json', "backups\$($backup.Body.fileName)") {
         Assert-True (Test-Path (Join-Path $dataRoot $kept)) "kept: %ProgramData%\TitanFit\$kept"
     }
 
