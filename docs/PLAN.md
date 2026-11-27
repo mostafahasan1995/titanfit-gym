@@ -10,7 +10,7 @@ The single source of truth for this project. Any session that continues the work
 | 2 | Core: skeleton, CI, database, API, login, subscription logic, installers | ✅ Done (2.1–2.5) |
 | B0 | App foundation: API abstraction + sample data, station.json, login and roles, page shell, shared controls, smoke screenshots per page | ✅ Done (see "App foundation") |
 | 3 | Reception app | Waiting (needs Syrian ID scan sample) |
-| 4 | Cafeteria app | Waiting |
+| 4 | Cafeteria app | ✅ Done (see "Cafeteria app"); receipt printer and scanner still to test on site |
 | 5 | Admin app + deployment | Waiting |
 
 **Next action:** the app screens (steps 3 to 5, one agent per app, each only inside its own app project; follow "App foundation"). The owner said on 2026-11-26 to execute all steps without stopping; report at milestones.
@@ -219,6 +219,26 @@ Everything shared is in `Gym.UI` and `Gym.Client`. An app agent adds files only 
 - **Shared controls and styles** (all colours are Deep Teal tokens via `DynamicResource`; usage example: `Gym.UI/Shell/ControlsGalleryPage.xaml`, screenshot `<App>-controls-<lang>.png`): buttons `Button.Primary`, `Button.Secondary` (default), `Button.Gold`, `Button.Danger`, `Button.Ghost`, `Button.Icon` with `ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Check}"` (44 px and up); implicit TextBox, PasswordBox, ComboBox, DatePicker and Calendar, CheckBox, ListBox, DataGrid (read-only, 52 px rows, define the columns), ScrollBar, ToolTip; `ui:ThemeAssist.Placeholder` and `ui:ThemeAssist.HasError` on inputs; Border styles `Card`, `Card.Inset`, `Chip`, `Divider`; text styles `Text.H1`, `Text.H2`, `Text.Body`, `Text.Strong`, `Text.Caption`, `Text.Overline`, `Text.Label`, `Text.Number`, `Text.Display`; controls (`xmlns:controls="clr-namespace:Gym.UI.Controls;assembly=Gym.UI"`) `Icon`, `StatusPill` (`Status="{Binding Membership.Status}"`: green / amber / red / grey with icon and label), `MoneyText`, `SearchBox` (`SearchChanged`, 300 ms debounce), `FormField` (`Label`, `Hint`, `Error`), `EmptyState`, `LoadingOverlay`, `Avatar` (+ `Images.FromBytes`), `PagePlaceholder`, `ToastView`, `DialogFrame`; line icons `UiIcons.*`. CommunityToolkit.Mvvm 8.4.2 comes with Gym.UI for view models.
 - **Smoke mode:** `Gym.<App>.exe --smoke-screenshots <dir> --lang en|ar` writes `<App>-login`, `-server-settings`, (Admin) `-first-admin`, one per page id, one per smoke state, `-controls` and `-dialog` PNGs plus `<App>-<lang>.json` (each screenshot with ok / error, text problems, unhandled errors, binding warnings). Exit code 1 when a page threw, a string failed the check or a UI error was unhandled. Run it locally the same way to see a screen without a server.
 
+## Cafeteria app (step 4)
+
+`src/Gym.Cafeteria`, for the 2 cafeteria PCs (Cashier and Admin logins). Four screens, in sidebar order (screenshot id in brackets):
+
+- **Sell** (`cashier`, plus `cashier-paid`), after `design/Cafeteria-POS.dc.html`:
+  - Low-stock banner (count + the lowest items), the scan / search box, category tabs from the API with counts, big product tiles: name, price in gold, the stock left after the cart (grey, amber when low, red and disabled when out), a ×N badge for what is in the cart.
+  - Order: lines with − / + (− at 1 removes, + stops at the stock), line totals, the current shift (open since, sales, total), cash received with quick amounts (exact, next 5,000 / 10,000 / 50,000) and the change, the total, **Charge** (one `POST /api/sales` with `Context.StationName`; cash only, as in Contracts).
+  - `insufficient_stock` (another till sold first): the stock is reloaded, the short lines turn red ("Only 7 in stock") and a dialog lists them (from `shortages` in the answer, else by comparing with the fresh stock). A timeout says to check Receipts before charging again.
+  - After a sale: the paid panel (receipt number, change to give, print status, Reprint, New order); the receipt prints at once. Live `StockChanged`, `ProductChanged` and `SaleCompleted` update tiles, cart, banner and shift totals.
+- **Stock** (`stock`, plus `stock-adjust`): items with category, barcode, price, stock and minimum, a status pill (in stock / low / out / inactive), low rows tinted; filters: search (name or barcode), category, low only, show inactive. The selected item: stock, minimum, price, **Stock in** (quantity + note), **Adjust** (a change or the counted quantity, reason required; the new stock is shown before saving and a result below zero is refused in the form and by the server, `negative_stock` / `insufficient_stock`), **Edit**, and its movements of the last 90 days. **New item / Edit item:** names EN and AR, category, price, barcode (scan into the field), minimum stock (the low-stock threshold per item), active.
+- **Shift close** (`shift-close`, plus `shift-report`): the open shift (or a past one picked in the list) with sales, sales total, opening cash, expected cash and items sold. **Close shift** with the counted cash (missing / extra / matches shown while typing) and a note, confirmed; then the shift (Z) report prints. **Shift report** shows the report as it prints, with Print. No open shift: **Open shift** with the opening cash (a sale also opens one). Past shifts of the last 14 days with totals and status (open / closed / cash short); a cashier sees his own, an admin everyone's.
+- **Receipts** (`receipts`): the day's sales (date picker; a cashier sees his own), the selected receipt exactly as it prints (80 mm), Reprint. The station's hardware: the **receipt printer** picker (installed Windows printers or "Windows default printer", saved as `printerName` in station.json through `Context.SaveStation`), Test print (EN + AR sample), and a **barcode scanner test** field.
+- **Receipt** (EN or AR, the UI language): TITANFIT, receipt number, date and time, station, cashier, items (name, then qty × price and the line total), total, payment cash, cash received and change, thank-you line. The shift report: shift number, station, cashier, opened / closed, sales, sales total, opening, expected and counted cash, difference, items sold, note, printed time.
+- **Code:** view models without WPF (`Sales/Cart.cs`, `Sales/CashierViewModel.cs`, `Sales/ShiftViewModel.cs`, `Inventory/StockViewModel.cs`), `Hardware/BarcodeWedge.cs`, `Receipts/ReceiptLayout.cs` (the slip as rows of text), `Receipts/ReceiptView.cs` (draws the rows for the preview and the printer), `Receipts/ReceiptPrinter.cs` (`IReceiptPrinter`, `WindowsReceiptPrinter`, `PreviewReceiptPrinter`). Unit tests: `tests/Gym.Tests/Cafeteria` (cart math, quick cash rounding, the wedge, receipt rows and view in Arabic, the view models on the sample API).
+- **Hardware assumptions (until tested on site):**
+  - **Barcode scanner:** USB, keyboard (HID) mode, Enter after each code. On the Sell screen a keyboard wedge on the window takes a burst of 4+ characters at most 60 ms apart followed by Enter as a scan, wherever the focus is (what the scanner typed into a field is taken back); an unknown code gives a warning toast and a beep. Slower typing is normal typing; Enter on a whole barcode in the search box also adds the item. On the other screens a scan simply types into the focused field (item barcode, scanner test).
+  - **Receipt printer:** any Windows printer driver (WPF printing: an XPS page with the receipt drawing). Paper narrower than 100 mm counts as a roll: the page is as long as the receipt, 72 mm printable width; on an A4 printer the receipt sits at the top of the page. ESC/POS (raw printing, cutter and cash drawer commands, logo) waits for the printer model (open item 2): a new `IReceiptPrinter` can print the same `ReceiptLayout` rows.
+  - Low-stock warning: the shell has no badge on the sidebar items, so the Sell screen shows a banner and the Stock screen a count.
+  - Smoke screenshots: no printer and no scanner are touched (`Context.IsSample`); the Sell screen shows a filled cart with cash typed in.
+
 ## Security
 
 - The QR holds no personal data (random code only).
@@ -343,7 +363,7 @@ Two Inno Setup 6 setups, built in CI (job `installers`), x64, admin rights, Engl
    - Theme in `Gym.UI`.
    - Camera photo, ID scan, new member, QR create (copy/save).
    - Renew and search, QR check-in with the camera.
-4. **Cafeteria app:** cashier screen, stock, low-stock warnings, receipts, shift close.
+4. **Cafeteria app:** cashier screen, stock, low-stock warnings, receipts, shift close. ✅ Done (see "Cafeteria app").
 5. **Admin app and deployment:**
    - Dashboard, management screens, reports, backups.
    - Final installers, and an on-site hardware test.
@@ -388,7 +408,7 @@ Answers received during step 2.1. Private trainers, staff types and ratings are 
 ## Open items
 
 1. **Syrian ID barcode:** what it actually holds is unknown. Before step 3, the owner scans one ID into Notepad and sends the text (digits may be masked).
-2. **Receipt printer model** (before step 4).
+2. **Receipt printer model:** still unknown. The Cafeteria app prints through any Windows driver for now (80 mm layout, see "Cafeteria app"). With the model: test width, cut and paper feed on site, and decide on ESC/POS (raw printing, cash drawer kick, logo).
 3. **Touchscreens:** not bought yet. The UI already uses touch-size targets.
 4. **Webcams:** buy autofocus models; fixed-focus ones struggle with a QR on a phone screen. Decide one or two per reception PC; a second keeps check-in running during registration.
 5. ~~**Early renewal**~~ decided: the new period starts the day after the old end date (see "Business rules").
@@ -399,6 +419,7 @@ Answers received during step 2.1. Private trainers, staff types and ratings are 
 10. **Fingerprint reader model:** confirm before coding (e.g. ZKTeco ZK9500).
 11. **Negative stock:** refused for now (see "Business rules"). The owner can ask to allow selling with a warning instead.
 12. **HTTPS on the LAN:** still plain HTTP: the API listens on `http://0.0.0.0:5080`, and the firewall rule lets only the local subnet in (Private and Domain networks). Logins and data cross the gym LAN unencrypted. HTTPS (a local certificate the stations trust, installed by the setups) comes later.
+13. **Barcode scanner on site:** check that it is in USB keyboard mode with Enter after the code, and that it types fast enough for the Sell screen (at most 60 ms between characters; otherwise change `BarcodeWedge.DefaultMaxGapMs`). Also check the barcodes on the real products.
 
 ## Working rules
 
