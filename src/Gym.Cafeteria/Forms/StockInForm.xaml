@@ -1,0 +1,27 @@
+<!-- The Stock in dialog: how many came in, and a note (supplier, invoice). -->
+<UserControl x:Class="Gym.Cafeteria.Forms.StockInForm"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:Gym.UI;assembly=Gym.UI"
+             xmlns:controls="clr-namespace:Gym.UI.Controls;assembly=Gym.UI"
+             xmlns:local="clr-namespace:Gym.Cafeteria">
+    <StackPanel>
+        <Border Style="{DynamicResource Card.Inset}" Padding="14,10">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Style="{DynamicResource Text.Caption}" VerticalAlignment="Center" Text="{ui:Loc {x:Static local:CafeteriaText.InStockNow}}" />
+                    <TextBlock x:Name="CurrentText" FontFamily="{DynamicResource Font.Heading}" FontSize="18" FontWeight="Bold" Margin="8,0,0,0"
+                               VerticalAlignment="Center" Foreground="{DynamicResource Brush.Text}" />
+                </StackPanel>
+                <TextBlock x:Name="ItemName" Style="{DynamicResource Text.Strong}" VerticalAlignment="Center" HorizontalAlignment="Left" />
+            </DockPanel>
+        </Border>
+        <controls:FormField x:Name="QuantityField" Margin="0,16,0,0" Label="{ui:Loc {x:Static local:CafeteriaText.QuantityIn}}">
+            <TextBox x:Name="QuantityInput" FlowDirection="LeftToRight" InputScope="Number" />
+        </controls:FormField>
+        <controls:FormField x:Name="NoteField" Margin="0,14,0,0" Label="{ui:Loc {x:Static local:CafeteriaText.Note}}"
+                            Hint="{ui:Loc {x:Static local:CafeteriaText.StockInNoteHint}}">
+            <TextBox x:Name="NoteInput" MaxLength="500" />
+        </controls:FormField>
+    </StackPanel>
+</UserControl>

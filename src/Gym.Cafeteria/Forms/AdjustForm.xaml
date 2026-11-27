@@ -1,0 +1,47 @@
+<!-- The Adjust stock dialog: a change (+ or −) or the counted quantity, with a reason. The new stock is shown before saving. -->
+<UserControl x:Class="Gym.Cafeteria.Forms.AdjustForm"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:Gym.UI;assembly=Gym.UI"
+             xmlns:controls="clr-namespace:Gym.UI.Controls;assembly=Gym.UI"
+             xmlns:local="clr-namespace:Gym.Cafeteria">
+    <StackPanel>
+        <Border Style="{DynamicResource Card.Inset}" Padding="14,10">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Style="{DynamicResource Text.Caption}" VerticalAlignment="Center" Text="{ui:Loc {x:Static local:CafeteriaText.InStockNow}}" />
+                    <TextBlock x:Name="CurrentText" FontFamily="{DynamicResource Font.Heading}" FontSize="18" FontWeight="Bold" Margin="8,0,0,0"
+                               VerticalAlignment="Center" Foreground="{DynamicResource Brush.Text}" />
+                </StackPanel>
+                <TextBlock x:Name="ItemName" Style="{DynamicResource Text.Strong}" VerticalAlignment="Center" HorizontalAlignment="Left" />
+            </DockPanel>
+        </Border>
+
+        <Border Margin="0,16,0,0" Padding="4" CornerRadius="12" HorizontalAlignment="Left" Background="{DynamicResource Brush.Panel}"
+                BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1">
+            <StackPanel Orientation="Horizontal">
+                <RadioButton x:Name="ChangeMode" Style="{DynamicResource Lang.Toggle}" GroupName="AdjustMode" IsChecked="True" Padding="14,0"
+                             Content="{ui:Loc {x:Static local:CafeteriaText.AdjustByChange}}" Checked="OnModeChanged" />
+                <RadioButton x:Name="CountMode" Style="{DynamicResource Lang.Toggle}" GroupName="AdjustMode" Margin="4,0,0,0" Padding="14,0"
+                             Content="{ui:Loc {x:Static local:CafeteriaText.AdjustByCount}}" Checked="OnModeChanged" />
+            </StackPanel>
+        </Border>
+
+        <controls:FormField x:Name="QuantityField" Margin="0,14,0,0">
+            <TextBox x:Name="QuantityInput" FlowDirection="LeftToRight" TextChanged="OnQuantityChanged" />
+        </controls:FormField>
+        <controls:FormField x:Name="ReasonField" Margin="0,14,0,0" Label="{ui:Loc {x:Static local:CafeteriaText.Reason}}"
+                            Hint="{ui:Loc {x:Static local:CafeteriaText.ReasonHint}}">
+            <TextBox x:Name="ReasonInput" MaxLength="500" />
+        </controls:FormField>
+
+        <Border x:Name="PreviewBox" Margin="0,14,0,0" Padding="14,10" CornerRadius="12" BorderThickness="1"
+                Background="{DynamicResource Brush.AccentSoft}" BorderBrush="{DynamicResource Brush.AccentLine}">
+            <DockPanel>
+                <TextBlock x:Name="NewStockText" DockPanel.Dock="Right" FontFamily="{DynamicResource Font.Heading}" FontSize="18" FontWeight="Bold"
+                           VerticalAlignment="Center" FlowDirection="LeftToRight" Foreground="{DynamicResource Brush.Text}" />
+                <TextBlock x:Name="PreviewLabel" Style="{DynamicResource Text.Body}" VerticalAlignment="Center" TextWrapping="Wrap" />
+            </DockPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

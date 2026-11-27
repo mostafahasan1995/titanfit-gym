@@ -27,6 +27,7 @@
     <ProjectReference Include="..\..\src\Gym.Api\Gym.Api.csproj" />
     <ProjectReference Include="..\..\src\Gym.Client\Gym.Client.csproj" />
     <ProjectReference Include="..\..\src\Gym.UI\Gym.UI.csproj" />
+    <ProjectReference Include="..\..\src\Gym.Cafeteria\Gym.Cafeteria.csproj" />
   </ItemGroup>
 
 </Project>

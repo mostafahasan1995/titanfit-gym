@@ -1,6 +1,6 @@
 <!--
-    CafeteriaText.Stock: placeholder. Replace the PagePlaceholder with the real screen (design: design/Cafeteria-POS.dc.html).
-    Shared controls and their usage: Gym.UI/Shell/ControlsGalleryPage.xaml. Strings: CafeteriaText.cs.
+    Stock: the items with their stock (low ones highlighted), filters, and for the selected item its stock-in,
+    adjustment, edit and movement history. "New item" adds a product. Logic: Inventory/StockViewModel.cs.
 -->
 <shell:PageView x:Class="Gym.Cafeteria.Pages.StockPage"
                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -8,8 +8,229 @@
                 xmlns:ui="clr-namespace:Gym.UI;assembly=Gym.UI"
                 xmlns:shell="clr-namespace:Gym.UI.Shell;assembly=Gym.UI"
                 xmlns:controls="clr-namespace:Gym.UI.Controls;assembly=Gym.UI"
-                xmlns:local="clr-namespace:Gym.Cafeteria">
-    <controls:PagePlaceholder x:Name="Placeholder" Icon="{x:Static ui:UiIcons.Box}"
-                              Title="{ui:Loc {x:Static local:CafeteriaText.Stock}}"
-                              Text="{ui:Loc {x:Static local:CafeteriaText.StockPlanned}}" />
+                xmlns:local="clr-namespace:Gym.Cafeteria"
+                xmlns:inventory="clr-namespace:Gym.Cafeteria.Inventory">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Filters and New item -->
+        <DockPanel Grid.Row="0" Margin="0,0,0,16" LastChildFill="False">
+            <controls:SearchBox x:Name="SearchInput" DockPanel.Dock="Left" Width="300" SearchChanged="OnSearchChanged"
+                                ui:ThemeAssist.Placeholder="{ui:Loc {x:Static local:CafeteriaText.StockSearchPlaceholder}}" />
+            <ComboBox x:Name="CategoryBox" DockPanel.Dock="Left" Width="210" Margin="12,0,0,0" SelectionChanged="OnCategoryChanged" />
+            <CheckBox x:Name="LowOnlyBox" DockPanel.Dock="Left" Margin="18,0,0,0" VerticalAlignment="Center"
+                      Content="{ui:Loc {x:Static local:CafeteriaText.LowOnly}}" Checked="OnFilterChanged" Unchecked="OnFilterChanged" />
+            <CheckBox x:Name="InactiveBox" DockPanel.Dock="Left" Margin="18,0,0,0" VerticalAlignment="Center"
+                      Content="{ui:Loc {x:Static local:CafeteriaText.ShowInactive}}" Checked="OnFilterChanged" Unchecked="OnFilterChanged" />
+            <Button DockPanel.Dock="Right" Style="{DynamicResource Button.Primary}" ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Plus}"
+                    Content="{ui:Loc {x:Static local:CafeteriaText.NewItem}}" Click="OnNewItemClick" />
+        </DockPanel>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="20" />
+                <ColumnDefinition Width="364" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Items -->
+            <Border Grid.Column="0" Style="{DynamicResource Card}" Padding="12,14,12,8">
+                <DockPanel>
+                    <DockPanel DockPanel.Dock="Top" Margin="8,0,8,6">
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                            <controls:StatusPill x:Name="LowCountPill" Tone="Warning" />
+                        </StackPanel>
+                        <TextBlock x:Name="CountText" Style="{DynamicResource Text.Overline}" VerticalAlignment="Center" />
+                    </DockPanel>
+                    <Grid>
+                        <DataGrid x:Name="ItemsGrid" SelectionChanged="OnItemSelected">
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsLow}" Value="True">
+                                            <Setter Property="Background" Value="{DynamicResource Brush.WarningSoft}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsInactive}" Value="True">
+                                            <Setter Property="Opacity" Value="0.6" />
+                                        </DataTrigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Background" Value="{DynamicResource Brush.AccentSoft}" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.RowStyle>
+                            <DataGrid.Columns>
+                                <DataGridTemplateColumn Header="{ui:Loc {x:Static local:CafeteriaText.Item}}" Width="*">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate DataType="{x:Type inventory:StockRow}">
+                                            <DockPanel VerticalAlignment="Center">
+                                                <Border DockPanel.Dock="Left" Width="34" Height="34" CornerRadius="10" Margin="0,0,12,0"
+                                                        Background="{DynamicResource Brush.AccentSoft}">
+                                                    <controls:Icon Data="{Binding Icon}" Size="20" Foreground="{DynamicResource Brush.Accent}"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                </Border>
+                                                <StackPanel VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Name}" Style="{DynamicResource Text.Strong}" FontSize="14" HorizontalAlignment="Left" />
+                                                    <TextBlock Text="{Binding CategoryName}" Style="{DynamicResource Text.Caption}" FontSize="12" HorizontalAlignment="Left" />
+                                                </StackPanel>
+                                            </DockPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="{ui:Loc {x:Static local:CafeteriaText.Barcode}}" Width="128">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate DataType="{x:Type inventory:StockRow}">
+                                            <TextBlock Text="{Binding Barcode}" FontSize="13" FlowDirection="LeftToRight" HorizontalAlignment="Left"
+                                                       VerticalAlignment="Center" Foreground="{DynamicResource Brush.TextTertiary}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="{ui:Loc {x:Static local:CafeteriaText.Price}}" Width="112">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate DataType="{x:Type inventory:StockRow}">
+                                            <controls:MoneyText Amount="{Binding Price}" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"
+                                                                Foreground="{DynamicResource Brush.Gold}" HorizontalAlignment="Left" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="{ui:Loc {x:Static local:CafeteriaText.StockColumn}}" Width="96">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate DataType="{x:Type inventory:StockRow}">
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding StockText}" FontFamily="{DynamicResource Font.Heading}" FontSize="16" FontWeight="Bold"
+                                                           HorizontalAlignment="Left" Foreground="{DynamicResource Brush.Text}" />
+                                                <TextBlock Text="{Binding MinText}" Style="{DynamicResource Text.Caption}" FontSize="11.5" HorizontalAlignment="Left" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="{ui:Loc {x:Static local:CafeteriaText.Status}}" Width="136">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate DataType="{x:Type inventory:StockRow}">
+                                            <controls:StatusPill Tone="{Binding StatusTone}" Text="{Binding StatusText}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <controls:EmptyState x:Name="NoItems" Visibility="Collapsed" VerticalAlignment="Top" Margin="0,60,0,0" Icon="{x:Static ui:UiIcons.Box}"
+                                             Title="{ui:Loc {x:Static ui:CommonText.NoResults}}" Text="{ui:Loc {x:Static local:CafeteriaText.NoItemsFound}}" />
+                    </Grid>
+                </DockPanel>
+            </Border>
+
+            <!-- The selected item -->
+            <Border Grid.Column="2" Style="{DynamicResource Card}" Padding="20">
+                <Grid>
+                    <DockPanel x:Name="DetailPanel">
+                        <StackPanel DockPanel.Dock="Top">
+                            <DockPanel>
+                                <controls:StatusPill x:Name="DetailStatus" DockPanel.Dock="Right" VerticalAlignment="Top" Margin="8,2,0,0" />
+                                <StackPanel>
+                                    <TextBlock x:Name="DetailName" Style="{DynamicResource Text.H2}" FontSize="20" FontWeight="Bold" TextWrapping="Wrap"
+                                               HorizontalAlignment="Left" />
+                                    <TextBlock x:Name="DetailCategory" Style="{DynamicResource Text.Caption}" Margin="0,2,0,0" HorizontalAlignment="Left" />
+                                </StackPanel>
+                            </DockPanel>
+
+                            <Grid Margin="0,16,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Style="{DynamicResource Card.Inset}" Padding="12,10">
+                                    <StackPanel>
+                                        <TextBlock Style="{DynamicResource Text.Overline}" Text="{ui:Loc {x:Static local:CafeteriaText.InStockNow}}" />
+                                        <TextBlock x:Name="DetailStock" FontFamily="{DynamicResource Font.Heading}" FontSize="26" FontWeight="Bold"
+                                                   Margin="0,4,0,0" HorizontalAlignment="Left" Foreground="{DynamicResource Brush.Text}" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Grid.Column="2" Style="{DynamicResource Card.Inset}" Padding="12,10">
+                                    <StackPanel>
+                                        <TextBlock Style="{DynamicResource Text.Overline}" Text="{ui:Loc {x:Static local:CafeteriaText.MinStockShort}}" />
+                                        <TextBlock x:Name="DetailMin" FontFamily="{DynamicResource Font.Heading}" FontSize="26" FontWeight="Bold"
+                                                   Margin="0,4,0,0" HorizontalAlignment="Left" Foreground="{DynamicResource Brush.TextTertiary}" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Grid.Column="4" Style="{DynamicResource Card.Inset}" Padding="12,10">
+                                    <StackPanel>
+                                        <TextBlock Style="{DynamicResource Text.Overline}" Text="{ui:Loc {x:Static local:CafeteriaText.Price}}" />
+                                        <controls:MoneyText x:Name="DetailPrice" ShowCurrency="False" FontFamily="{DynamicResource Font.Heading}" FontSize="18"
+                                                            FontWeight="Bold" Margin="0,9,0,0" HorizontalAlignment="Left" Foreground="{DynamicResource Brush.Gold}" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <Grid Margin="0,14,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Button x:Name="StockInButton" Grid.Column="0" Style="{DynamicResource Button.Primary}" Padding="10,0"
+                                        ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Plus}" Content="{ui:Loc {x:Static local:CafeteriaText.StockIn}}"
+                                        Click="OnStockInClick" />
+                                <Button x:Name="AdjustButton" Grid.Column="2" Padding="10,0" ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Settings}"
+                                        Content="{ui:Loc {x:Static local:CafeteriaText.Adjust}}" Click="OnAdjustClick" />
+                                <Button x:Name="EditButton" Grid.Column="4" Style="{DynamicResource Button.Icon}" Width="48" Height="48"
+                                        ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Tag}" Click="OnEditClick" />
+                            </Grid>
+
+                            <Border Style="{DynamicResource Divider}" Margin="0,18,0,12" />
+                            <TextBlock Style="{DynamicResource Text.Overline}" Text="{ui:Loc {x:Static local:CafeteriaText.History}}" />
+                        </StackPanel>
+
+                        <Grid Margin="0,8,0,0">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+                                <ItemsControl x:Name="MovementList" Focusable="False">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type inventory:MovementRow}">
+                                            <Border BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" Padding="0,9">
+                                                <DockPanel>
+                                                    <TextBlock DockPanel.Dock="Right" Text="{Binding QuantityText}" FontFamily="{DynamicResource Font.Heading}"
+                                                               FontSize="16" FontWeight="Bold" VerticalAlignment="Center" Margin="10,0,0,0" FlowDirection="LeftToRight">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Foreground" Value="{DynamicResource Brush.Bad}" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsIncrease}" Value="True">
+                                                                        <Setter Property="Foreground" Value="{DynamicResource Brush.Good}" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                    <StackPanel>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <controls:StatusPill Tone="{Binding Tone}" Text="{Binding TypeText}" FontSize="12" Padding="8,2" />
+                                                            <TextBlock Text="{Binding When}" Style="{DynamicResource Text.Caption}" FontSize="12" Margin="8,0,0,0"
+                                                                       VerticalAlignment="Center" />
+                                                        </StackPanel>
+                                                        <TextBlock Text="{Binding Detail}" Style="{DynamicResource Text.Caption}" FontSize="12" Margin="0,4,0,0"
+                                                                   TextTrimming="CharacterEllipsis" HorizontalAlignment="Left" />
+                                                    </StackPanel>
+                                                </DockPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                            <TextBlock x:Name="NoHistory" Style="{DynamicResource Text.Caption}" Margin="0,8,0,0" Visibility="Collapsed"
+                                       Text="{ui:Loc {x:Static local:CafeteriaText.NoHistory}}" />
+                        </Grid>
+                    </DockPanel>
+                    <controls:EmptyState x:Name="NoSelection" Visibility="Collapsed" Icon="{x:Static ui:UiIcons.Box}" VerticalAlignment="Center"
+                                         Title="{ui:Loc {x:Static local:CafeteriaText.PickAnItem}}" Text="{ui:Loc {x:Static local:CafeteriaText.PickAnItemText}}" />
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
 </shell:PageView>

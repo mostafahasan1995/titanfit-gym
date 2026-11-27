@@ -1,6 +1,7 @@
 <!--
-    CafeteriaText.ShiftClose: placeholder. Replace the PagePlaceholder with the real screen (design: design/Cafeteria-POS.dc.html).
-    Shared controls and their usage: Gym.UI/Shell/ControlsGalleryPage.xaml. Strings: CafeteriaText.cs.
+    Shift close: the summary of the cashier's shift (sales, totals, expected cash, items sold), closing it with the
+    counted cash, the shift (Z) report on the receipt printer, and the past shifts with their totals.
+    Logic: Sales/ShiftViewModel.cs.
 -->
 <shell:PageView x:Class="Gym.Cafeteria.Pages.ShiftClosePage"
                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -8,8 +9,184 @@
                 xmlns:ui="clr-namespace:Gym.UI;assembly=Gym.UI"
                 xmlns:shell="clr-namespace:Gym.UI.Shell;assembly=Gym.UI"
                 xmlns:controls="clr-namespace:Gym.UI.Controls;assembly=Gym.UI"
-                xmlns:local="clr-namespace:Gym.Cafeteria">
-    <controls:PagePlaceholder x:Name="Placeholder" Icon="{x:Static ui:UiIcons.Receipt}"
-                              Title="{ui:Loc {x:Static local:CafeteriaText.ShiftClose}}"
-                              Text="{ui:Loc {x:Static local:CafeteriaText.ShiftClosePlanned}}" />
+                xmlns:local="clr-namespace:Gym.Cafeteria"
+                xmlns:sales="clr-namespace:Gym.Cafeteria.Sales">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="24" />
+            <ColumnDefinition Width="392" />
+        </Grid.ColumnDefinitions>
+
+        <!-- The shown shift -->
+        <Border Grid.Column="0" Style="{DynamicResource Card}">
+            <Grid>
+                <DockPanel x:Name="SummaryPanel">
+                    <DockPanel DockPanel.Dock="Top">
+                        <Button x:Name="PrintButton" DockPanel.Dock="Right" VerticalAlignment="Top" ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Printer}"
+                                Content="{ui:Loc {x:Static local:CafeteriaText.ShiftReport}}" Click="OnPrintClick" />
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock x:Name="ShiftTitle" Style="{DynamicResource Text.H2}" FontSize="22" FontWeight="Bold" VerticalAlignment="Center" />
+                                <controls:StatusPill x:Name="ShiftStatus" Margin="12,0,0,0" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                <TextBlock x:Name="ShiftStation" Style="{DynamicResource Text.Body}" Foreground="{DynamicResource Brush.TextTertiary}" />
+                                <TextBlock Text="·" Style="{DynamicResource Text.Body}" Margin="8,0" Foreground="{DynamicResource Brush.TextSecondary}" />
+                                <TextBlock x:Name="ShiftCashier" Style="{DynamicResource Text.Body}" Foreground="{DynamicResource Brush.TextTertiary}" />
+                            </StackPanel>
+                            <TextBlock x:Name="ShiftWhen" Style="{DynamicResource Text.Caption}" Margin="0,2,0,0" HorizontalAlignment="Left" />
+                        </StackPanel>
+                    </DockPanel>
+
+                    <UniformGrid x:Name="Figures" DockPanel.Dock="Top" Rows="1" Margin="-6,20,-6,0">
+                        <Border Style="{DynamicResource Card.Inset}" Margin="6,0">
+                            <StackPanel>
+                                <TextBlock Style="{DynamicResource Text.Overline}" Text="{ui:Loc {x:Static local:CafeteriaText.SalesCount}}" />
+                                <Viewbox StretchDirection="DownOnly" HorizontalAlignment="Left" Margin="0,6,0,0" Height="36">
+                                    <TextBlock x:Name="SalesCountText" Style="{DynamicResource Text.Number}" FontSize="28" />
+                                </Viewbox>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{DynamicResource Card.Inset}" Margin="6,0">
+                            <StackPanel>
+                                <TextBlock Style="{DynamicResource Text.Overline}" Text="{ui:Loc {x:Static local:CafeteriaText.SalesTotal}}" />
+                                <Viewbox StretchDirection="DownOnly" HorizontalAlignment="Left" Margin="0,6,0,0" Height="36">
+                                    <controls:MoneyText x:Name="SalesTotalText" ShowCurrency="False" FontFamily="{DynamicResource Font.Heading}" FontSize="28"
+                                                        FontWeight="Bold" Foreground="{DynamicResource Brush.Gold}" />
+                                </Viewbox>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{DynamicResource Card.Inset}" Margin="6,0">
+                            <StackPanel>
+                                <TextBlock Style="{DynamicResource Text.Overline}" Text="{ui:Loc {x:Static local:CafeteriaText.OpeningCash}}" />
+                                <Viewbox StretchDirection="DownOnly" HorizontalAlignment="Left" Margin="0,6,0,0" Height="36">
+                                    <controls:MoneyText x:Name="OpeningCashText" ShowCurrency="False" FontFamily="{DynamicResource Font.Heading}" FontSize="28"
+                                                        FontWeight="Bold" Foreground="{DynamicResource Brush.Text}" />
+                                </Viewbox>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{DynamicResource Card.Inset}" Margin="6,0">
+                            <StackPanel>
+                                <TextBlock Style="{DynamicResource Text.Overline}" Text="{ui:Loc {x:Static local:CafeteriaText.ExpectedCash}}" />
+                                <Viewbox StretchDirection="DownOnly" HorizontalAlignment="Left" Margin="0,6,0,0" Height="36">
+                                    <controls:MoneyText x:Name="ExpectedCashText" ShowCurrency="False" FontFamily="{DynamicResource Font.Heading}" FontSize="28"
+                                                        FontWeight="Bold" Foreground="{DynamicResource Brush.Text}" />
+                                </Viewbox>
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+
+                    <!-- Counted cash of a closed shift -->
+                    <Border x:Name="CountedBox" DockPanel.Dock="Top" Margin="0,12,0,0" Padding="16,10" CornerRadius="14" BorderThickness="1"
+                            Visibility="Collapsed" Background="{DynamicResource Brush.Panel2}" BorderBrush="{DynamicResource Brush.Line}">
+                        <DockPanel>
+                            <controls:MoneyText x:Name="CountedDifferenceText" DockPanel.Dock="Right" FontFamily="{DynamicResource Font.Heading}" FontSize="17"
+                                                FontWeight="Bold" VerticalAlignment="Center" />
+                            <TextBlock x:Name="CountedText" Style="{DynamicResource Text.Body}" VerticalAlignment="Center" Foreground="{DynamicResource Brush.TextTertiary}" />
+                        </DockPanel>
+                    </Border>
+
+                    <TextBlock DockPanel.Dock="Top" Style="{DynamicResource Text.Overline}" Margin="0,22,0,6" Text="{ui:Loc {x:Static local:CafeteriaText.ItemsSold}}" />
+                    <Grid>
+                        <DataGrid x:Name="ItemsGrid">
+                            <DataGrid.Columns>
+                                <DataGridTemplateColumn Header="{ui:Loc {x:Static local:CafeteriaText.Item}}" Width="*">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate DataType="{x:Type sales:SoldItem}">
+                                            <TextBlock Text="{Binding Name}" Style="{DynamicResource Text.Strong}" FontSize="14" VerticalAlignment="Center"
+                                                       HorizontalAlignment="Left" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="{ui:Loc {x:Static local:CafeteriaText.Quantity}}" Width="110">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate DataType="{x:Type sales:SoldItem}">
+                                            <TextBlock Text="{Binding QuantityText}" FontFamily="{DynamicResource Font.Heading}" FontSize="15" FontWeight="Bold"
+                                                       VerticalAlignment="Center" HorizontalAlignment="Left" Foreground="{DynamicResource Brush.Text}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="{ui:Loc {x:Static local:CafeteriaText.Total}}" Width="150">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate DataType="{x:Type sales:SoldItem}">
+                                            <controls:MoneyText Amount="{Binding Total}" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"
+                                                                HorizontalAlignment="Left" Foreground="{DynamicResource Brush.Gold}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <TextBlock x:Name="NoSales" Style="{DynamicResource Text.Caption}" Margin="14,52,0,0" Visibility="Collapsed"
+                                   Text="{ui:Loc {x:Static local:CafeteriaText.NoSalesYet}}" />
+                    </Grid>
+                </DockPanel>
+                <controls:EmptyState x:Name="NoShift" Visibility="Collapsed" Icon="{x:Static ui:UiIcons.Receipt}" VerticalAlignment="Center"
+                                     Title="{ui:Loc {x:Static local:CafeteriaText.NoShiftsYet}}" Text="{ui:Loc {x:Static local:CafeteriaText.FirstSaleOpensShift}}" />
+            </Grid>
+        </Border>
+
+        <!-- Close (or open) the shift, then the past shifts -->
+        <DockPanel Grid.Column="2">
+            <Border x:Name="CloseCard" DockPanel.Dock="Top" Style="{DynamicResource Card}" Padding="20">
+                <StackPanel>
+                    <TextBlock Style="{DynamicResource Text.H2}" FontWeight="Bold" Text="{ui:Loc {x:Static local:CafeteriaText.CloseShiftTitle}}" />
+                    <controls:FormField x:Name="CountedField" Margin="0,14,0,0" Label="{ui:Loc {x:Static local:CafeteriaText.CountedCash}}"
+                                        Hint="{ui:Loc {x:Static local:CafeteriaText.CountedCashHint}}">
+                        <TextBox x:Name="CountedInput" FlowDirection="LeftToRight" InputScope="Number" TextChanged="OnCountedChanged" />
+                    </controls:FormField>
+                    <DockPanel x:Name="DifferenceRow" Margin="0,10,0,0" Visibility="Collapsed">
+                        <controls:MoneyText x:Name="DifferenceText" DockPanel.Dock="Right" FontFamily="{DynamicResource Font.Heading}" FontSize="17"
+                                            FontWeight="Bold" VerticalAlignment="Center" />
+                        <TextBlock x:Name="DifferenceLabel" Style="{DynamicResource Text.Body}" VerticalAlignment="Center" Foreground="{DynamicResource Brush.TextTertiary}" />
+                    </DockPanel>
+                    <controls:FormField Margin="0,12,0,0" Label="{ui:Loc {x:Static local:CafeteriaText.ShiftNote}}">
+                        <TextBox x:Name="NoteInput" MaxLength="500" />
+                    </controls:FormField>
+                    <Button x:Name="CloseButton" Style="{DynamicResource Button.Gold}" Margin="0,16,0,0" MinHeight="56" FontSize="16"
+                            ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Lock}" Content="{ui:Loc {x:Static local:CafeteriaText.CloseShift}}" Click="OnCloseClick" />
+                </StackPanel>
+            </Border>
+
+            <Border x:Name="OpenCard" DockPanel.Dock="Top" Style="{DynamicResource Card}" Padding="20" Visibility="Collapsed">
+                <StackPanel>
+                    <TextBlock Style="{DynamicResource Text.H2}" FontWeight="Bold" Text="{ui:Loc {x:Static local:CafeteriaText.NoOpenShift}}" />
+                    <TextBlock Style="{DynamicResource Text.Caption}" Margin="0,4,0,0" TextWrapping="Wrap" Text="{ui:Loc {x:Static local:CafeteriaText.FirstSaleOpensShift}}" />
+                    <controls:FormField x:Name="OpeningField" Margin="0,14,0,0" Label="{ui:Loc {x:Static local:CafeteriaText.OpeningCash}}">
+                        <TextBox x:Name="OpeningInput" FlowDirection="LeftToRight" InputScope="Number" Text="0" />
+                    </controls:FormField>
+                    <Button Margin="0,14,0,0" ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Clock}" Content="{ui:Loc {x:Static local:CafeteriaText.OpenShift}}"
+                            Click="OnOpenClick" />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{DynamicResource Card}" Padding="12,16,12,8" Margin="0,16,0,0">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Style="{DynamicResource Text.Overline}" Margin="8,0,0,8" Text="{ui:Loc {x:Static local:CafeteriaText.PastShifts}}" />
+                    <ListBox x:Name="HistoryList" SelectionChanged="OnHistorySelected">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate DataType="{x:Type sales:ShiftListItem}">
+                                <DockPanel>
+                                    <StackPanel DockPanel.Dock="Right" HorizontalAlignment="Right" Margin="10,0,0,0">
+                                        <controls:MoneyText Amount="{Binding Total}" FontSize="14" FontWeight="Bold" HorizontalAlignment="Right"
+                                                            Foreground="{DynamicResource Brush.Gold}" />
+                                        <controls:StatusPill Tone="{Binding StatusTone}" Text="{Binding StatusText}" FontSize="11.5" Padding="8,1"
+                                                             Margin="0,4,0,0" HorizontalAlignment="Right" />
+                                    </StackPanel>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Day}" Style="{DynamicResource Text.Strong}" FontSize="14" HorizontalAlignment="Left" />
+                                        <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                            <TextBlock Text="{Binding Hours}" Style="{DynamicResource Text.Caption}" FontSize="12" FlowDirection="LeftToRight" />
+                                            <TextBlock Text="·" Style="{DynamicResource Text.Caption}" FontSize="12" Margin="6,0" />
+                                            <TextBlock Text="{Binding SalesText}" Style="{DynamicResource Text.Caption}" FontSize="12" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </DockPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </Border>
+        </DockPanel>
+    </Grid>
 </shell:PageView>

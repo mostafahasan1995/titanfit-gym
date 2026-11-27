@@ -1,0 +1,126 @@
+<!--
+    Receipts: the day's sales (a cashier sees his own), the selected receipt as it prints (80 mm), Reprint, and the
+    station's hardware settings: the receipt printer (saved as printerName in station.json, Test print) and a barcode
+    scanner test field.
+-->
+<shell:PageView x:Class="Gym.Cafeteria.Pages.ReceiptsPage"
+                xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                xmlns:ui="clr-namespace:Gym.UI;assembly=Gym.UI"
+                xmlns:shell="clr-namespace:Gym.UI.Shell;assembly=Gym.UI"
+                xmlns:controls="clr-namespace:Gym.UI.Controls;assembly=Gym.UI"
+                xmlns:local="clr-namespace:Gym.Cafeteria"
+                xmlns:pages="clr-namespace:Gym.Cafeteria.Pages">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="360" />
+            <ColumnDefinition Width="24" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="24" />
+            <ColumnDefinition Width="340" />
+        </Grid.ColumnDefinitions>
+
+        <!-- The day's sales -->
+        <Border Grid.Column="0" Style="{DynamicResource Card}" Padding="12,16,12,8">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Top" Margin="8,0,4,10">
+                    <DockPanel>
+                        <DatePicker x:Name="DayPicker" DockPanel.Dock="Right" Width="184" SelectedDateChanged="OnDayChanged" />
+                        <TextBlock Style="{DynamicResource Text.Strong}" FontSize="16" VerticalAlignment="Center"
+                                   Text="{ui:Loc {x:Static local:CafeteriaText.SalesOfTheDay}}" />
+                    </DockPanel>
+                    <TextBlock x:Name="DayTotalText" Style="{DynamicResource Text.Caption}" Margin="0,8,0,0" />
+                </StackPanel>
+                <Grid>
+                    <ListBox x:Name="SalesList" SelectionChanged="OnSaleSelected">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate DataType="{x:Type pages:SaleListItem}">
+                                <DockPanel>
+                                    <controls:MoneyText DockPanel.Dock="Right" Amount="{Binding Total}" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"
+                                                        Foreground="{DynamicResource Brush.Gold}" Margin="10,0,0,0" />
+                                    <Border DockPanel.Dock="Left" Width="40" Height="40" CornerRadius="10" Margin="0,0,12,0" Background="{DynamicResource Brush.AccentSoft}">
+                                        <controls:Icon Data="{x:Static ui:UiIcons.Receipt}" Size="20" Foreground="{DynamicResource Brush.Accent}"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Title}" Style="{DynamicResource Text.Strong}" FontSize="14" HorizontalAlignment="Left" />
+                                        <TextBlock Text="{Binding Detail}" Style="{DynamicResource Text.Caption}" FontSize="12" Margin="0,2,0,0" HorizontalAlignment="Left" />
+                                    </StackPanel>
+                                </DockPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <controls:EmptyState x:Name="NoSales" Visibility="Collapsed" VerticalAlignment="Top" Margin="0,40,0,0" Icon="{x:Static ui:UiIcons.Receipt}"
+                                         Title="{ui:Loc {x:Static local:CafeteriaText.NoReceipts}}" Text="{ui:Loc {x:Static local:CafeteriaText.NoReceiptsText}}" />
+                </Grid>
+            </DockPanel>
+        </Border>
+
+        <!-- The receipt as it prints -->
+        <Border Grid.Column="2" Style="{DynamicResource Card}" Padding="20">
+            <DockPanel>
+                <DockPanel DockPanel.Dock="Top" Margin="0,0,0,14">
+                    <Button x:Name="ReprintButton" DockPanel.Dock="Right" Style="{DynamicResource Button.Primary}" ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Printer}"
+                            Content="{ui:Loc {x:Static local:CafeteriaText.Reprint}}" Click="OnReprintClick" />
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Style="{DynamicResource Text.H2}" FontWeight="Bold" Text="{ui:Loc {x:Static local:CafeteriaText.ReceiptPreview}}" />
+                        <TextBlock Style="{DynamicResource Text.Caption}" Margin="0,2,0,0" Text="{ui:Loc {x:Static local:CafeteriaText.ReceiptPreviewText}}" />
+                    </StackPanel>
+                </DockPanel>
+                <Border CornerRadius="14" Background="{DynamicResource Brush.Background}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+                        <Border x:Name="Paper" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,18,0,18" Background="White"
+                                SnapsToDevicePixels="True">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="18" ShadowDepth="4" Opacity="0.45" Color="#000000" />
+                            </Border.Effect>
+                        </Border>
+                    </ScrollViewer>
+                </Border>
+            </DockPanel>
+        </Border>
+
+        <!-- Hardware of this station -->
+        <StackPanel Grid.Column="4">
+            <Border Style="{DynamicResource Card}" Padding="20">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <controls:Icon Data="{x:Static ui:UiIcons.Printer}" Size="22" Foreground="{DynamicResource Brush.Accent}" VerticalAlignment="Center" />
+                        <TextBlock Style="{DynamicResource Text.H2}" FontWeight="Bold" Margin="10,0,0,0" VerticalAlignment="Center"
+                                   Text="{ui:Loc {x:Static local:CafeteriaText.ReceiptPrinter}}" />
+                    </StackPanel>
+                    <controls:FormField Margin="0,14,0,0" Label="{ui:Loc {x:Static local:CafeteriaText.Printer}}"
+                                        Hint="{ui:Loc {x:Static local:CafeteriaText.PrinterHint}}">
+                        <ComboBox x:Name="PrinterBox" />
+                    </controls:FormField>
+                    <Grid Margin="0,14,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Button x:Name="SavePrinterButton" Grid.Column="0" Style="{DynamicResource Button.Primary}" Padding="8,0"
+                                ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Check}" Content="{ui:Loc {x:Static ui:CommonText.Save}}" Click="OnSavePrinterClick" />
+                        <Button x:Name="TestPrintButton" Grid.Column="2" Padding="8,0" ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Receipt}"
+                                Content="{ui:Loc {x:Static local:CafeteriaText.TestPrint}}" Click="OnTestPrintClick" />
+                    </Grid>
+                    <TextBlock x:Name="PrinterNote" Style="{DynamicResource Text.Caption}" Margin="0,12,0,0" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{DynamicResource Card}" Padding="20" Margin="0,16,0,0">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <controls:Icon Data="{x:Static ui:UiIcons.Barcode}" Size="22" Foreground="{DynamicResource Brush.Accent}" VerticalAlignment="Center" />
+                        <TextBlock Style="{DynamicResource Text.H2}" FontWeight="Bold" Margin="10,0,0,0" VerticalAlignment="Center"
+                                   Text="{ui:Loc {x:Static local:CafeteriaText.ScannerTest}}" />
+                    </StackPanel>
+                    <TextBlock Style="{DynamicResource Text.Caption}" Margin="0,6,0,0" TextWrapping="Wrap" Text="{ui:Loc {x:Static local:CafeteriaText.ScannerTestText}}" />
+                    <TextBox x:Name="ScanTestInput" Margin="0,12,0,0" FlowDirection="LeftToRight" KeyDown="OnScanTestKeyDown"
+                             ui:ThemeAssist.Placeholder="{ui:Loc {x:Static local:CafeteriaText.ScanHere}}" />
+                    <TextBlock x:Name="ScanTestResult" Style="{DynamicResource Text.Body}" Margin="0,10,0,0" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </Grid>
+</shell:PageView>
