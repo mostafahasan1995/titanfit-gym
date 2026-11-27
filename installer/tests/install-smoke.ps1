@@ -153,6 +153,7 @@ try {
     Assert-True ($db.StartName -eq 'NT AUTHORITY\NetworkService') "database service account: $($db.StartName)"
     Assert-True ($server.StartName -eq 'LocalSystem') "server service account: $($server.StartName)"
     Assert-True ($server.PathName -eq "`"$appDir\Server\Gym.Api.exe`"") "server service path: $($server.PathName)"
+    Assert-True ([System.Diagnostics.EventLog]::SourceExists('Gym.Api')) 'event log source Gym.Api registered by the setup'
     $failure = (& sc.exe qfailure TitanFitServer) -join ' '
     Assert-True ($failure -match 'RESTART') 'server service restarts on failure'
     $depends = (Get-Service TitanFitServer).ServicesDependedOn.Name

@@ -46,6 +46,7 @@ $ApiPort = 5080
 $DbPort = 5433
 $PgMajor = '17'
 $FirewallRule = 'TitanFit-Server-TCP-5080'
+$EventSource = 'Gym.Api'   # the server's warnings and errors go to the Application event log under this source
 
 $DataRoot = Join-Path ([Environment]::GetFolderPath('CommonApplicationData')) 'TitanFit'
 $PgData = Join-Path $DataRoot 'pgdata'
@@ -354,6 +355,20 @@ SELECT 'CREATE DATABASE titanfit OWNER titanfit' WHERE NOT EXISTS (SELECT FROM p
 # API service, firewall, health
 # ---------------------------------------------------------------------------------------------------------------
 
+# The setup runs elevated, so it registers the server's event log source. Left to the service, creating the source at
+# the first warning or error (e.g. EF's expected "no migrations table yet" on a fresh database) can be refused and
+# that logging error stops the server.
+function Register-EventSource {
+    try {
+        if (-not [System.Diagnostics.EventLog]::SourceExists($EventSource)) {
+            [System.Diagnostics.EventLog]::CreateEventSource($EventSource, 'Application')
+            Write-Log "Event log source $EventSource registered (Application log)."
+        }
+    } catch {
+        Write-Log "WARNING: the event log source $EventSource could not be registered: $($_.Exception.Message)"
+    }
+}
+
 function Register-ApiService {
     $binPath = '"' + $ApiExe + '"'
     $description = "TITANFIT gym server: API and live updates on port $ApiPort. Settings: $ServerConfig"
@@ -429,6 +444,7 @@ function Invoke-Install {
     Wait-ForDatabase
     Initialize-AppDatabase $newSuperPassword
 
+    Register-EventSource
     Register-ApiService
     Set-FirewallRule
     if ($AdminApp) { Write-AdminStationConfig }
