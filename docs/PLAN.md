@@ -9,11 +9,11 @@ The single source of truth for this project. Any session that continues the work
 | 1 | Design mockups | ✅ Done (`design/`, logo and name added) |
 | 2 | Core: skeleton, CI, database, API, login, subscription logic, installers | ✅ Done (2.1–2.5) |
 | B0 | App foundation: API abstraction + sample data, station.json, login and roles, page shell, shared controls, smoke screenshots per page | ✅ Done (see "App foundation") |
-| 3 | Reception app | Waiting (needs Syrian ID scan sample) |
+| 3 | Reception app | ✅ Done (see "Reception app"); the ID barcode parser is a placeholder until a real scan arrives (open item 1) |
 | 4 | Cafeteria app | ✅ Done (see "Cafeteria app"); receipt printer and scanner still to test on site |
 | 5 | Admin app + deployment | Waiting |
 
-**Next action:** the app screens (steps 3 to 5, one agent per app, each only inside its own app project; follow "App foundation"). The owner said on 2026-11-26 to execute all steps without stopping; report at milestones.
+**Next action:** the Admin app (step 5, inside its own project; follow "App foundation"), then the on-site hardware checks (open items 1, 13 and 14). The owner said on 2026-11-26 to execute all steps without stopping; report at milestones.
 
 ## Requirements (from the gym)
 
@@ -219,6 +219,31 @@ Everything shared is in `Gym.UI` and `Gym.Client`. An app agent adds files only 
 - **Shared controls and styles** (all colours are Deep Teal tokens via `DynamicResource`; usage example: `Gym.UI/Shell/ControlsGalleryPage.xaml`, screenshot `<App>-controls-<lang>.png`): buttons `Button.Primary`, `Button.Secondary` (default), `Button.Gold`, `Button.Danger`, `Button.Ghost`, `Button.Icon` with `ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Check}"` (44 px and up); implicit TextBox, PasswordBox, ComboBox, DatePicker and Calendar, CheckBox, ListBox, DataGrid (read-only, 52 px rows, define the columns), ScrollBar, ToolTip; `ui:ThemeAssist.Placeholder` and `ui:ThemeAssist.HasError` on inputs; Border styles `Card`, `Card.Inset`, `Chip`, `Divider`; text styles `Text.H1`, `Text.H2`, `Text.Body`, `Text.Strong`, `Text.Caption`, `Text.Overline`, `Text.Label`, `Text.Number`, `Text.Display`; controls (`xmlns:controls="clr-namespace:Gym.UI.Controls;assembly=Gym.UI"`) `Icon`, `StatusPill` (`Status="{Binding Membership.Status}"`: green / amber / red / grey with icon and label), `MoneyText`, `SearchBox` (`SearchChanged`, 300 ms debounce), `FormField` (`Label`, `Hint`, `Error`), `EmptyState`, `LoadingOverlay`, `Avatar` (+ `Images.FromBytes`), `PagePlaceholder`, `ToastView`, `DialogFrame`; line icons `UiIcons.*`. CommunityToolkit.Mvvm 8.4.2 comes with Gym.UI for view models.
 - **Smoke mode:** `Gym.<App>.exe --smoke-screenshots <dir> --lang en|ar` writes `<App>-login`, `-server-settings`, (Admin) `-first-admin`, one per page id, one per smoke state, `-controls` and `-dialog` PNGs plus `<App>-<lang>.json` (each screenshot with ok / error, text problems, unhandled errors, binding warnings). Exit code 1 when a page threw, a string failed the check or a UI error was unhandled. Run it locally the same way to see a screen without a server.
 
+## Reception app (step 3)
+
+`src/Gym.Reception`: four pages in the sidebar, built on "App foundation". Tests in `tests/Gym.Tests/Reception`.
+
+- **Check-in** (`check-in`, design `Main`):
+  - A member is identified by the webcam (OpenCvSharp, DirectShow; ZXing.Net looks for a QR about 8 times a second; the picture is mirrored like a mirror), by a USB barcode scanner in keyboard (HID) mode (a burst of keys ending with Enter anywhere on the page, read by key position so an Arabic keyboard layout does not matter: `KeyboardWedge`), or by the member number the staff type (`231`, `#00231`, or a typed `TF1-…` code).
+  - The same code checks in once while it stays in view, and again after 5 s without it (`CheckInDebouncer`).
+  - The big card: photo, name, member number and phone, a status pill and text, plan, start and end date, the days left (or since the end) in big digits, the part of the period used, a note, and a sound. Green: active ("Active · 25 days left"). Amber: expires within the threshold from the settings ("Expires in 2 days"). Red: expired ("Expired 6 days ago") or never paid, with a gold Renew button that opens renew for that member and checks him in after paying; red without Renew for an unknown code (e.g. an old QR after a reissue).
+  - Sounds: three generated WAVs embedded in the exe (`Sounds/ok.wav`, `warning.wav`, `denied.wav`), played by Windows.
+  - Recent check-ins: the last 8 of today from both desks (live), tap one to show it again; "N entries today".
+  - Camera picker (Windows camera names; two of the same get "(2)"), saved as `cameraName` in station.json. The station name goes with every check-in.
+  - Fingerprint later: `CheckInPage.CheckInSource` is where a reader plugs in; the server needs a new `CheckInMethod` (today `QrCode` and `MemberNo`).
+- **New member** (`new-member`, design `Reception-Register`):
+  1. ID card: the USB 2D scanner types the ID barcode into the scan box; 0.4 s after the last key `IIdCardParser` fills the fields, and every field stays editable. The parser is a **placeholder** (`TolerantIdCardParser`): fields split by common separators or spaces, labelled fields in Arabic or English, otherwise the card order (first name, father, surname, mother, birth place), the national number as 11 digits, the birth date as d/m/yyyy, yyyy-m-d or 8 digits, Arabic-Indic digits too. It is replaced when the real scan arrives (open item 1). The raw text stays in the box only; nothing of it is sent or stored.
+  2. Phone with +963 in front; a Syrian mobile is stored as `09xxxxxxxx` like the existing members (search finds every form).
+  3. Photo: webcam preview, Take photo / Retake, cut to the centred square, 480 × 480 JPEG, uploaded after the member is created. Saving without a photo asks first.
+  4. Member type (regular or private trainer), plan (1 / 3 / 6 / 12 months with prices), start today and the end date, cash, total in gold. A private trainer also pays the private training service at once (months × the monthly fee from the settings, a separate payment; it can be unticked).
+  - Save creates the member with the first payment, then uploads the photo and pays the service (a failure there is reported; the member stays). Then the member QR is shown: QRCoder (error correction Q) from `MemberDto.QrCode`, the same text check-in reads, with Copy image, Save PNG and Print.
+- **Members** (`members`): search by name (Arabic-normalized on the server), phone, national number, member number or QR (typed, a USB scanner anywhere on the page, or the webcam button); filter all / active / expiring / expired. Details: photo, ID data, phone, status, trainer or private service, payments and the check-ins of the last 90 days. Actions: Renew (or the first payment; plan choice, the new dates by the server's renewal rule shown before confirming, total in gold), Show QR (copy, save, print, issue a new one after a warning), Change phone, Change photo.
+- **Private trainers** (`private-trainers`): the trainers with their client count and private service ("Paid until …"); pay or renew the service (1, 3, 6 or 12 months × the fee, dates shown first); link a client (search; shows who already trains with another trainer) and unlink; make a member a private trainer, or back to regular (the server refuses while clients are linked: "Unlink the clients first").
+- **Live updates:** `MemberChanged` and `CheckInRecorded` from the other desk refresh the page on screen (handlers on the UI thread, 0.4 s debounce); `SettingsChanged` updates the private training fee.
+- **Arabic:** numbers in groups go through `BidiText.FixNumbers`; names keep their own direction; the QR image and the camera picture are always left-to-right (a mirrored QR cannot be read).
+- **Smoke screenshots:** every page on sample data, plus the states `check-in-expiring`, `check-in-expired`, `new-member-filled`, `new-member-saved` (QR shown), `members-renew`, `members-qr` and `private-trainers-pay`. Sample mode opens no camera, scanner or sound.
+- **Hardware assumed:** one USB webcam per reception PC (autofocus, open item 4) and a USB 2D barcode scanner in keyboard (HID) mode with Enter after each code (it reads the ID barcode and, held to a phone, the member QR). The OpenCV native library is inside the exe (OpenCvSharp4.runtime.win). Without a working camera the card says "Camera not available" and check-in goes on with the scanner and the member number.
+
 ## Cafeteria app (step 4)
 
 `src/Gym.Cafeteria`, for the 2 cafeteria PCs (Cashier and Admin logins). Four screens, in sidebar order (screenshot id in brackets):
@@ -359,10 +384,7 @@ Two Inno Setup 6 setups, built in CI (job `installers`), x64, admin rights, Engl
    3. Database: EF Core model + first migration + PostgreSQL integration tests. ✅ Done.
    4. API: endpoints, SignalR hub, staff login with roles + tests. ✅ Done (see "API overview"). CI: 165 unit tests (Windows job) and 49 PostgreSQL/API integration tests (Linux job).
    5. Installers (Inno Setup) in CI + GitHub Release on tags. ✅ Done (see "Installers"): server and station setups, install smoke test on a Windows runner.
-3. **Reception app:**
-   - Theme in `Gym.UI`.
-   - Camera photo, ID scan, new member, QR create (copy/save).
-   - Renew and search, QR check-in with the camera.
+3. **Reception app.** ✅ Done (see "Reception app"): QR check-in with the webcam, USB scanner and member number; new member with ID scan, photo, plan and QR (copy, save, print); search, details and renew; private trainers. The ID barcode parser waits for a real scan (open item 1).
 4. **Cafeteria app:** cashier screen, stock, low-stock warnings, receipts, shift close. ✅ Done (see "Cafeteria app").
 5. **Admin app and deployment:**
    - Dashboard, management screens, reports, backups.
@@ -407,7 +429,7 @@ Answers received during step 2.1. Private trainers, staff types and ratings are 
 
 ## Open items
 
-1. **Syrian ID barcode:** what it actually holds is unknown. Before step 3, the owner scans one ID into Notepad and sends the text (digits may be masked).
+1. **Syrian ID barcode:** what it actually holds is still unknown. The Reception app ships a tolerant placeholder parser (`TolerantIdCardParser`, see "Reception app") and every field can be typed. The owner scans one ID into Notepad and sends the text (digits may be masked); then the parser gets the real layout and a test. Also check how the scanner types the Arabic names (keyboard layout or Alt codes).
 2. **Receipt printer model:** still unknown. The Cafeteria app prints through any Windows driver for now (80 mm layout, see "Cafeteria app"). With the model: test width, cut and paper feed on site, and decide on ESC/POS (raw printing, cash drawer kick, logo).
 3. **Touchscreens:** not bought yet. The UI already uses touch-size targets.
 4. **Webcams:** buy autofocus models; fixed-focus ones struggle with a QR on a phone screen. Decide one or two per reception PC; a second keeps check-in running during registration.
@@ -420,6 +442,7 @@ Answers received during step 2.1. Private trainers, staff types and ratings are 
 11. **Negative stock:** refused for now (see "Business rules"). The owner can ask to allow selling with a warning instead.
 12. **HTTPS on the LAN:** still plain HTTP: the API listens on `http://0.0.0.0:5080`, and the firewall rule lets only the local subnet in (Private and Domain networks). Logins and data cross the gym LAN unencrypted. HTTPS (a local certificate the stations trust, installed by the setups) comes later.
 13. **Barcode scanner on site:** check that it is in USB keyboard mode with Enter after the code, and that it types fast enough for the Sell screen (at most 60 ms between characters; otherwise change `BarcodeWedge.DefaultMaxGapMs`). Also check the barcodes on the real products.
+14. **Reception hardware on site:** check with the real webcam and phones how far and how fast the QR reads (screen brightness, autofocus), that the camera opens on the reception PCs (the OpenCV native library may need the Visual C++ 2015-2022 x64 runtime; without it the card says "Camera not available"), and that the USB scanner is in keyboard mode with Enter after the code.
 
 ## Working rules
 
