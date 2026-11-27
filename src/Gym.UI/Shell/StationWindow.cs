@@ -116,7 +116,18 @@ public sealed class StationWindow : Window
     public async Task<LocalText?> SetupFirstAdminAsync(SetupAdminRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var response = await api.SetupAdminAsync(request).ConfigureAwait(true);
+        LoginResponse response;
+        try
+        {
+            response = await api.SetupAdminAsync(request).ConfigureAwait(true);
+        }
+        catch (GymApiException ex) when (ex.Code == "already_set_up")
+        {
+            // The server setup wizard (or another PC) created the first admin meanwhile: sign in with it instead.
+            Login?.ShowSignIn();
+            return CommonText.AdminAlreadyExists;
+        }
+
         await StartSessionAsync(response, request.Username).ConfigureAwait(true);
         return null;
     }

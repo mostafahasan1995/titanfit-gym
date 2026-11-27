@@ -128,6 +128,10 @@ public static class CommonText
 
     public static LocalText CreateAdmin { get; } = new("Create admin", "إنشاء المسؤول");
 
+    public static LocalText AdminAlreadyExists { get; } = new(
+        "An admin already exists on the server (made by the server setup). Sign in with that account.",
+        "يوجد مسؤول على الخادم (أنشأه برنامج تثبيت الخادم). سجّل الدخول بذلك الحساب.");
+
     public static LocalText PasswordsDiffer { get; } = new("The passwords do not match.", "كلمتا المرور غير متطابقتين.");
 
     public static LocalText FillAllFields { get; } = new("Fill in all fields.", "املأ جميع الحقول.");

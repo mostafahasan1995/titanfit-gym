@@ -100,6 +100,24 @@ public partial class LoginView : UserControl
         ApplyLanguage();
     }
 
+    /// <summary>Back to the sign-in form (the first admin was created elsewhere, e.g. by the server setup wizard).</summary>
+    internal void ShowSignIn()
+    {
+        if (!IsSetupMode)
+        {
+            return;
+        }
+
+        IsSetupMode = false;
+        UsernameBox.Text = SetupUsernameBox.Text.Trim();
+        SetupPasswordBox.Clear();
+        SetupConfirmBox.Clear();
+        SetupForm.Visibility = Visibility.Collapsed;
+        SignInForm.Visibility = Visibility.Visible;
+        ClearMessage();
+        ApplyLanguage();
+    }
+
     /// <summary>Fills in the form (the smoke screenshots).</summary>
     internal void Prefill(string username, string password)
     {
