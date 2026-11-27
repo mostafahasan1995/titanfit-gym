@@ -33,4 +33,14 @@
     <InternalsVisibleTo Include="Gym.Tests" />
   </ItemGroup>
 
+  <!-- The camera uses DirectShow only: leave out OpenCV's FFmpeg plug-in (video files and streams, about 29 MB). -->
+  <Target Name="DropOpenCvFfmpegPlugin" AfterTargets="ResolvePackageAssets">
+    <ItemGroup>
+      <NativeCopyLocalItems Remove="@(NativeCopyLocalItems)"
+                            Condition="'%(NuGetPackageId)' == 'OpenCvSharp4.runtime.win' And $([System.String]::Copy('%(Filename)').StartsWith('opencv_videoio_ffmpeg'))" />
+      <RuntimeTargetsCopyLocalItems Remove="@(RuntimeTargetsCopyLocalItems)"
+                                    Condition="'%(NuGetPackageId)' == 'OpenCvSharp4.runtime.win' And $([System.String]::Copy('%(Filename)').StartsWith('opencv_videoio_ffmpeg'))" />
+    </ItemGroup>
+  </Target>
+
 </Project>
