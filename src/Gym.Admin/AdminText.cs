@@ -3,8 +3,9 @@ using Gym.UI;
 namespace Gym.Admin;
 
 /// <summary>
-/// Every string of the Admin app, in English and Arabic (docs/PLAN.md, "How to add strings").
-/// XAML: <c>{ui:Loc {x:Static local:AdminText.Key}}</c>. Code: <c>AdminText.Key.For(UiLanguage.Current)</c>.
+/// The Admin app's sidebar and the words several pages share, in English and Arabic (docs/PLAN.md, "How to add strings").
+/// Each page has its own strings class next to it (DashboardText, MembersText, ...).
+/// XAML: <c>{ui:Loc {x:Static local:AdminText.Key}}</c>. Code: <c>AdminText.Key.For(Context.Language)</c>.
 /// </summary>
 public static class AdminText
 {
@@ -14,49 +15,106 @@ public static class AdminText
 
     public static LocalText Dashboard { get; } = new("Dashboard", "لوحة التحكم");
 
-    public static LocalText DashboardPlanned { get; } = new("Today's check-ins by hour, active, expiring and expired members, revenue, low stock and who expires soon.", "الحضور اليوم حسب الساعة، والمشتركون الفعّالون ومن ينتهي قريبًا والمنتهون، والإيرادات ونقص المخزون.");
-
-    public static LocalText DashboardSample { get; } = new("Sample data: {0} check-ins today, {1} active members", "بيانات تجريبية: {0} عملية دخول اليوم، {1} مشتركًا فعّالًا");
-
     public static LocalText Members { get; } = new("Members", "المشتركون");
-
-    public static LocalText MembersPlanned { get; } = new("All members with filters by status and type, editing and payment history.", "كل المشتركين مع التصفية حسب الحالة والنوع، والتعديل وسجل الدفعات.");
-
-    public static LocalText MembersSample { get; } = new("Sample data: {0} members", "بيانات تجريبية: {0} مشتركًا");
 
     public static LocalText Plans { get; } = new("Plans & prices", "الخطط والأسعار");
 
-    public static LocalText PlansPlanned { get; } = new("The 1, 3, 6 and 12 month plans and their prices.", "خطط 1 و3 و6 و12 شهرًا وأسعارها.");
-
-    public static LocalText PlansSample { get; } = new("Sample data: {0} plans", "بيانات تجريبية: {0} خطط");
-
     public static LocalText CafeteriaItems { get; } = new("Cafeteria items", "أصناف الكافتيريا");
-
-    public static LocalText CafeteriaItemsPlanned { get; } = new("Categories and products: names, prices, barcodes and minimum stock.", "الفئات والأصناف: الأسماء والأسعار والباركود والحد الأدنى للمخزون.");
-
-    public static LocalText CafeteriaItemsSample { get; } = new("Sample data: {0} products in {1} categories", "بيانات تجريبية: {0} صنفًا في {1} فئات");
 
     public static LocalText Staff { get; } = new("Staff & ratings", "الموظفون والتقييمات");
 
-    public static LocalText StaffPlanned { get; } = new("Staff, their logins and roles, and the monthly club trainer ratings.", "الموظفون وحسابات الدخول والصلاحيات، والتقييم الشهري لمدربي النادي.");
-
-    public static LocalText StaffSample { get; } = new("Sample data: {0} staff, {1} club trainers", "بيانات تجريبية: {0} موظفين، منهم {1} مدربو نادٍ");
-
     public static LocalText Settings { get; } = new("Settings", "الإعدادات");
-
-    public static LocalText SettingsPlanned { get; } = new("The expiring-soon threshold and the private training fee.", "حدّ التنبيه بقرب انتهاء الاشتراك ورسوم التدريب الخاص.");
-
-    public static LocalText SettingsSample { get; } = new("Sample data: expiring soon = {0} days, private training {1} a month", "بيانات تجريبية: قرب الانتهاء = {0} أيام، التدريب الخاص {1} شهريًا");
 
     public static LocalText Reports { get; } = new("Reports", "التقارير");
 
-    public static LocalText ReportsPlanned { get; } = new("Subscriptions, attendance and sales over any period.", "الاشتراكات والحضور والمبيعات لأي فترة.");
-
-    public static LocalText ReportsSample { get; } = new("Sample data: cafeteria sales in the last 7 days {0}", "بيانات تجريبية: مبيعات الكافتيريا في آخر 7 أيام {0}");
-
     public static LocalText Backups { get; } = new("Backups", "النسخ الاحتياطي");
 
-    public static LocalText BackupsPlanned { get; } = new("A daily automatic database backup to an external drive.", "نسخ احتياطي يومي تلقائي لقاعدة البيانات إلى قرص خارجي.");
+    // Shared words
 
-    public static LocalText BackupsSample { get; } = new("Runs on the server PC (step 5)", "يعمل على جهاز الخادم (الخطوة 5)");
+    public static LocalText Active { get; } = new("Active", "فعّال");
+
+    public static LocalText Inactive { get; } = new("Inactive", "غير فعّال");
+
+    public static LocalText Name { get; } = new("Name", "الاسم");
+
+    public static LocalText Phone { get; } = new("Phone", "الهاتف");
+
+    public static LocalText Price { get; } = new("Price", "السعر");
+
+    public static LocalText Total { get; } = new("Total", "الإجمالي");
+
+    public static LocalText Count { get; } = new("Count", "العدد");
+
+    public static LocalText Date { get; } = new("Date", "التاريخ");
+
+    public static LocalText Status { get; } = new("Status", "الحالة");
+
+    public static LocalText Note { get; } = new("Note", "ملاحظة");
+
+    public static LocalText Saved { get; } = new("Saved.", "تم الحفظ.");
+
+    public static LocalText Refresh { get; } = new("Refresh", "تحديث");
+
+    public static LocalText NoneYet { get; } = new("None yet", "لا يوجد بعد");
+
+    public static LocalText Dash { get; } = new("—", "—");
+
+    public static LocalText WholeNumber { get; } = new("Enter a whole number.", "أدخل عددًا صحيحًا.");
+
+    public static LocalText NumberRange { get; } = new("Enter a number from {0} to {1}.", "أدخل رقمًا من {0} إلى {1}.");
+
+    public static LocalText Required { get; } = new("Required.", "حقل مطلوب.");
+
+    public static LocalText AmountInvalid { get; } = new("Enter an amount in SYP, e.g. 150000.", "أدخل مبلغًا بالليرة، مثل 150000.");
+
+    // Counted words. Arabic: 1, 2, 3 to 10 and 11 and more each have their own form.
+
+    public static LocalText MonthOne { get; } = new("1 month", "شهر واحد");
+
+    public static LocalText MonthTwo { get; } = new("2 months", "شهران");
+
+    public static LocalText MonthsFew { get; } = new("{0} months", "{0} أشهر");
+
+    public static LocalText MonthsMany { get; } = new("{0} months", "{0} شهرًا");
+
+    public static LocalText DayToday { get; } = new("Today", "اليوم");
+
+    public static LocalText DayOne { get; } = new("1 day", "يوم واحد");
+
+    public static LocalText DayTwo { get; } = new("2 days", "يومان");
+
+    public static LocalText DaysFew { get; } = new("{0} days", "{0} أيام");
+
+    public static LocalText DaysMany { get; } = new("{0} days", "{0} يومًا");
+
+    public static LocalText MemberOne { get; } = new("1 member", "مشترك واحد");
+
+    public static LocalText MemberTwo { get; } = new("2 members", "مشتركان");
+
+    public static LocalText MembersFew { get; } = new("{0} members", "{0} مشتركين");
+
+    public static LocalText MembersMany { get; } = new("{0} members", "{0} مشتركًا");
+
+    /// <summary>"3 months" / "3 أشهر" (the name of a plan).</summary>
+    public static string Months(int months, AppLanguage language) => Counted(months, MonthOne, MonthTwo, MonthsFew, MonthsMany, language);
+
+    /// <summary>"Today", "1 day", "5 days" / "اليوم"، "يوم واحد"، "5 أيام".</summary>
+    public static string Days(int days, AppLanguage language) =>
+        days == 0 ? DayToday.For(language) : Counted(days, DayOne, DayTwo, DaysFew, DaysMany, language);
+
+    public static string MemberCount(int count, AppLanguage language) => Counted(count, MemberOne, MemberTwo, MembersFew, MembersMany, language);
+
+    /// <summary>Picks the form for <paramref name="count"/>: English 1 / other; Arabic 1, 2, 3-10, 11+ (and 0 like 11+).</summary>
+    public static string Counted(int count, LocalText one, LocalText two, LocalText few, LocalText many, AppLanguage language)
+    {
+        var abs = Math.Abs(count);
+        var text = abs switch
+        {
+            1 => one,
+            2 => two,
+            >= 3 and <= 10 => few,
+            _ => many,
+        };
+        return text.Format(language, NumberText.Format(count));
+    }
 }

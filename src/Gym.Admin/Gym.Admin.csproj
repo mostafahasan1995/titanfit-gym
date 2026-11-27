@@ -11,6 +11,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Check-ins by hour on the dashboard (SkiaSharp rendering, MIT). -->
+    <PackageReference Include="LiveChartsCore.SkiaSharpView.WPF" Version="2.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Gym.UI\Gym.UI.csproj" />
     <ProjectReference Include="..\Gym.Client\Gym.Client.csproj" />
   </ItemGroup>

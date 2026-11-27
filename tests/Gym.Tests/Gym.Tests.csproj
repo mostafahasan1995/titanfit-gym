@@ -29,6 +29,8 @@
     <ProjectReference Include="..\..\src\Gym.UI\Gym.UI.csproj" />
     <ProjectReference Include="..\..\src\Gym.Cafeteria\Gym.Cafeteria.csproj" />
     <ProjectReference Include="..\..\src\Gym.Reception\Gym.Reception.csproj" />
+    <!-- The Admin app's screen logic (report periods, CSV export, rating months, settings checks). -->
+    <ProjectReference Include="..\..\src\Gym.Admin\Gym.Admin.csproj" />
   </ItemGroup>
 
 </Project>

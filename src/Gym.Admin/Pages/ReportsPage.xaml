@@ -1,6 +1,7 @@
 <!--
-    AdminText.Reports: placeholder. Replace the PagePlaceholder with the real screen (design: design/Admin-Dashboard.dc.html).
-    Shared controls and their usage: Gym.UI/Shell/ControlsGalleryPage.xaml. Strings: AdminText.cs.
+    Reports: subscriptions, attendance and sales for a period (local days, both ends included). Totals on top, the
+    main table on the left, one or two smaller tables on the right. Export CSV (UTF-8 with BOM for Excel) and Print.
+    The tables are built in code from Logic/ReportTables.cs, so the screen, the CSV file and the print-out match.
 -->
 <shell:PageView x:Class="Gym.Admin.Pages.ReportsPage"
                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -8,8 +9,168 @@
                 xmlns:ui="clr-namespace:Gym.UI;assembly=Gym.UI"
                 xmlns:shell="clr-namespace:Gym.UI.Shell;assembly=Gym.UI"
                 xmlns:controls="clr-namespace:Gym.UI.Controls;assembly=Gym.UI"
-                xmlns:local="clr-namespace:Gym.Admin">
-    <controls:PagePlaceholder x:Name="Placeholder" Icon="{x:Static ui:UiIcons.Reports}"
-                              Title="{ui:Loc {x:Static local:AdminText.Reports}}"
-                              Text="{ui:Loc {x:Static local:AdminText.ReportsPlanned}}" />
+                xmlns:pages="clr-namespace:Gym.Admin.Pages">
+    <shell:PageView.Resources>
+        <!-- A segmented toggle (like the EN / عربي switch in the header). -->
+        <Style x:Key="Segment" TargetType="Border">
+            <Setter Property="Padding" Value="4" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Background" Value="{DynamicResource Brush.Panel}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+        <Style x:Key="ReportGrid" TargetType="DataGrid" BasedOn="{StaticResource {x:Type DataGrid}}">
+            <Setter Property="RowHeight" Value="42" />
+            <Setter Property="CanUserSortColumns" Value="False" />
+            <Setter Property="CanUserReorderColumns" Value="False" />
+        </Style>
+    </shell:PageView.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="16" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="16" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Report kind, period and the export buttons -->
+        <Border Grid.Row="0" Style="{DynamicResource Card}" Padding="18,14">
+            <StackPanel>
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                        <Button x:Name="ExportButton" Style="{DynamicResource Button.Secondary}" ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Receipt}"
+                                Content="{ui:Loc {x:Static pages:ReportsText.ExportCsv}}" Click="OnExportClick" />
+                        <Button x:Name="PrintButton" Style="{DynamicResource Button.Secondary}" Margin="10,0,0,0"
+                                ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Printer}"
+                                Content="{ui:Loc {x:Static pages:ReportsText.Print}}" Click="OnPrintClick" />
+                    </StackPanel>
+                    <Border Style="{StaticResource Segment}" HorizontalAlignment="Left" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton x:Name="SubscriptionsButton" Style="{DynamicResource Lang.Toggle}" GroupName="ReportKind" MinWidth="120"
+                                         Content="{ui:Loc {x:Static pages:ReportsText.Subscriptions}}" Checked="OnKindChecked" />
+                            <RadioButton x:Name="AttendanceButton" Style="{DynamicResource Lang.Toggle}" GroupName="ReportKind" MinWidth="120" Margin="4,0,0,0"
+                                         Content="{ui:Loc {x:Static pages:ReportsText.Attendance}}" Checked="OnKindChecked" />
+                            <RadioButton x:Name="SalesButton" Style="{DynamicResource Lang.Toggle}" GroupName="ReportKind" MinWidth="120" Margin="4,0,0,0"
+                                         Content="{ui:Loc {x:Static pages:ReportsText.Sales}}" Checked="OnKindChecked" />
+                        </StackPanel>
+                    </Border>
+                </DockPanel>
+
+                <DockPanel Margin="0,12,0,0">
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Style="{DynamicResource Text.Label}" VerticalAlignment="Center" Margin="0,0,8,0"
+                                   Text="{ui:Loc {x:Static pages:ReportsText.From}}" />
+                        <DatePicker x:Name="FromPicker" Width="190" SelectedDateChanged="OnDateChanged"
+                                    ui:ThemeAssist.Placeholder="{ui:Loc {x:Static ui:CommonText.PickDate}}" />
+                        <TextBlock Style="{DynamicResource Text.Label}" VerticalAlignment="Center" Margin="16,0,8,0"
+                                   Text="{ui:Loc {x:Static pages:ReportsText.To}}" />
+                        <DatePicker x:Name="ToPicker" Width="190" SelectedDateChanged="OnDateChanged"
+                                    ui:ThemeAssist.Placeholder="{ui:Loc {x:Static ui:CommonText.PickDate}}" />
+                    </StackPanel>
+                    <Border Style="{StaticResource Segment}" HorizontalAlignment="Left" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton x:Name="TodayButton" Style="{DynamicResource Lang.Toggle}" GroupName="ReportPeriod"
+                                         Content="{ui:Loc {x:Static pages:ReportsText.Today}}" Checked="OnPresetChecked" />
+                            <RadioButton x:Name="WeekButton" Style="{DynamicResource Lang.Toggle}" GroupName="ReportPeriod" Margin="4,0,0,0"
+                                         Content="{ui:Loc {x:Static pages:ReportsText.ThisWeek}}" Checked="OnPresetChecked" />
+                            <RadioButton x:Name="MonthButton" Style="{DynamicResource Lang.Toggle}" GroupName="ReportPeriod" Margin="4,0,0,0"
+                                         Content="{ui:Loc {x:Static pages:ReportsText.ThisMonth}}" Checked="OnPresetChecked" />
+                            <RadioButton x:Name="LastMonthButton" Style="{DynamicResource Lang.Toggle}" GroupName="ReportPeriod" Margin="4,0,0,0"
+                                         Content="{ui:Loc {x:Static pages:ReportsText.LastMonth}}" Checked="OnPresetChecked" />
+                            <RadioButton x:Name="CustomButton" Style="{DynamicResource Lang.Toggle}" GroupName="ReportPeriod" Margin="4,0,0,0"
+                                         Content="{ui:Loc {x:Static pages:ReportsText.Custom}}" Checked="OnPresetChecked" />
+                        </StackPanel>
+                    </Border>
+                </DockPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Title, range and totals -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="230" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <StackPanel VerticalAlignment="Center" Margin="4,0,16,0">
+                <TextBlock x:Name="ReportTitleText" Style="{DynamicResource Text.H2}" TextWrapping="Wrap" TextTrimming="None" />
+                <TextBlock x:Name="RangeText" Style="{DynamicResource Text.Caption}" Margin="0,4,0,0" TextWrapping="Wrap" TextTrimming="None" />
+                <TextBlock x:Name="RangeErrorText" Margin="0,6,0,0" FontSize="13" TextWrapping="Wrap" Visibility="Collapsed"
+                           FontFamily="{DynamicResource Font.Body}" Foreground="{DynamicResource Brush.Bad}"
+                           Text="{ui:Loc {x:Static pages:ReportsText.RangeInvalid}}" />
+            </StackPanel>
+            <ItemsControl x:Name="TotalsList" Grid.Column="1" Focusable="False">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Rows="1" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{DynamicResource Card}" Padding="16,12" Margin="6,0" CornerRadius="16">
+                            <StackPanel>
+                                <TextBlock Text="{Binding Label}" Style="{DynamicResource Text.Caption}" />
+                                <Viewbox StretchDirection="DownOnly" HorizontalAlignment="Left" Margin="0,6,0,0">
+                                    <TextBlock x:Name="Value" Text="{Binding Display}" Style="{DynamicResource Text.Number}" FontSize="24" TextTrimming="None" />
+                                </Viewbox>
+                            </StackPanel>
+                        </Border>
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsMoney}" Value="True">
+                                <Setter TargetName="Value" Property="Foreground" Value="{DynamicResource Brush.Gold}" />
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Grid>
+
+        <!-- Tables -->
+        <Grid Grid.Row="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="20" />
+                <ColumnDefinition Width="430" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="16" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Border x:Name="MainCard" Grid.Column="0" Grid.RowSpan="3" Style="{DynamicResource Card}" Padding="10,14,10,6">
+                <DockPanel>
+                    <TextBlock x:Name="MainTitle" DockPanel.Dock="Top" Style="{DynamicResource Text.Strong}" FontSize="16" Margin="12,0,12,6" />
+                    <Grid>
+                        <DataGrid x:Name="MainGrid" Style="{StaticResource ReportGrid}" />
+                        <TextBlock x:Name="MainEmpty" Style="{DynamicResource Text.Caption}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Visibility="Collapsed" Text="{ui:Loc {x:Static pages:ReportsText.NoData}}" />
+                    </Grid>
+                </DockPanel>
+            </Border>
+
+            <Border x:Name="SideCard1" Grid.Column="2" Grid.Row="0" Style="{DynamicResource Card}" Padding="10,14,10,6">
+                <DockPanel>
+                    <TextBlock x:Name="SideTitle1" DockPanel.Dock="Top" Style="{DynamicResource Text.Strong}" FontSize="16" Margin="12,0,12,6" />
+                    <Grid>
+                        <DataGrid x:Name="SideGrid1" Style="{StaticResource ReportGrid}" />
+                        <TextBlock x:Name="SideEmpty1" Style="{DynamicResource Text.Caption}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Visibility="Collapsed" Text="{ui:Loc {x:Static pages:ReportsText.NoData}}" />
+                    </Grid>
+                </DockPanel>
+            </Border>
+
+            <Border x:Name="SideCard2" Grid.Column="2" Grid.Row="2" Style="{DynamicResource Card}" Padding="10,14,10,6">
+                <DockPanel>
+                    <TextBlock x:Name="SideTitle2" DockPanel.Dock="Top" Style="{DynamicResource Text.Strong}" FontSize="16" Margin="12,0,12,6" />
+                    <Grid>
+                        <DataGrid x:Name="SideGrid2" Style="{StaticResource ReportGrid}" />
+                        <TextBlock x:Name="SideEmpty2" Style="{DynamicResource Text.Caption}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Visibility="Collapsed" Text="{ui:Loc {x:Static pages:ReportsText.NoData}}" />
+                    </Grid>
+                </DockPanel>
+            </Border>
+        </Grid>
+    </Grid>
 </shell:PageView>

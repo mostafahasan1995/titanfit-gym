@@ -1,6 +1,7 @@
 <!--
-    AdminText.Members: placeholder. Replace the PagePlaceholder with the real screen (design: design/Admin-Dashboard.dc.html).
-    Shared controls and their usage: Gym.UI/Shell/ControlsGalleryPage.xaml. Strings: AdminText.cs.
+    Members: search (name, phone, national number, member number) and status / type filters on the left, the chosen
+    member on the right: status, details, private trainer info, payments and recent check-ins. Edit changes the
+    member's data. There is no delete and no refund (docs/PLAN.md); registration and renewal are at reception.
 -->
 <shell:PageView x:Class="Gym.Admin.Pages.MembersPage"
                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -8,8 +9,203 @@
                 xmlns:ui="clr-namespace:Gym.UI;assembly=Gym.UI"
                 xmlns:shell="clr-namespace:Gym.UI.Shell;assembly=Gym.UI"
                 xmlns:controls="clr-namespace:Gym.UI.Controls;assembly=Gym.UI"
-                xmlns:local="clr-namespace:Gym.Admin">
-    <controls:PagePlaceholder x:Name="Placeholder" Icon="{x:Static ui:UiIcons.Users}"
-                              Title="{ui:Loc {x:Static local:AdminText.Members}}"
-                              Text="{ui:Loc {x:Static local:AdminText.MembersPlanned}}" />
+                xmlns:pages="clr-namespace:Gym.Admin.Pages">
+    <shell:PageView.Resources>
+        <Style x:Key="SectionTitle" TargetType="TextBlock" BasedOn="{StaticResource Text.Overline}">
+            <Setter Property="Margin" Value="0,18,0,8" />
+        </Style>
+        <Style x:Key="DetailLabel" TargetType="TextBlock" BasedOn="{StaticResource Text.Caption}">
+            <Setter Property="Width" Value="120" />
+        </Style>
+    </shell:PageView.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="20" />
+            <ColumnDefinition Width="400" />
+        </Grid.ColumnDefinitions>
+
+        <!-- List -->
+        <Border Style="{DynamicResource Card}" Padding="16,16,16,10">
+            <DockPanel>
+                <Grid DockPanel.Dock="Top" Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="180" />
+                    </Grid.ColumnDefinitions>
+                    <controls:SearchBox x:Name="SearchBox" SearchChanged="OnSearchChanged" />
+                    <ComboBox x:Name="TypeBox" Grid.Column="2" SelectionChanged="OnFilterChanged" />
+                </Grid>
+                <Border DockPanel.Dock="Top" HorizontalAlignment="Left" Padding="4" CornerRadius="12" Margin="0,0,0,8"
+                        Background="{DynamicResource Brush.Panel2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1">
+                    <StackPanel Orientation="Horizontal">
+                        <RadioButton x:Name="AllButton" Style="{DynamicResource Lang.Toggle}" GroupName="MemberStatus" IsChecked="True"
+                                     Content="{ui:Loc {x:Static pages:MembersText.All}}" Checked="OnFilterChanged" />
+                        <RadioButton x:Name="ActiveButton" Style="{DynamicResource Lang.Toggle}" GroupName="MemberStatus" Margin="4,0,0,0"
+                                     Content="{ui:Loc {x:Static ui:CommonText.StatusActive}}" Checked="OnFilterChanged" />
+                        <RadioButton x:Name="ExpiringButton" Style="{DynamicResource Lang.Toggle}" GroupName="MemberStatus" Margin="4,0,0,0"
+                                     Content="{ui:Loc {x:Static ui:CommonText.StatusExpiring}}" Checked="OnFilterChanged" />
+                        <RadioButton x:Name="ExpiredButton" Style="{DynamicResource Lang.Toggle}" GroupName="MemberStatus" Margin="4,0,0,0"
+                                     Content="{ui:Loc {x:Static ui:CommonText.StatusExpired}}" Checked="OnFilterChanged" />
+                    </StackPanel>
+                </Border>
+                <DockPanel DockPanel.Dock="Bottom" Margin="4,8,0,0">
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                        <Button x:Name="PreviousButton" Style="{DynamicResource Button.Icon}" ui:ThemeAssist.Icon="{x:Static ui:UiIcons.ChevronLeft}"
+                                ToolTip="{ui:Loc {x:Static pages:MembersText.Previous}}" Click="OnPreviousClick" />
+                        <Button x:Name="NextButton" Style="{DynamicResource Button.Icon}" ui:ThemeAssist.Icon="{x:Static ui:UiIcons.ChevronRight}" Margin="8,0,0,0"
+                                ToolTip="{ui:Loc {x:Static pages:MembersText.Next}}" Click="OnNextClick" />
+                    </StackPanel>
+                    <TextBlock x:Name="PageText" Style="{DynamicResource Text.Caption}" VerticalAlignment="Center" />
+                </DockPanel>
+                <Grid>
+                    <DataGrid x:Name="MembersGrid" SelectionChanged="OnMemberSelected">
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Width="58">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <controls:Avatar Source="{Binding Photo}" Width="38" Height="38" ui:ThemeAssist.CornerRadius="11" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:MembersText.Member}}" Width="*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Name}" Style="{DynamicResource Text.Strong}" FontSize="14"
+                                                       FlowDirection="{Binding NameDirection}" HorizontalAlignment="Left" />
+                                            <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                                <TextBlock Text="{Binding Number}" Style="{DynamicResource Text.Caption}" FontSize="12" FlowDirection="LeftToRight" />
+                                                <TextBlock Text="{Binding TypeText}" Style="{DynamicResource Text.Caption}" FontSize="12" Margin="8,0,0,0"
+                                                           Foreground="{DynamicResource Brush.Gold}" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:MembersText.Phone}}" Width="140">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Phone}" Style="{DynamicResource Text.Body}" FontSize="14" Foreground="{DynamicResource Brush.TextTertiary}"
+                                                   FlowDirection="LeftToRight" HorizontalAlignment="Left" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:MembersText.Status}}" Width="130">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <controls:StatusPill Status="{Binding Status}" HorizontalAlignment="Left" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:MembersText.ValidUntil}}" Width="150">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Ends}" Style="{DynamicResource Text.Body}" FontSize="14" Foreground="{DynamicResource Brush.TextTertiary}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <controls:EmptyState x:Name="ListEmpty" Visibility="Collapsed"
+                                         Title="{ui:Loc {x:Static ui:CommonText.NoResults}}" Text="{ui:Loc {x:Static ui:CommonText.NoResultsText}}" />
+                </Grid>
+            </DockPanel>
+        </Border>
+
+        <!-- The chosen member -->
+        <Border Grid.Column="2" Style="{DynamicResource Card}" Padding="0">
+            <Grid>
+                <ScrollViewer x:Name="DetailScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+                    <StackPanel x:Name="DetailPanel" Margin="22,20,22,20" Visibility="Collapsed">
+                        <DockPanel>
+                            <controls:Avatar x:Name="DetailPhoto" DockPanel.Dock="Left" Width="64" Height="64" ui:ThemeAssist.CornerRadius="16" />
+                            <Button x:Name="EditButton" DockPanel.Dock="Right" Style="{DynamicResource Button.Secondary}" VerticalAlignment="Top"
+                                    Content="{ui:Loc {x:Static ui:CommonText.Edit}}" Click="OnEditClick" />
+                            <StackPanel Margin="14,2,10,0" VerticalAlignment="Center">
+                                <TextBlock x:Name="DetailName" Style="{DynamicResource Text.H2}" TextWrapping="Wrap" TextTrimming="None" HorizontalAlignment="Left" />
+                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                    <TextBlock x:Name="DetailNumber" Style="{DynamicResource Text.Caption}" FlowDirection="LeftToRight" />
+                                    <TextBlock x:Name="DetailType" Style="{DynamicResource Text.Caption}" Margin="8,0,0,0" Foreground="{DynamicResource Brush.Gold}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </DockPanel>
+
+                        <Border Style="{DynamicResource Card.Inset}" Margin="0,16,0,0" Padding="14,12">
+                            <StackPanel>
+                                <controls:StatusPill x:Name="DetailStatus" HorizontalAlignment="Left" />
+                                <TextBlock x:Name="DetailStatusText" Style="{DynamicResource Text.Body}" Margin="0,8,0,0" TextWrapping="Wrap" TextTrimming="None" />
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Style="{StaticResource SectionTitle}" Text="{ui:Loc {x:Static pages:MembersText.Details}}" />
+                        <ItemsControl x:Name="DetailFacts" Focusable="False">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <DockPanel Margin="0,0,0,6">
+                                        <TextBlock Text="{Binding Label}" Style="{StaticResource DetailLabel}" />
+                                        <TextBlock Text="{Binding Value}" Style="{DynamicResource Text.Body}" FontSize="14" TextWrapping="Wrap" TextTrimming="None"
+                                                   FlowDirection="{Binding Direction}" HorizontalAlignment="Left" />
+                                    </DockPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <StackPanel x:Name="TrainerSection" Visibility="Collapsed">
+                            <TextBlock x:Name="TrainerTitle" Style="{StaticResource SectionTitle}" />
+                            <TextBlock x:Name="TrainerService" Style="{DynamicResource Text.Body}" FontSize="14" TextWrapping="Wrap" TextTrimming="None" />
+                            <ItemsControl x:Name="ClientList" Margin="0,6,0,0" Focusable="False">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <DockPanel Margin="0,4,0,0">
+                                            <controls:StatusPill DockPanel.Dock="Right" Status="{Binding Status}" />
+                                            <TextBlock Text="{Binding Name}" Style="{DynamicResource Text.Body}" FontSize="14" VerticalAlignment="Center"
+                                                       FlowDirection="{Binding NameDirection}" HorizontalAlignment="Left" />
+                                        </DockPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+
+                        <TextBlock Style="{StaticResource SectionTitle}" Text="{ui:Loc {x:Static pages:MembersText.Payments}}" />
+                        <TextBlock x:Name="NoPayments" Style="{DynamicResource Text.Caption}" Text="{ui:Loc {x:Static pages:MembersText.NoPayments}}" />
+                        <ItemsControl x:Name="PaymentList" Focusable="False">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" Padding="0,8">
+                                        <DockPanel>
+                                            <controls:MoneyText DockPanel.Dock="Right" Amount="{Binding Price}" Style="{DynamicResource Text.Strong}" FontSize="14"
+                                                                Foreground="{DynamicResource Brush.Gold}" VerticalAlignment="Top" />
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Title}" Style="{DynamicResource Text.Strong}" FontSize="14" />
+                                                <TextBlock Text="{Binding Period}" Style="{DynamicResource Text.Caption}" FontSize="12" Margin="0,2,0,0" />
+                                                <TextBlock Text="{Binding Paid}" Style="{DynamicResource Text.Caption}" FontSize="12" Margin="0,2,0,0" />
+                                            </StackPanel>
+                                        </DockPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <TextBlock x:Name="CheckInsTitle" Style="{StaticResource SectionTitle}" />
+                        <TextBlock x:Name="NoCheckIns" Style="{DynamicResource Text.Caption}" Text="{ui:Loc {x:Static pages:MembersText.NoCheckIns}}" />
+                        <ItemsControl x:Name="CheckInList" Focusable="False">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <DockPanel Margin="0,0,0,6">
+                                        <controls:StatusPill DockPanel.Dock="Right" Tone="{Binding Tone}" Text="{Binding Result}" />
+                                        <TextBlock Text="{Binding When}" Style="{DynamicResource Text.Body}" FontSize="14" VerticalAlignment="Center" />
+                                    </DockPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+                <controls:EmptyState x:Name="DetailEmpty" Icon="{x:Static ui:UiIcons.User}"
+                                     Title="{ui:Loc {x:Static pages:MembersText.PickMember}}" Text="{ui:Loc {x:Static pages:MembersText.PickMemberText}}" />
+            </Grid>
+        </Border>
+    </Grid>
 </shell:PageView>

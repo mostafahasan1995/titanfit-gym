@@ -1,6 +1,7 @@
 <!--
-    AdminText.CafeteriaItems: placeholder. Replace the PagePlaceholder with the real screen (design: design/Admin-Dashboard.dc.html).
-    Shared controls and their usage: Gym.UI/Shell/ControlsGalleryPage.xaml. Strings: AdminText.cs.
+    Cafeteria items: every product with its category, barcode, price, current stock (= sum of the stock movements) and
+    the low-stock minimum. Add and edit items, take in a delivery or set the counted stock (the stock never goes below 0).
+    The daily stock work happens in the Cafeteria app.
 -->
 <shell:PageView x:Class="Gym.Admin.Pages.CafeteriaItemsPage"
                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -8,8 +9,106 @@
                 xmlns:ui="clr-namespace:Gym.UI;assembly=Gym.UI"
                 xmlns:shell="clr-namespace:Gym.UI.Shell;assembly=Gym.UI"
                 xmlns:controls="clr-namespace:Gym.UI.Controls;assembly=Gym.UI"
-                xmlns:local="clr-namespace:Gym.Admin">
-    <controls:PagePlaceholder x:Name="Placeholder" Icon="{x:Static ui:UiIcons.Box}"
-                              Title="{ui:Loc {x:Static local:AdminText.CafeteriaItems}}"
-                              Text="{ui:Loc {x:Static local:AdminText.CafeteriaItemsPlanned}}" />
+                xmlns:pages="clr-namespace:Gym.Admin.Pages">
+    <Border Style="{DynamicResource Card}" Padding="16,16,16,8">
+        <DockPanel>
+            <Grid DockPanel.Dock="Top" Margin="0,0,0,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="200" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <controls:SearchBox x:Name="SearchBox" SearchChanged="OnSearchChanged" />
+                <ComboBox x:Name="CategoryBox" Grid.Column="2" SelectionChanged="OnFilterChanged" />
+                <CheckBox x:Name="InactiveBox" Grid.Column="4" VerticalAlignment="Center" Content="{ui:Loc {x:Static pages:ItemsText.ShowInactive}}"
+                          Checked="OnFilterChanged" Unchecked="OnFilterChanged" />
+                <Button Grid.Column="6" Style="{DynamicResource Button.Primary}" ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Plus}"
+                        Content="{ui:Loc {x:Static pages:ItemsText.AddItem}}" Click="OnAddClick" />
+            </Grid>
+            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="4,0,0,8">
+                <TextBlock x:Name="CountText" Style="{DynamicResource Text.Caption}" VerticalAlignment="Center" />
+                <controls:StatusPill x:Name="LowPill" Tone="Warning" Margin="12,0,0,0" />
+                <controls:StatusPill x:Name="EmptyPill" Tone="Bad" Margin="8,0,0,0" />
+            </StackPanel>
+            <Grid>
+                <DataGrid x:Name="ItemsGrid" MouseDoubleClick="OnGridDoubleClick">
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:ItemsText.Item}}" Width="*">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Name}" Style="{DynamicResource Text.Strong}" FontSize="14" FlowDirection="{Binding NameDirection}" HorizontalAlignment="Left" />
+                                        <TextBlock Text="{Binding OtherName}" Style="{DynamicResource Text.Caption}" FontSize="12" Margin="0,2,0,0"
+                                                   FlowDirection="{Binding OtherDirection}" HorizontalAlignment="Left" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:ItemsText.Category}}" Width="130">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Category}" Style="{DynamicResource Text.Body}" FontSize="14" Foreground="{DynamicResource Brush.TextTertiary}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:ItemsText.Barcode}}" Width="150">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Barcode}" Style="{DynamicResource Text.Caption}" FontSize="13" FlowDirection="LeftToRight" HorizontalAlignment="Left" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:ItemsText.Price}}" Width="130">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <controls:MoneyText Amount="{Binding Price}" Style="{DynamicResource Text.Strong}" FontSize="14" Foreground="{DynamicResource Brush.Gold}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:ItemsText.Stock}}" Width="130">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Stock}" Style="{DynamicResource Text.Strong}" FontSize="15" Foreground="{Binding StockBrush}"
+                                                   VerticalAlignment="Center" MinWidth="34" />
+                                        <controls:StatusPill Tone="{Binding StockTone}" Text="{Binding StockText}" Visibility="{Binding StockPillVisibility}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:ItemsText.Minimum}}" Width="80">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Minimum}" Style="{DynamicResource Text.Body}" FontSize="14" Foreground="{DynamicResource Brush.TextTertiary}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:ItemsText.Status}}" Width="110">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <controls:StatusPill Tone="{Binding Tone}" Text="{Binding StatusText}" HorizontalAlignment="Left" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Width="196">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                        <Button Style="{DynamicResource Button.Ghost}" Content="{ui:Loc {x:Static pages:ItemsText.StockButton}}" Tag="{Binding}" Click="OnStockClick" />
+                                        <Button Style="{DynamicResource Button.Ghost}" Margin="6,0,0,0" Content="{ui:Loc {x:Static ui:CommonText.Edit}}" Tag="{Binding}" Click="OnEditClick" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+                <controls:EmptyState x:Name="ListEmpty" Visibility="Collapsed" Icon="{x:Static ui:UiIcons.Box}"
+                                     Title="{ui:Loc {x:Static ui:CommonText.NoResults}}" Text="{ui:Loc {x:Static pages:ItemsText.NoItemsText}}" />
+            </Grid>
+        </DockPanel>
+    </Border>
 </shell:PageView>

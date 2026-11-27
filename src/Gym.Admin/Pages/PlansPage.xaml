@@ -1,6 +1,6 @@
 <!--
-    AdminText.Plans: placeholder. Replace the PagePlaceholder with the real screen (design: design/Admin-Dashboard.dc.html).
-    Shared controls and their usage: Gym.UI/Shell/ControlsGalleryPage.xaml. Strings: AdminText.cs.
+    Plans and prices: the membership plans (months, price, active). A price change applies to new payments only;
+    each subscription keeps the price that was paid. Plans are deactivated, never deleted (old payments point to them).
 -->
 <shell:PageView x:Class="Gym.Admin.Pages.PlansPage"
                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -8,8 +8,97 @@
                 xmlns:ui="clr-namespace:Gym.UI;assembly=Gym.UI"
                 xmlns:shell="clr-namespace:Gym.UI.Shell;assembly=Gym.UI"
                 xmlns:controls="clr-namespace:Gym.UI.Controls;assembly=Gym.UI"
-                xmlns:local="clr-namespace:Gym.Admin">
-    <controls:PagePlaceholder x:Name="Placeholder" Icon="{x:Static ui:UiIcons.Tag}"
-                              Title="{ui:Loc {x:Static local:AdminText.Plans}}"
-                              Text="{ui:Loc {x:Static local:AdminText.PlansPlanned}}" />
+                xmlns:pages="clr-namespace:Gym.Admin.Pages">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="24" />
+            <ColumnDefinition Width="340" />
+        </Grid.ColumnDefinitions>
+
+        <Border Style="{DynamicResource Card}" Padding="12,18,12,8">
+            <DockPanel>
+                <DockPanel DockPanel.Dock="Top" Margin="12,0,4,12">
+                    <Button DockPanel.Dock="Right" Style="{DynamicResource Button.Primary}" ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Plus}"
+                            Content="{ui:Loc {x:Static pages:PlansText.AddPlan}}" Click="OnAddClick" />
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Style="{DynamicResource Text.H2}" Text="{ui:Loc {x:Static pages:PlansText.ListTitle}}" />
+                        <TextBlock x:Name="CountText" Style="{DynamicResource Text.Caption}" Margin="0,2,0,0" />
+                    </StackPanel>
+                </DockPanel>
+                <DataGrid x:Name="PlansGrid" MouseDoubleClick="OnGridDoubleClick">
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:PlansText.Plan}}" Width="*">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Border Width="34" Height="34" CornerRadius="10" Background="{DynamicResource Brush.AccentSoft}">
+                                            <controls:Icon Data="{x:Static ui:UiIcons.Calendar}" Size="18" Foreground="{DynamicResource Brush.Accent}"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <TextBlock Text="{Binding Name}" Style="{DynamicResource Text.Strong}" Margin="12,0,0,0" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:PlansText.Price}}" Width="190">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <controls:MoneyText Amount="{Binding Price}" Style="{DynamicResource Text.Strong}" Foreground="{DynamicResource Brush.Gold}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:PlansText.PerMonth}}" Width="170">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <controls:MoneyText Amount="{Binding PerMonth}" Style="{DynamicResource Text.Caption}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:PlansText.Status}}" Width="140">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <controls:StatusPill Tone="{Binding Tone}" Text="{Binding StatusText}" HorizontalAlignment="Left" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Width="120">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Style="{DynamicResource Button.Ghost}" Content="{ui:Loc {x:Static ui:CommonText.Edit}}"
+                                            Tag="{Binding}" Click="OnEditClick" HorizontalAlignment="Right" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
+        </Border>
+
+        <StackPanel Grid.Column="2">
+            <Border Style="{DynamicResource Card}" Padding="22">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <controls:Icon Data="{x:Static ui:UiIcons.Info}" Size="20" Foreground="{DynamicResource Brush.Accent}" VerticalAlignment="Center" />
+                        <TextBlock Style="{DynamicResource Text.H2}" Margin="10,0,0,0" Text="{ui:Loc {x:Static pages:PlansText.HowTitle}}" />
+                    </StackPanel>
+                    <TextBlock Style="{DynamicResource Text.Body}" Margin="0,14,0,0" TextWrapping="Wrap" TextTrimming="None"
+                               Foreground="{DynamicResource Brush.TextTertiary}" Text="{ui:Loc {x:Static pages:PlansText.HowPrice}}" />
+                    <TextBlock Style="{DynamicResource Text.Body}" Margin="0,10,0,0" TextWrapping="Wrap" TextTrimming="None"
+                               Foreground="{DynamicResource Brush.TextTertiary}" Text="{ui:Loc {x:Static pages:PlansText.HowInactive}}" />
+                    <TextBlock Style="{DynamicResource Text.Body}" Margin="0,10,0,0" TextWrapping="Wrap" TextTrimming="None"
+                               Foreground="{DynamicResource Brush.TextTertiary}" Text="{ui:Loc {x:Static pages:PlansText.HowRenewal}}" />
+                </StackPanel>
+            </Border>
+            <Border Style="{DynamicResource Card}" Padding="22" Margin="0,16,0,0">
+                <StackPanel>
+                    <TextBlock Style="{DynamicResource Text.Overline}" Text="{ui:Loc {x:Static pages:PlansText.PrivateFee}}" />
+                    <controls:MoneyText x:Name="FeeText" Style="{DynamicResource Text.Number}" FontSize="26" Margin="0,8,0,0"
+                                        Foreground="{DynamicResource Brush.Gold}" HorizontalAlignment="Left" />
+                    <TextBlock Style="{DynamicResource Text.Caption}" Margin="0,6,0,0" TextWrapping="Wrap" TextTrimming="None"
+                               Text="{ui:Loc {x:Static pages:PlansText.PrivateFeeHint}}" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </Grid>
 </shell:PageView>

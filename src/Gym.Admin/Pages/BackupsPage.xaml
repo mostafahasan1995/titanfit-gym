@@ -1,6 +1,7 @@
 <!--
-    AdminText.Backups: placeholder. Replace the PagePlaceholder with the real screen (design: design/Admin-Dashboard.dc.html).
-    Shared controls and their usage: Gym.UI/Shell/ControlsGalleryPage.xaml. Strings: AdminText.cs.
+    Backups: the state of the daily database backup (last run, next run, warning), Back up now, the backup files in the
+    folder, and the settings (folder on the external drive, daily time, how many to keep, pg_dump). The server checks
+    the folder (it must exist and be writable). Restoring is done on the server PC with restore-backup.ps1 (docs/PLAN.md).
 -->
 <shell:PageView x:Class="Gym.Admin.Pages.BackupsPage"
                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -8,8 +9,133 @@
                 xmlns:ui="clr-namespace:Gym.UI;assembly=Gym.UI"
                 xmlns:shell="clr-namespace:Gym.UI.Shell;assembly=Gym.UI"
                 xmlns:controls="clr-namespace:Gym.UI.Controls;assembly=Gym.UI"
-                xmlns:local="clr-namespace:Gym.Admin">
-    <controls:PagePlaceholder x:Name="Placeholder" Icon="{x:Static ui:UiIcons.Database}"
-                              Title="{ui:Loc {x:Static local:AdminText.Backups}}"
-                              Text="{ui:Loc {x:Static local:AdminText.BackupsPlanned}}" />
+                xmlns:pages="clr-namespace:Gym.Admin.Pages">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="20" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Status -->
+        <Border x:Name="StatusCard" Style="{DynamicResource Card}" Padding="22,18">
+            <DockPanel>
+                <Border x:Name="StatusIconBox" DockPanel.Dock="Left" Width="56" Height="56" CornerRadius="16" VerticalAlignment="Center"
+                        Background="{DynamicResource Brush.GoodSoft}">
+                    <controls:Icon x:Name="StatusIcon" Data="{x:Static ui:UiIcons.Check}" Size="28" Foreground="{DynamicResource Brush.Good}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+                <Button x:Name="BackupNowButton" DockPanel.Dock="Right" Style="{DynamicResource Button.Primary}" MinWidth="190" VerticalAlignment="Center"
+                        ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Database}" Content="{ui:Loc {x:Static pages:BackupsText.BackUpNow}}" Click="OnBackupNowClick" />
+                <StackPanel Margin="18,0,18,0" VerticalAlignment="Center">
+                    <TextBlock x:Name="StatusTitle" Style="{DynamicResource Text.H2}" />
+                    <TextBlock x:Name="StatusLast" Style="{DynamicResource Text.Body}" FontSize="14" Margin="0,6,0,0" Foreground="{DynamicResource Brush.TextTertiary}"
+                               TextWrapping="Wrap" TextTrimming="None" />
+                    <TextBlock x:Name="StatusNext" Style="{DynamicResource Text.Caption}" Margin="0,4,0,0" />
+                    <TextBlock x:Name="StatusError" Style="{DynamicResource Text.Caption}" Margin="0,4,0,0" Foreground="{DynamicResource Brush.Bad}"
+                               TextWrapping="Wrap" TextTrimming="None" Visibility="Collapsed" FlowDirection="LeftToRight" HorizontalAlignment="Left" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="20" />
+                <ColumnDefinition Width="420" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Backup files -->
+            <Border Style="{DynamicResource Card}" Padding="12,16,12,8">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Top" Margin="10,0,10,8">
+                        <TextBlock Style="{DynamicResource Text.H2}" FontSize="17" Text="{ui:Loc {x:Static pages:BackupsText.FilesTitle}}" />
+                        <TextBlock x:Name="FilesSummary" Style="{DynamicResource Text.Caption}" Margin="0,2,0,0" />
+                        <TextBlock x:Name="FilesFolder" Style="{DynamicResource Text.Caption}" Margin="0,2,0,0" FlowDirection="LeftToRight" HorizontalAlignment="Left" />
+                    </StackPanel>
+                    <Grid>
+                        <DataGrid x:Name="FilesGrid" RowHeight="46">
+                            <DataGrid.Columns>
+                                <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:BackupsText.File}}" Width="*">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <controls:Icon Data="{x:Static ui:UiIcons.Database}" Size="16" Foreground="{DynamicResource Brush.Accent}" VerticalAlignment="Center" />
+                                                <TextBlock Text="{Binding Name}" Style="{DynamicResource Text.Body}" FontSize="14" Margin="10,0,0,0" FlowDirection="LeftToRight"
+                                                           VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:BackupsText.Made}}" Width="210">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Made}" Style="{DynamicResource Text.Body}" FontSize="14" Foreground="{DynamicResource Brush.TextTertiary}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:BackupsText.Size}}" Width="120">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Size}" Style="{DynamicResource Text.Body}" FontSize="14" Foreground="{DynamicResource Brush.TextTertiary}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <controls:EmptyState x:Name="FilesEmpty" Visibility="Collapsed" Icon="{x:Static ui:UiIcons.Database}"
+                                             Title="{ui:Loc {x:Static pages:BackupsText.NoFiles}}" Text="{ui:Loc {x:Static pages:BackupsText.NoFilesText}}" />
+                    </Grid>
+                </DockPanel>
+            </Border>
+
+            <!-- Settings and restore -->
+            <Border Grid.Column="2" Style="{DynamicResource Card}" Padding="0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+                    <StackPanel Margin="22,18,22,20">
+                        <TextBlock Style="{DynamicResource Text.H2}" FontSize="17" Text="{ui:Loc {x:Static pages:BackupsText.SettingsTitle}}" />
+
+                        <controls:FormField x:Name="FolderField" Margin="0,14,0,0" Label="{ui:Loc {x:Static pages:BackupsText.Folder}}"
+                                            Hint="{ui:Loc {x:Static pages:BackupsText.FolderHint}}">
+                            <TextBox x:Name="FolderBox" FlowDirection="LeftToRight" />
+                        </controls:FormField>
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                            <Button x:Name="BrowseButton" Style="{DynamicResource Button.Secondary}" Content="{ui:Loc {x:Static pages:BackupsText.Browse}}" Click="OnBrowseClick" />
+                            <Button Style="{DynamicResource Button.Ghost}" Margin="8,0,0,0" Content="{ui:Loc {x:Static pages:BackupsText.UseDefault}}" Click="OnDefaultClick" />
+                        </StackPanel>
+
+                        <Grid Margin="0,16,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="14" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <controls:FormField x:Name="TimeField" Label="{ui:Loc {x:Static pages:BackupsText.Time}}">
+                                <ComboBox x:Name="TimeBox" FlowDirection="LeftToRight" />
+                            </controls:FormField>
+                            <controls:FormField x:Name="KeepField" Grid.Column="2" Label="{ui:Loc {x:Static pages:BackupsText.Keep}}">
+                                <TextBox x:Name="KeepBox" FlowDirection="LeftToRight" MaxLength="3" />
+                            </controls:FormField>
+                        </Grid>
+
+                        <controls:FormField x:Name="PgDumpField" Margin="0,16,0,0" Label="{ui:Loc {x:Static pages:BackupsText.PgDump}}">
+                            <TextBox x:Name="PgDumpBox" FlowDirection="LeftToRight" />
+                        </controls:FormField>
+
+                        <Button x:Name="SaveButton" Style="{DynamicResource Button.Primary}" Margin="0,18,0,0" HorizontalAlignment="Left" MinWidth="140"
+                                ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Check}" Content="{ui:Loc {x:Static ui:CommonText.Save}}" Click="OnSaveClick" />
+
+                        <Border Style="{DynamicResource Divider}" Margin="0,20,0,16" />
+                        <TextBlock Style="{DynamicResource Text.Strong}" Text="{ui:Loc {x:Static pages:BackupsText.RestoreTitle}}" />
+                        <TextBlock Style="{DynamicResource Text.Caption}" Margin="0,6,0,0" TextWrapping="Wrap" TextTrimming="None"
+                                   Text="{ui:Loc {x:Static pages:BackupsText.RestoreText}}" />
+                        <Border Style="{DynamicResource Card.Inset}" Margin="0,10,0,0" Padding="12,8">
+                            <TextBlock x:Name="RestoreCommand" Style="{DynamicResource Text.Caption}" FontSize="12" FlowDirection="LeftToRight" TextWrapping="Wrap"
+                                       TextTrimming="None" Foreground="{DynamicResource Brush.TextTertiary}" />
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+    </Grid>
 </shell:PageView>
