@@ -223,7 +223,8 @@ try {
     $backupFile = Join-Path $backupDir $backup.Body.fileName
     Assert-True ((Test-Path $backupFile) -and (Get-Item $backupFile).Length -gt 1KB -and $backup.Body.fileName -match '^titanfit-\d{8}-\d{4}(-\d+)?\.dump$') "backup file written: $backupFile ($((Get-Item $backupFile).Length) bytes)"
     Assert-True (((Get-Sids $backupFile) -join ',') -eq 'S-1-5-18,S-1-5-32-544') 'backup file readable only by SYSTEM and Administrators'
-    $listed = @(Get-Json '/api/backups' $token)
+    $listed = Get-Json '/api/backups' $token   # Invoke-RestMethod returns a JSON array as one object: assign, then @()
+    $listed = @($listed)
     Assert-True ($listed[0].name -eq $backup.Body.fileName) "GET /api/backups lists it first ($($listed.Count) backups)"
     $status = Get-Json '/api/backups/status' $token
     Assert-True ($status.warning -eq 'None' -and $status.lastSuccess.fileName -eq $backup.Body.fileName) "GET /api/backups/status: warning $($status.warning), next run $($status.nextRunAt)"
@@ -236,7 +237,8 @@ try {
     & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $restoreScript -BackupFile $backupFile -Force *>&1 | ForEach-Object { Write-Host "    $_" }
     Assert-True ($LASTEXITCODE -eq 0) "restore-backup.ps1 (Windows PowerShell 5.1) exit code $LASTEXITCODE"
     Assert-ServerRunning 'after the restore'
-    $plansAfter = @(Get-Json '/api/plans?includeInactive=true' $token)
+    $plansAfter = Get-Json '/api/plans?includeInactive=true' $token
+    $plansAfter = @($plansAfter)
     Assert-True (-not ($plansAfter | Where-Object { $_.months -eq 7 })) "restored: the plan added after the backup is gone ($($plansAfter.Count) plans)"
     Assert-Login 'after the restore'
     Assert-True (@(Get-ChildItem $backupDir -Filter 'titanfit-before-restore-*.dump').Count -eq 1) 'the restore saved the data from before it'
