@@ -28,6 +28,7 @@
     <ProjectReference Include="..\..\src\Gym.Client\Gym.Client.csproj" />
     <ProjectReference Include="..\..\src\Gym.UI\Gym.UI.csproj" />
     <ProjectReference Include="..\..\src\Gym.Cafeteria\Gym.Cafeteria.csproj" />
+    <ProjectReference Include="..\..\src\Gym.Reception\Gym.Reception.csproj" />
   </ItemGroup>
 
 </Project>

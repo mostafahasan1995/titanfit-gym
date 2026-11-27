@@ -1,0 +1,68 @@
+<!--
+    The live webcam picture with the TITANFIT scan frame (check-in) or the face guide (member photo), a status chip
+    and a hint. The picture is mirrored like a mirror; the QR decoder and the saved photo use the real frame.
+-->
+<UserControl x:Class="Gym.Reception.Views.CameraView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:Gym.UI;assembly=Gym.UI"
+             xmlns:controls="clr-namespace:Gym.UI.Controls;assembly=Gym.UI">
+    <Border x:Name="Frame" CornerRadius="20" Background="{DynamicResource Brush.LogoTile}"
+            BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1">
+        <Grid x:Name="Inner" ClipToBounds="True">
+            <Image x:Name="PreviewImage" Stretch="UniformToFill" FlowDirection="LeftToRight"
+                   HorizontalAlignment="Center" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
+                <Image.RenderTransform>
+                    <ScaleTransform ScaleX="-1" />
+                </Image.RenderTransform>
+            </Image>
+
+            <!-- Check-in: the scan frame with its moving line. -->
+            <Grid x:Name="ScanFrame" Width="240" Height="240" Margin="0,0,0,64"
+                  HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Border Width="44" Height="44" HorizontalAlignment="Left" VerticalAlignment="Top"
+                        BorderThickness="4,4,0,0" CornerRadius="18,0,0,0" BorderBrush="{DynamicResource Brush.Accent}" />
+                <Border Width="44" Height="44" HorizontalAlignment="Right" VerticalAlignment="Top"
+                        BorderThickness="0,4,4,0" CornerRadius="0,18,0,0" BorderBrush="{DynamicResource Brush.Accent}" />
+                <Border Width="44" Height="44" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                        BorderThickness="4,0,0,4" CornerRadius="0,0,0,18" BorderBrush="{DynamicResource Brush.Accent}" />
+                <Border Width="44" Height="44" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                        BorderThickness="0,0,4,4" CornerRadius="0,0,18,0" BorderBrush="{DynamicResource Brush.Accent}" />
+                <controls:Icon x:Name="QrPlaceholder" Data="{x:Static ui:UiIcons.Qr}" Size="112" StrokeThickness="1.2"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource Brush.Border}" />
+                <Border x:Name="ScanLine" Height="2" CornerRadius="1" Margin="14,0" VerticalAlignment="Top"
+                        Background="{DynamicResource Brush.Accent}">
+                    <Border.RenderTransform>
+                        <TranslateTransform x:Name="ScanLineOffset" Y="60" />
+                    </Border.RenderTransform>
+                </Border>
+            </Grid>
+
+            <!-- Photo: an oval for the face. -->
+            <Grid x:Name="FaceGuide" Visibility="Collapsed" IsHitTestVisible="False">
+                <Ellipse x:Name="FaceOval" Width="124" Height="156" Margin="0,30,0,0" StrokeThickness="2" StrokeDashArray="5 4"
+                         Stroke="{DynamicResource Brush.Accent}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                <controls:Icon x:Name="FacePlaceholder" Data="{x:Static ui:UiIcons.User}" Size="80" StrokeThickness="1.2" Margin="0,30,0,0"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource Brush.Border}" />
+            </Grid>
+
+            <!-- Status chip -->
+            <Border x:Name="StatusChip" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="16" Padding="12,6"
+                    CornerRadius="999" Background="{DynamicResource Brush.Scrim}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1">
+                <StackPanel Orientation="Horizontal">
+                    <Ellipse x:Name="StatusDot" Width="8" Height="8" VerticalAlignment="Center" Fill="{DynamicResource Brush.Accent}" />
+                    <TextBlock x:Name="StatusText" Margin="8,0,0,0" FontSize="13" VerticalAlignment="Center"
+                               Foreground="{DynamicResource Brush.TextTertiary}" TextTrimming="CharacterEllipsis" MaxWidth="360" />
+                </StackPanel>
+            </Border>
+
+            <!-- Hint at the bottom -->
+            <StackPanel x:Name="HintPanel" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="24,0,24,26">
+                <TextBlock x:Name="HintTitle" FontFamily="{DynamicResource Font.Heading}" FontSize="20" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Brush.Text}" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" />
+                <TextBlock x:Name="HintText" Margin="0,4,0,0" FontSize="14" Foreground="{DynamicResource Brush.TextSecondary}"
+                           HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" />
+            </StackPanel>
+        </Grid>
+    </Border>
+</UserControl>

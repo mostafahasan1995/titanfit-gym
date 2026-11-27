@@ -1,6 +1,7 @@
 <!--
-    ReceptionText.NewMember: placeholder. Replace the PagePlaceholder with the real screen (design: design/Main.dc.html (check-in) and design/Reception-Register.dc.html (new member)).
-    Shared controls and their usage: Gym.UI/Shell/ControlsGalleryPage.xaml. Strings: ReceptionText.cs.
+    New member (design/Reception-Register.dc.html): 1 ID card (the USB 2D scanner types the barcode into the scan box,
+    the fields fill in and stay editable), 2 phone (+963), 3 photo (webcam, square), the member QR after saving,
+    4 subscription (member type, months, dates, price) and Save.
 -->
 <shell:PageView x:Class="Gym.Reception.Pages.NewMemberPage"
                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -8,8 +9,250 @@
                 xmlns:ui="clr-namespace:Gym.UI;assembly=Gym.UI"
                 xmlns:shell="clr-namespace:Gym.UI.Shell;assembly=Gym.UI"
                 xmlns:controls="clr-namespace:Gym.UI.Controls;assembly=Gym.UI"
+                xmlns:views="clr-namespace:Gym.Reception.Views"
                 xmlns:local="clr-namespace:Gym.Reception">
-    <controls:PagePlaceholder x:Name="Placeholder" Icon="{x:Static ui:UiIcons.UserPlus}"
-                              Title="{ui:Loc {x:Static local:ReceptionText.NewMember}}"
-                              Text="{ui:Loc {x:Static local:ReceptionText.NewMemberPlanned}}" />
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1.18*" />
+            <ColumnDefinition Width="20" />
+            <ColumnDefinition Width="1*" />
+            <ColumnDefinition Width="20" />
+            <ColumnDefinition Width="1.06*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Column 1: ID card and phone -->
+        <StackPanel Grid.Column="0" x:Name="IdColumn">
+            <Border Style="{DynamicResource Card}" Padding="20,18">
+                <StackPanel>
+                    <DockPanel>
+                        <Button x:Name="RescanButton" DockPanel.Dock="Right" Style="{DynamicResource Button.Ghost}" MinHeight="40" Height="40"
+                                ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Barcode}" Click="OnRescanClick"
+                                Content="{ui:Loc {x:Static local:ReceptionText.ScanAgain}}" />
+                        <Border Style="{DynamicResource Step.Badge}">
+                            <TextBlock Style="{DynamicResource Step.Number}" Text="1" />
+                        </Border>
+                        <TextBlock Style="{DynamicResource Text.H2}" Margin="10,0,0,0" VerticalAlignment="Center"
+                                   Text="{ui:Loc {x:Static local:ReceptionText.IdCardTitle}}" />
+                    </DockPanel>
+
+                    <Grid Margin="0,14,0,0">
+                        <TextBox x:Name="ScanBox" AcceptsReturn="True" AcceptsTab="True" TextWrapping="NoWrap" Height="48" MinHeight="48"
+                                 Padding="44,0,14,0" VerticalScrollBarVisibility="Hidden"
+                                 ui:ThemeAssist.Placeholder="{ui:Loc {x:Static local:ReceptionText.ScanPlaceholder}}"
+                                 TextChanged="OnScanTextChanged" />
+                        <controls:Icon Data="{x:Static ui:UiIcons.Barcode}" Size="20" Margin="14,0,0,0" HorizontalAlignment="Left"
+                                       VerticalAlignment="Center" IsHitTestVisible="False" Foreground="{DynamicResource Brush.TextSecondary}" />
+                    </Grid>
+                    <Grid Margin="2,8,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="8" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <controls:Icon x:Name="ScanStatusIcon" Data="{x:Static ui:UiIcons.Info}" Size="16" VerticalAlignment="Top" Margin="0,1,0,0"
+                                       Foreground="{DynamicResource Brush.TextSecondary}" />
+                        <TextBlock x:Name="ScanStatus" Grid.Column="2" Style="{DynamicResource Text.Caption}" TextWrapping="Wrap"
+                                   TextTrimming="None" VerticalAlignment="Center" />
+                    </Grid>
+
+                    <Grid Margin="0,14,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="12" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="12" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="12" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <controls:FormField x:Name="FirstField" Grid.Row="0" Grid.Column="0" Label="{ui:Loc {x:Static local:ReceptionText.FirstName}}">
+                            <TextBox x:Name="FirstBox" />
+                        </controls:FormField>
+                        <controls:FormField Grid.Row="0" Grid.Column="2" Label="{ui:Loc {x:Static local:ReceptionText.FatherName}}">
+                            <TextBox x:Name="FatherBox" />
+                        </controls:FormField>
+                        <controls:FormField x:Name="LastField" Grid.Row="2" Grid.Column="0" Label="{ui:Loc {x:Static local:ReceptionText.LastName}}">
+                            <TextBox x:Name="LastBox" />
+                        </controls:FormField>
+                        <controls:FormField Grid.Row="2" Grid.Column="2" Label="{ui:Loc {x:Static local:ReceptionText.MotherName}}">
+                            <TextBox x:Name="MotherBox" />
+                        </controls:FormField>
+                        <controls:FormField x:Name="BirthDateField" Grid.Row="4" Grid.Column="0" Label="{ui:Loc {x:Static local:ReceptionText.BirthDate}}">
+                            <TextBox x:Name="BirthDateBox" FlowDirection="LeftToRight" TextChanged="OnBirthDateChanged"
+                                     ui:ThemeAssist.Placeholder="{ui:Loc {x:Static local:ReceptionText.DatePlaceholder}}" />
+                        </controls:FormField>
+                        <controls:FormField Grid.Row="4" Grid.Column="2" Label="{ui:Loc {x:Static local:ReceptionText.BirthPlace}}">
+                            <TextBox x:Name="BirthPlaceBox" />
+                        </controls:FormField>
+                        <controls:FormField x:Name="NationalNoField" Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="3"
+                                            Label="{ui:Loc {x:Static local:ReceptionText.NationalNo}}">
+                            <TextBox x:Name="NationalNoBox" FlowDirection="LeftToRight" MaxLength="20" />
+                        </controls:FormField>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{DynamicResource Card}" Padding="20,18" Margin="0,16,0,0">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Border Style="{DynamicResource Step.Badge}">
+                            <TextBlock Style="{DynamicResource Step.Number}" Text="2" />
+                        </Border>
+                        <TextBlock Style="{DynamicResource Text.H2}" Margin="10,0,0,0" VerticalAlignment="Center"
+                                   Text="{ui:Loc {x:Static local:ReceptionText.PhoneTitle}}" />
+                    </StackPanel>
+                    <ContentControl x:Name="PhoneHost" Margin="0,14,0,0" Focusable="False" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+
+        <!-- Column 2: photo and the member QR -->
+        <StackPanel Grid.Column="2">
+            <Border Style="{DynamicResource Card}" Padding="20,18">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Border Style="{DynamicResource Step.Badge}">
+                            <TextBlock Style="{DynamicResource Step.Number}" Text="3" />
+                        </Border>
+                        <TextBlock Style="{DynamicResource Text.H2}" Margin="10,0,0,0" VerticalAlignment="Center"
+                                   Text="{ui:Loc {x:Static local:ReceptionText.PhotoTitle}}" />
+                    </StackPanel>
+                    <Grid Width="220" Height="220" Margin="0,14,0,0" HorizontalAlignment="Center">
+                        <views:CameraView x:Name="PhotoCamera" Mode="Photo" />
+                        <Border x:Name="PhotoFrame" CornerRadius="16" Visibility="Collapsed" BorderThickness="2"
+                                BorderBrush="{DynamicResource Brush.GoodLine}" Background="{DynamicResource Brush.Panel2}">
+                            <Image x:Name="PhotoImage" Stretch="UniformToFill" FlowDirection="LeftToRight" />
+                        </Border>
+                    </Grid>
+                    <Button x:Name="PhotoButton" Margin="0,14,0,0" HorizontalAlignment="Center" MinWidth="200"
+                            ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Camera}" Click="OnPhotoClick" />
+                    <TextBlock x:Name="PhotoStatus" Style="{DynamicResource Text.Caption}" Margin="0,8,0,0" HorizontalAlignment="Center"
+                               TextAlignment="Center" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{DynamicResource Card}" Padding="20,18" Margin="0,16,0,0">
+                <StackPanel>
+                    <TextBlock Style="{DynamicResource Text.H2}" Text="{ui:Loc {x:Static local:ReceptionText.MemberQrTitle}}" />
+                    <Grid Margin="0,14,0,0">
+                        <Grid x:Name="QrWaiting">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="14" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border Width="96" Height="96" CornerRadius="12" BorderThickness="1.5" BorderBrush="{DynamicResource Brush.Border}">
+                                <controls:Icon Data="{x:Static ui:UiIcons.Qr}" Size="40" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource Brush.Border}" />
+                            </Border>
+                            <TextBlock Grid.Column="2" Style="{DynamicResource Text.Caption}" VerticalAlignment="Center" TextWrapping="Wrap"
+                                       TextTrimming="None" Text="{ui:Loc {x:Static local:ReceptionText.QrWait}}" />
+                        </Grid>
+                        <views:MemberQrView x:Name="QrView" Visibility="Collapsed" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+
+        <!-- Column 3: subscription and save -->
+        <Border Grid.Column="4" Style="{DynamicResource Card}" Padding="20,18" VerticalAlignment="Top">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <Border Style="{DynamicResource Step.Badge}">
+                        <TextBlock Style="{DynamicResource Step.Number}" Text="4" />
+                    </Border>
+                    <TextBlock Style="{DynamicResource Text.H2}" Margin="10,0,0,0" VerticalAlignment="Center"
+                               Text="{ui:Loc {x:Static local:ReceptionText.SubscriptionTitle}}" />
+                </StackPanel>
+
+                <TextBlock Style="{DynamicResource Text.Label}" Margin="2,16,2,8" Text="{ui:Loc {x:Static local:ReceptionText.MemberType}}" />
+                <UniformGrid x:Name="TypeChoices" Columns="2">
+                    <RadioButton x:Name="RegularChoice" Style="{DynamicResource Choice.Card}" Margin="0,0,8,0" MinHeight="52" IsChecked="True"
+                                 Checked="OnTypeChecked">
+                        <TextBlock FontWeight="SemiBold" Text="{ui:Loc {x:Static local:ReceptionText.TypeRegular}}" TextWrapping="Wrap" />
+                    </RadioButton>
+                    <RadioButton x:Name="TrainerChoice" Style="{DynamicResource Choice.Card}" MinHeight="52" Checked="OnTypeChecked">
+                        <TextBlock FontWeight="SemiBold" Text="{ui:Loc {x:Static local:ReceptionText.TypeTrainer}}" TextWrapping="Wrap" />
+                    </RadioButton>
+                </UniformGrid>
+
+                <TextBlock Style="{DynamicResource Text.Label}" Margin="2,16,2,8" Text="{ui:Loc {x:Static local:ReceptionText.Duration}}" />
+                <ItemsControl x:Name="PlanChoices" Focusable="False">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="2" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
+
+                <Grid Margin="0,10,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1.3*" />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="1.3*" />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Style="{DynamicResource Fact.Caption}" Text="{ui:Loc {x:Static local:ReceptionText.Starts}}" />
+                        <TextBlock x:Name="StartsText" Style="{DynamicResource Fact.Value}" TextWrapping="Wrap" TextTrimming="None" />
+                        <TextBlock Style="{DynamicResource Text.Caption}" FontSize="12" Text="{ui:Loc {x:Static local:ReceptionText.TodayNote}}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Style="{DynamicResource Fact.Caption}" Text="{ui:Loc {x:Static local:ReceptionText.Ends}}" />
+                        <TextBlock x:Name="EndsText" Style="{DynamicResource Fact.Value}" TextWrapping="Wrap" TextTrimming="None" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="4">
+                        <TextBlock Style="{DynamicResource Fact.Caption}" Text="{ui:Loc {x:Static local:ReceptionText.Payment}}" />
+                        <TextBlock Style="{DynamicResource Fact.Value}" Text="{ui:Loc {x:Static local:ReceptionText.Cash}}" />
+                    </StackPanel>
+                </Grid>
+
+                <Border x:Name="ServicePanel" Style="{DynamicResource Card.Inset}" Margin="0,14,0,0" Padding="14,10" Visibility="Collapsed">
+                    <DockPanel>
+                        <controls:MoneyText x:Name="ServiceAmount" DockPanel.Dock="Right" FontSize="15" VerticalAlignment="Center" Margin="10,0,0,0" />
+                        <CheckBox x:Name="ServiceCheck" IsChecked="True" Checked="OnServiceChanged" Unchecked="OnServiceChanged">
+                            <StackPanel>
+                                <TextBlock FontWeight="SemiBold" TextWrapping="Wrap" Text="{ui:Loc {x:Static local:ReceptionText.PayServiceNow}}" />
+                                <TextBlock x:Name="ServiceDetail" Style="{DynamicResource Text.Caption}" FontSize="12" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </CheckBox>
+                    </DockPanel>
+                </Border>
+
+                <Border Style="{DynamicResource Divider}" Margin="0,16,0,12" />
+                <DockPanel>
+                    <controls:MoneyText x:Name="TotalText" DockPanel.Dock="Right" FontSize="30" VerticalAlignment="Center" />
+                    <TextBlock Style="{DynamicResource Text.Label}" VerticalAlignment="Center" Text="{ui:Loc {x:Static local:ReceptionText.Total}}" />
+                </DockPanel>
+
+                <StackPanel x:Name="SavePanel" Margin="0,16,0,0">
+                    <Button x:Name="SaveButton" Style="{DynamicResource Button.Primary}" Height="56" FontSize="16"
+                            ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Check}" Click="OnSaveClick"
+                            Content="{ui:Loc {x:Static local:ReceptionText.SaveMember}}" />
+                    <TextBlock x:Name="SaveError" Margin="2,10,2,0" FontSize="13" TextWrapping="Wrap" Visibility="Collapsed"
+                               Foreground="{DynamicResource Brush.Bad}" />
+                </StackPanel>
+
+                <StackPanel x:Name="SavedPanel" Margin="0,16,0,0" Visibility="Collapsed">
+                    <Border CornerRadius="12" Padding="14,10" Background="{DynamicResource Brush.GoodSoft}"
+                            BorderBrush="{DynamicResource Brush.GoodLine}" BorderThickness="1">
+                        <StackPanel Orientation="Horizontal">
+                            <controls:Icon Data="{x:Static ui:UiIcons.Check}" Size="18" StrokeThickness="2.4" Foreground="{DynamicResource Brush.Good}"
+                                           VerticalAlignment="Center" />
+                            <TextBlock x:Name="SavedText" Margin="10,0,0,0" FontWeight="SemiBold" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource Brush.Good}" />
+                        </StackPanel>
+                    </Border>
+                    <Button x:Name="AnotherButton" Margin="0,12,0,0" Height="52" ui:ThemeAssist.Icon="{x:Static ui:UiIcons.UserPlus}"
+                            Click="OnAnotherClick" Content="{ui:Loc {x:Static local:ReceptionText.RegisterAnother}}" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </Grid>
 </shell:PageView>
