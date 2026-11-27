@@ -33,6 +33,8 @@
                                TextWrapping="Wrap" TextTrimming="None" />
                     <TextBlock x:Name="StatusNext" Style="{DynamicResource Text.Caption}" Margin="0,4,0,0" />
                     <TextBlock x:Name="StatusError" Style="{DynamicResource Text.Caption}" Margin="0,4,0,0" Foreground="{DynamicResource Brush.Bad}"
+                               TextWrapping="Wrap" TextTrimming="None" Visibility="Collapsed" />
+                    <TextBlock x:Name="StatusDetail" Style="{DynamicResource Text.Caption}" Margin="0,2,0,0" FontSize="12" Foreground="{DynamicResource Brush.Bad}"
                                TextWrapping="Wrap" TextTrimming="None" Visibility="Collapsed" FlowDirection="LeftToRight" HorizontalAlignment="Left" />
                 </StackPanel>
             </DockPanel>

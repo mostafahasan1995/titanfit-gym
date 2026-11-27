@@ -93,14 +93,14 @@
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:MembersText.Status}}" Width="130">
+                            <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:MembersText.Status}}" Width="158">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <controls:StatusPill Status="{Binding Status}" HorizontalAlignment="Left" />
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:MembersText.ValidUntil}}" Width="150">
+                            <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:MembersText.ValidUntil}}" Width="140">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding Ends}" Style="{DynamicResource Text.Body}" FontSize="14" Foreground="{DynamicResource Brush.TextTertiary}" />
@@ -122,9 +122,7 @@
                     <StackPanel x:Name="DetailPanel" Margin="22,20,22,20" Visibility="Collapsed">
                         <DockPanel>
                             <controls:Avatar x:Name="DetailPhoto" DockPanel.Dock="Left" Width="64" Height="64" ui:ThemeAssist.CornerRadius="16" />
-                            <Button x:Name="EditButton" DockPanel.Dock="Right" Style="{DynamicResource Button.Secondary}" VerticalAlignment="Top"
-                                    Content="{ui:Loc {x:Static ui:CommonText.Edit}}" Click="OnEditClick" />
-                            <StackPanel Margin="14,2,10,0" VerticalAlignment="Center">
+                            <StackPanel Margin="14,2,0,0" VerticalAlignment="Center">
                                 <TextBlock x:Name="DetailName" Style="{DynamicResource Text.H2}" TextWrapping="Wrap" TextTrimming="None" HorizontalAlignment="Left" />
                                 <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
                                     <TextBlock x:Name="DetailNumber" Style="{DynamicResource Text.Caption}" FlowDirection="LeftToRight" />
@@ -134,10 +132,14 @@
                         </DockPanel>
 
                         <Border Style="{DynamicResource Card.Inset}" Margin="0,16,0,0" Padding="14,12">
-                            <StackPanel>
-                                <controls:StatusPill x:Name="DetailStatus" HorizontalAlignment="Left" />
-                                <TextBlock x:Name="DetailStatusText" Style="{DynamicResource Text.Body}" Margin="0,8,0,0" TextWrapping="Wrap" TextTrimming="None" />
-                            </StackPanel>
+                            <DockPanel>
+                                <Button x:Name="EditButton" DockPanel.Dock="Right" Style="{DynamicResource Button.Secondary}" VerticalAlignment="Center" Margin="10,0,0,0"
+                                        Content="{ui:Loc {x:Static ui:CommonText.Edit}}" Click="OnEditClick" />
+                                <StackPanel>
+                                    <controls:StatusPill x:Name="DetailStatus" HorizontalAlignment="Left" />
+                                    <TextBlock x:Name="DetailStatusText" Style="{DynamicResource Text.Body}" Margin="0,8,0,0" TextWrapping="Wrap" TextTrimming="None" />
+                                </StackPanel>
+                            </DockPanel>
                         </Border>
 
                         <TextBlock Style="{StaticResource SectionTitle}" Text="{ui:Loc {x:Static pages:MembersText.Details}}" />

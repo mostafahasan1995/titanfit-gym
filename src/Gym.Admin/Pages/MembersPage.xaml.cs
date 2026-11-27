@@ -35,7 +35,7 @@ public static class MembersText
 
     public static LocalText ValidUntil { get; } = new("Valid until", "صالح حتى");
 
-    public static LocalText PageOf { get; } = new("{0}–{1} of {2}", "{0}–{1} من أصل {2}");
+    public static LocalText PageOf { get; } = new("{0}–{1} of {2}", "{0}-{1} من أصل {2}");
 
     public static LocalText Previous { get; } = new("Previous page", "الصفحة السابقة");
 
@@ -294,10 +294,14 @@ public partial class MembersPage : PageView
             Fact.Ltr(MembersText.Phone.For(language), PhoneText.Format(m.Phone)),
             Fact.Ltr(MembersText.NationalNo.For(language), m.NationalNo ?? AdminText.Dash.For(language)),
         };
-        if (m.BirthDate is not null || m.BirthPlace is not null)
+        if (m.BirthDate is { } born)
         {
-            var bornText = string.Join(" · ", new[] { m.BirthDate is { } b ? DateText.ShortDate(b, language) : null, m.BirthPlace }.Where(t => !string.IsNullOrWhiteSpace(t)));
-            facts.Add(Fact.Data(MembersText.Born.For(language), bornText));
+            facts.Add(Fact.Data(MembersText.Born.For(language), DateText.ShortDate(born, language)));
+        }
+
+        if (!string.IsNullOrWhiteSpace(m.BirthPlace))
+        {
+            facts.Add(Fact.Data(MembersText.BirthPlace.For(language), m.BirthPlace));
         }
 
         if (!string.IsNullOrWhiteSpace(m.MotherName))

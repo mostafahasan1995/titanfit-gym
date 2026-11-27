@@ -118,7 +118,7 @@
                                             Foreground="{DynamicResource Brush.Gold}" VerticalAlignment="Bottom" />
                         <TextBlock Style="{DynamicResource Text.Caption}" Margin="6,0,0,4" VerticalAlignment="Bottom" Text="{ui:Loc {x:Static ui:CommonText.Currency}}" />
                     </StackPanel>
-                    <TextBlock x:Name="RevenueSub" Style="{StaticResource TileSub}" Margin="0,6,0,0" />
+                    <TextBlock x:Name="RevenueSub" Style="{StaticResource TileSub}" Margin="0,6,0,0" TextWrapping="Wrap" TextTrimming="None" />
                 </StackPanel>
             </Border>
         </UniformGrid>

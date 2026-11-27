@@ -131,12 +131,12 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="20" />
-                <ColumnDefinition Width="430" />
+                <ColumnDefinition Width="470" />
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
-                <RowDefinition Height="*" />
+                <RowDefinition Height="3*" />
                 <RowDefinition Height="16" />
-                <RowDefinition Height="*" />
+                <RowDefinition Height="2*" />
             </Grid.RowDefinitions>
 
             <Border x:Name="MainCard" Grid.Column="0" Grid.RowSpan="3" Style="{DynamicResource Card}" Padding="10,14,10,6">

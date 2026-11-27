@@ -147,14 +147,15 @@ public partial class BackupsPage : PageView
         if (s.LastRun is { Succeeded: false } failed)
         {
             var reason = AdminErrors.ForCode(failed.ErrorCode)?.For(language) ?? AdminErrors.BackupFailed.For(language);
-            StatusError.Text = BackupsText.FailedAt.Format(language, DateText.DateAndTime(failed.StartedAt, language), reason)
-                + (string.IsNullOrWhiteSpace(failed.Error) ? "" : Environment.NewLine + failed.Error);
-            StatusError.FlowDirection = language == AppLanguage.Arabic ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
+            StatusError.Text = BackupsText.FailedAt.Format(language, DateText.DateAndTime(failed.StartedAt, language), reason);
             StatusError.Visibility = Visibility.Visible;
+            StatusDetail.Text = failed.Error ?? "";
+            StatusDetail.Visibility = string.IsNullOrWhiteSpace(failed.Error) ? Visibility.Collapsed : Visibility.Visible;
         }
         else
         {
             StatusError.Visibility = Visibility.Collapsed;
+            StatusDetail.Visibility = Visibility.Collapsed;
         }
     }
 

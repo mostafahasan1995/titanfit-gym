@@ -40,7 +40,7 @@ public static class DashboardText
 
     public static LocalText RevenueToday { get; } = new("Revenue today", "إيراد اليوم");
 
-    public static LocalText RevenueSplit { get; } = new("Subscriptions {0} · Cafeteria {1}", "الاشتراكات {0} · الكافتيريا {1}");
+    public static LocalText RevenueSplit { get; } = new("Subscriptions {0}\nCafeteria {1}", "الاشتراكات {0}\nالكافتيريا {1}");
 
     public static LocalText ChartTitle { get; } = new("Check-ins by hour · today", "الدخول حسب الساعة · اليوم");
 
@@ -118,6 +118,7 @@ public partial class DashboardPage : PageView
             TooltipPosition = TooltipPosition.Hidden,
             FlowDirection = FlowDirection.LeftToRight,
         };
+        chart.SetResourceReference(System.Windows.Controls.Control.BackgroundProperty, "Brush.Panel");
         ChartHost.Child = chart;
 
         refreshSoon = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1.5) };

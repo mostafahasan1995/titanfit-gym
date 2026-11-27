@@ -4,7 +4,7 @@ using Gym.Contracts;
 namespace Gym.Client.Sample;
 
 /// <summary>
-/// Sample backups: 14 daily backups at 02:00 on the external drive E:, the last one this morning. "Back up now" adds
+/// Sample backups: 14 daily backups at 02:00 on the external drive E:, the last one this morning (or last night before 02:00). "Back up now" adds
 /// one, and the "keep" setting drops the oldest, like the server. Nothing is written to disk.
 /// </summary>
 public sealed partial class SampleGymApi
@@ -130,9 +130,13 @@ public sealed partial class SampleGymApi
 
         backupsSeeded = true;
         long size = 3_180_000;
+
+        // The last daily backup is this morning's, or yesterday's before 02:00 (no backup in the future).
+        var now = DateTime.Now;
+        var last = Today == DateOnly.FromDateTime(now) && now.TimeOfDay < backupSettings.Time.ToTimeSpan() ? Today.AddDays(-1) : Today;
         for (var daysAgo = 13; daysAgo >= 0; daysAgo--)
         {
-            var day = Today.AddDays(-daysAgo);
+            var day = last.AddDays(-daysAgo);
             var started = At(day, 2, 0);
             size += 5_000 + ((daysAgo * 7_919) % 9_000);
             var name = $"titanfit-{day.ToString("yyyyMMdd", CultureInfo.InvariantCulture)}-0200.dump";

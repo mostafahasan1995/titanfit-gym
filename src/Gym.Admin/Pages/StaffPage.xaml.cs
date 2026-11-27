@@ -76,7 +76,7 @@ public static class StaffText
 
     public static LocalText AverageText { get; } = new("Average {0} of 5 · {1}", "المتوسط {0} من 5 · {1}");
 
-    public static LocalText RatedBy { get; } = new("Rated by {0} · {1}", "قيّمه {0} · {1}");
+    public static LocalText RatedBy { get; } = new("{1} · rated by {0}", "{1} · قيّمه {0}");
 
     public static LocalText SelectSomeone { get; } = new("Choose a staff member", "اختر موظفًا");
 
