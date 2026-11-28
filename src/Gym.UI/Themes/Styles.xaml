@@ -847,6 +847,10 @@
             </Setter.Value>
         </Setter>
         <Style.Triggers>
+            <!-- Nothing to scroll (a table keeps its scroll bar space, see DataGrid): no thumb. -->
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0" />
+            </Trigger>
             <Trigger Property="Orientation" Value="Horizontal">
                 <Setter Property="Width" Value="Auto" />
                 <Setter Property="MinWidth" Value="0" />
@@ -1044,6 +1048,9 @@
         <Setter Property="SelectionUnit" Value="FullRow" />
         <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+        <!-- Always keeps the 10 px of the vertical scroll bar: star columns are sized once, so a scroll bar that appears
+             later would cover the last column. -->
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Visible" />
     </Style>
 
     <!-- Tool tip -->
