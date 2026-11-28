@@ -29,7 +29,7 @@
         <controls:FormField x:Name="CategoryField" Grid.Row="1" Grid.Column="0" Margin="0,14,0,0" Label="{ui:Loc {x:Static local:CafeteriaText.Category}}">
             <ComboBox x:Name="CategoryInput" />
         </controls:FormField>
-        <controls:FormField x:Name="PriceField" Grid.Row="1" Grid.Column="2" Margin="0,14,0,0" Label="{ui:Loc {x:Static local:CafeteriaText.PriceSyp}}">
+        <controls:FormField x:Name="PriceField" Grid.Row="1" Grid.Column="2" Margin="0,14,0,0" Label="{ui:Loc {x:Static local:CafeteriaText.PriceUsd}}">
             <TextBox x:Name="PriceInput" FlowDirection="LeftToRight" InputScope="Number" />
         </controls:FormField>
 

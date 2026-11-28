@@ -37,11 +37,11 @@ public sealed class ShiftViewModelTests
         var (_, model) = await StartAsync();
         var expected = model.Current!.ExpectedCash;
 
-        var closed = await model.CloseAsync(expected - 2_000, "  short by 2,000 ");
+        var closed = await model.CloseAsync(expected - 2.50m, "  short by $2.50 ");
 
         Assert.NotNull(closed.Shift.ClosedAt);
-        Assert.Equal(-2_000, closed.CashDifference);
-        Assert.Equal("short by 2,000", closed.Shift.Note);
+        Assert.Equal(-2.50m, closed.CashDifference);
+        Assert.Equal("short by $2.50", closed.Shift.Note);
         Assert.Null(model.Current);
         Assert.Same(closed, model.Shown);
         var item = model.History.First(h => h.Id == closed.Shift.Id);
@@ -55,21 +55,36 @@ public sealed class ShiftViewModelTests
         var (_, model) = await StartAsync();
         await model.CloseAsync(null, null);
 
-        var shift = await model.OpenAsync(50_000);
+        var shift = await model.OpenAsync(20m);
 
         Assert.Equal("Cafeteria 1", shift.Station);
         Assert.Equal(shift.Id, model.Current?.Shift.Id);
         Assert.Equal(0, model.Current!.SaleCount);
-        Assert.Equal(50_000, model.Current.ExpectedCash);
+        Assert.Equal(20m, model.Current.ExpectedCash);
     }
 
     [Theory]
-    [InlineData(562_000L, 560_000L, -2_000L)]
-    [InlineData(562_000L, 562_000L, 0L)]
-    [InlineData(562_000L, 565_000L, 3_000L)]
-    [InlineData(562_000L, null, null)]
-    public void The_difference_is_counted_minus_expected(long expected, long? counted, long? difference)
+    [InlineData("265.50", "263.50", "-2.00")]
+    [InlineData("265.50", "265.50", "0")]
+    [InlineData("265.50", "268.75", "3.25")]
+    [InlineData("265.50", null, null)]
+    public void The_difference_is_counted_minus_expected(string expected, string? counted, string? difference)
     {
-        Assert.Equal(difference, ShiftViewModel.Difference(expected, counted));
+        Assert.Equal(D(difference), ShiftViewModel.Difference(D(expected)!.Value, D(counted)));
     }
+
+    [Fact]
+    public async Task The_shift_summary_splits_what_was_taken_in_dollars_and_in_pounds()
+    {
+        var (_, model) = await StartAsync();
+        var paid = model.Current!.Paid!;
+
+        // The sample pays every third sale in pounds; dollars + the pounds' dollar value = the sales total.
+        Assert.True(paid.SypCount > 0);
+        Assert.True(paid.Syp > 0);
+        Assert.Equal(model.Current.SalesTotal, paid.Usd + paid.SypAsUsd);
+        Assert.Equal(model.Current.SaleCount, paid.UsdCount + paid.SypCount);
+    }
+
+    private static decimal? D(string? text) => text is null ? null : decimal.Parse(text, System.Globalization.CultureInfo.InvariantCulture);
 }

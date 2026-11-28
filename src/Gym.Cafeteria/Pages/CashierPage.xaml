@@ -234,8 +234,11 @@
                                                    TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="42" LineHeight="20"
                                                    LineStackingStrategy="BlockLineHeight" Foreground="{DynamicResource Brush.Text}" />
                                         <StackPanel Grid.Row="2">
-                                            <controls:MoneyText Amount="{Binding Price}" FontFamily="{DynamicResource Font.Heading}" FontSize="17"
-                                                                FontWeight="Bold" Foreground="{DynamicResource Brush.Gold}" HorizontalAlignment="Left" />
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                                                <controls:MoneyText Amount="{Binding Price}" FontFamily="{DynamicResource Font.Heading}" FontSize="17"
+                                                                    FontWeight="Bold" Foreground="{DynamicResource Brush.Gold}" VerticalAlignment="Bottom" />
+                                                <controls:SypText Amount="{Binding Price}" FontSize="12" Margin="8,0,0,2" VerticalAlignment="Bottom" />
+                                            </StackPanel>
                                             <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
                                                 <StackPanel.Style>
                                                     <Style TargetType="StackPanel">
@@ -295,6 +298,10 @@
 
                 <!-- Footer: cash, change, total, Charge (hidden after a sale) -->
                 <StackPanel x:Name="OrderFooter" DockPanel.Dock="Bottom" Margin="0,12,0,0">
+                    <DockPanel Margin="0,0,0,10">
+                        <controls:CurrencyPicker x:Name="CurrencyInput" DockPanel.Dock="Right" CurrencyChanged="OnCurrencyChanged" />
+                        <TextBlock Style="{DynamicResource Text.Label}" VerticalAlignment="Center" Text="{ui:Loc {x:Static ui:CommonText.PayIn}}" />
+                    </DockPanel>
                     <TextBlock Style="{DynamicResource Text.Label}" Text="{ui:Loc {x:Static local:CafeteriaText.CashReceived}}" />
                     <TextBox x:Name="CashInput" Margin="0,6,0,0" FlowDirection="LeftToRight" InputScope="Number" TextChanged="OnCashChanged"
                              ui:ThemeAssist.Placeholder="{ui:Loc {x:Static local:CafeteriaText.CashPlaceholder}}" />
@@ -307,7 +314,7 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Button Margin="3,0" MinHeight="44" Padding="4,0" FontSize="14" Click="OnQuickCashClick">
-                                    <controls:MoneyText Amount="{Binding}" ShowCurrency="False" FlowDirection="LeftToRight" />
+                                    <TextBlock Text="{Binding Text}" FlowDirection="LeftToRight" />
                                 </Button>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -326,12 +333,13 @@
                         <TextBlock DockPanel.Dock="Left" Style="{DynamicResource Text.Body}" Foreground="{DynamicResource Brush.TextTertiary}"
                                    VerticalAlignment="Bottom" Margin="0,0,0,8" Text="{ui:Loc {x:Static local:CafeteriaText.TotalCash}}" />
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                            <controls:MoneyText x:Name="TotalText" ShowCurrency="False" FontFamily="{DynamicResource Font.Heading}" FontSize="36"
+                            <controls:MoneyText x:Name="TotalText" FontFamily="{DynamicResource Font.Heading}" FontSize="36"
                                                 FontWeight="ExtraBold" VerticalAlignment="Bottom" />
-                            <TextBlock Text="{ui:Loc {x:Static ui:CommonText.Currency}}" Style="{DynamicResource Text.Caption}" FontSize="14"
-                                       Margin="8,0,0,8" VerticalAlignment="Bottom" />
+                            <controls:SypText x:Name="TotalSypText" FontSize="14" Margin="8,0,0,8" VerticalAlignment="Bottom" />
                         </StackPanel>
                     </DockPanel>
+                    <TextBlock x:Name="DueSypText" Style="{DynamicResource Text.Strong}" FontSize="15" Margin="0,6,0,0" HorizontalAlignment="Right"
+                               Foreground="{DynamicResource Brush.Gold}" Visibility="Collapsed" />
                     <Button x:Name="ChargeButton" Style="{DynamicResource Button.Gold}" Margin="0,12,0,0" MinHeight="64" FontSize="18"
                             ui:ThemeAssist.CornerRadius="16" ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Cash}" Click="OnChargeClick" />
                 </StackPanel>

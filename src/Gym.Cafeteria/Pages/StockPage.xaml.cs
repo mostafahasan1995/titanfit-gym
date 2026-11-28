@@ -126,6 +126,7 @@ public partial class StockPage : PageView
         DetailStock.SetResourceReference(TextBlock.ForegroundProperty, row.IsOut ? "Brush.Bad" : row.IsLow ? "Brush.Warning" : "Brush.Text");
         DetailMin.Text = row.MinStockText;
         DetailPrice.Amount = row.Price;
+        DetailPriceSyp.Amount = row.Price;
         EditButton.ToolTip = CafeteriaText.EditItem.For(Context.Language);
         System.Windows.Automation.AutomationProperties.SetName(EditButton, CafeteriaText.EditItem.For(Context.Language));
         NoHistory.Visibility = model.Movements.Count == 0 ? Visibility.Visible : Visibility.Collapsed;

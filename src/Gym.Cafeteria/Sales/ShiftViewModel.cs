@@ -14,7 +14,7 @@ public sealed record SoldItem(ProductSalesDto Item, AppLanguage Language)
 
     public string QuantityText => NumberText.Format(Item.Quantity);
 
-    public long Total => Item.Total;
+    public decimal Total => Item.Total;
 }
 
 /// <summary>A shift in the "Past shifts" list, with its totals.</summary>
@@ -36,7 +36,7 @@ public sealed record ShiftListItem(ShiftSummaryDto Summary, AppLanguage Language
 
     public string Cashier => Summary.Shift.CashierName;
 
-    public long Total => Summary.SalesTotal;
+    public decimal Total => Summary.SalesTotal;
 
     public string SalesText => Summary.SaleCount == 1
         ? CafeteriaText.OneSale.For(Language)
@@ -106,7 +106,7 @@ public sealed class ShiftViewModel : ObservableObject
     }
 
     /// <summary>Counted minus expected: negative = cash missing, positive = extra cash, null = not counted.</summary>
-    public static long? Difference(long expectedCash, long? countedCash) => countedCash - expectedCash;
+    public static decimal? Difference(decimal expectedCash, decimal? countedCash) => countedCash - expectedCash;
 
     public async Task LoadAsync(CancellationToken ct = default)
     {
@@ -135,7 +135,7 @@ public sealed class ShiftViewModel : ObservableObject
     }
 
     /// <summary>Closes the open shift with the counted cash (optional) and a note. Returns its final summary.</summary>
-    public async Task<ShiftSummaryDto> CloseAsync(long? countedCash, string? note, CancellationToken ct = default)
+    public async Task<ShiftSummaryDto> CloseAsync(decimal? countedCash, string? note, CancellationToken ct = default)
     {
         var open = Current ?? throw new InvalidOperationException("No shift is open.");
         var closed = await api.CloseShiftAsync(open.Shift.Id, new CloseShiftRequest(countedCash, string.IsNullOrWhiteSpace(note) ? null : note.Trim()), ct)
@@ -146,7 +146,7 @@ public sealed class ShiftViewModel : ObservableObject
     }
 
     /// <summary>Opens a shift with the cash already in the drawer (a sale also opens one by itself).</summary>
-    public async Task<ShiftDto> OpenAsync(long openingCash, CancellationToken ct = default)
+    public async Task<ShiftDto> OpenAsync(decimal openingCash, CancellationToken ct = default)
     {
         var shift = await api.OpenShiftAsync(new OpenShiftRequest(station(), openingCash), ct).ConfigureAwait(true);
         await LoadAsync(ct).ConfigureAwait(true);

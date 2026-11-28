@@ -52,7 +52,7 @@
                             <StackPanel>
                                 <TextBlock Style="{DynamicResource Text.Overline}" Text="{ui:Loc {x:Static local:CafeteriaText.SalesTotal}}" />
                                 <Viewbox StretchDirection="DownOnly" HorizontalAlignment="Left" Margin="0,6,0,0" Height="36">
-                                    <controls:MoneyText x:Name="SalesTotalText" ShowCurrency="False" FontFamily="{DynamicResource Font.Heading}" FontSize="28"
+                                    <controls:MoneyText x:Name="SalesTotalText" FontFamily="{DynamicResource Font.Heading}" FontSize="28"
                                                         FontWeight="Bold" Foreground="{DynamicResource Brush.Gold}" />
                                 </Viewbox>
                             </StackPanel>
@@ -61,7 +61,7 @@
                             <StackPanel>
                                 <TextBlock Style="{DynamicResource Text.Overline}" Text="{ui:Loc {x:Static local:CafeteriaText.OpeningCash}}" />
                                 <Viewbox StretchDirection="DownOnly" HorizontalAlignment="Left" Margin="0,6,0,0" Height="36">
-                                    <controls:MoneyText x:Name="OpeningCashText" ShowCurrency="False" FontFamily="{DynamicResource Font.Heading}" FontSize="28"
+                                    <controls:MoneyText x:Name="OpeningCashText" FontFamily="{DynamicResource Font.Heading}" FontSize="28"
                                                         FontWeight="Bold" Foreground="{DynamicResource Brush.Text}" />
                                 </Viewbox>
                             </StackPanel>
@@ -70,12 +70,16 @@
                             <StackPanel>
                                 <TextBlock Style="{DynamicResource Text.Overline}" Text="{ui:Loc {x:Static local:CafeteriaText.ExpectedCash}}" />
                                 <Viewbox StretchDirection="DownOnly" HorizontalAlignment="Left" Margin="0,6,0,0" Height="36">
-                                    <controls:MoneyText x:Name="ExpectedCashText" ShowCurrency="False" FontFamily="{DynamicResource Font.Heading}" FontSize="28"
+                                    <controls:MoneyText x:Name="ExpectedCashText" FontFamily="{DynamicResource Font.Heading}" FontSize="28"
                                                         FontWeight="Bold" Foreground="{DynamicResource Brush.Text}" />
                                 </Viewbox>
                             </StackPanel>
                         </Border>
                     </UniformGrid>
+
+                    <!-- What was taken in dollars and in pounds -->
+                    <TextBlock x:Name="PaidSplitText" DockPanel.Dock="Top" Style="{DynamicResource Text.Caption}" Margin="0,10,0,0"
+                               TextWrapping="Wrap" HorizontalAlignment="Left" Visibility="Collapsed" />
 
                     <!-- Counted cash of a closed shift -->
                     <Border x:Name="CountedBox" DockPanel.Dock="Top" Margin="0,12,0,0" Padding="16,10" CornerRadius="14" BorderThickness="1"

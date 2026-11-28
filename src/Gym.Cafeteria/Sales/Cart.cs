@@ -4,6 +4,7 @@ using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Gym.Cafeteria.Receipts;
 using Gym.Contracts;
+using Gym.Domain;
 using Gym.UI;
 
 namespace Gym.Cafeteria.Sales;
@@ -94,10 +95,11 @@ public sealed class CartLine : ObservableObject
         }
     }
 
-    public long UnitPrice => Product.Price;
+    /// <summary>US dollars.</summary>
+    public decimal UnitPrice => Product.Price;
 
-    /// <summary>Whole SYP.</summary>
-    public long LineTotal => checked(Product.Price * Quantity);
+    /// <summary>US dollars.</summary>
+    public decimal LineTotal => Product.Price * Quantity;
 
     /// <summary>False when the cart already holds the whole stock of this item.</summary>
     public bool CanIncrease => Quantity < Product.Stock;
@@ -128,7 +130,7 @@ public sealed class CartLine : ObservableObject
 }
 
 /// <summary>
-/// The cashier's current order. Money is whole Syrian pounds, so the totals are exact sums (no rounding).
+/// The cashier's current order. Money is US dollars with cents (decimal), so the totals are exact sums.
 /// The cart never asks for more than the stock it knows; the server checks again when the sale is saved.
 /// </summary>
 public sealed class Cart : ObservableObject
@@ -158,8 +160,8 @@ public sealed class Cart : ObservableObject
 
     public ObservableCollection<CartLine> Lines { get; } = [];
 
-    /// <summary>Sum of the line totals, whole SYP.</summary>
-    public long Total => Lines.Aggregate(0L, (sum, line) => checked(sum + line.LineTotal));
+    /// <summary>Sum of the line totals, US dollars.</summary>
+    public decimal Total => Lines.Sum(line => line.LineTotal);
 
     /// <summary>Number of pieces (2 waters + 1 bar = 3).</summary>
     public int ItemCount => Lines.Sum(l => l.Quantity);
@@ -309,25 +311,30 @@ public sealed class Cart : ObservableObject
     }
 }
 
-/// <summary>Cash helpers for the charge panel. Whole SYP.</summary>
+/// <summary>
+/// Cash helpers for the charge panel. Amounts are in the currency the customer pays in: US dollars (cents) or
+/// whole Syrian pounds.
+/// </summary>
 public static class CashMath
 {
-    /// <summary>The change to give back, or null when no amount was typed or it is less than the total.</summary>
-    public static long? ChangeDue(long total, long? cashReceived) =>
-        cashReceived is { } cash && cash >= total ? cash - total : null;
+    /// <summary>The change to give back, or null when no amount was typed or it is less than the amount due.</summary>
+    public static decimal? ChangeDue(decimal due, decimal? cashReceived) =>
+        cashReceived is { } cash && cash >= due ? cash - due : null;
 
     /// <summary>
-    /// Quick amounts for the "cash received" buttons: the exact total, then the total rounded up to the next
-    /// 5,000, 10,000 and 50,000 (the notes customers usually hand over). Distinct and ascending, at most 4.
+    /// Quick amounts for the "cash received" buttons, distinct and ascending, at most 4. Pounds: the exact amount,
+    /// then rounded up to the next 5,000, 10,000 and 50,000 (the notes customers usually hand over). Dollars: the
+    /// exact amount, then the next $1, $5, $10 and $20.
     /// </summary>
-    public static IReadOnlyList<long> QuickAmounts(long total)
+    public static IReadOnlyList<decimal> QuickAmounts(decimal due, Currency currency = Currency.Usd)
     {
-        if (total <= 0)
+        if (due <= 0)
         {
             return [];
         }
 
-        return new[] { total, RoundUp(total, 5_000), RoundUp(total, 10_000), RoundUp(total, 50_000) }
+        var steps = currency == Currency.Syp ? new[] { 5_000m, 10_000m, 50_000m } : new[] { 1m, 5m, 10m, 20m };
+        return new[] { due }.Concat(steps.Select(step => RoundUp(due, step)))
             .Distinct()
             .Order()
             .Take(4)
@@ -335,7 +342,7 @@ public static class CashMath
     }
 
     /// <summary>The smallest multiple of <paramref name="step"/> that is at least <paramref name="amount"/>.</summary>
-    public static long RoundUp(long amount, long step)
+    public static decimal RoundUp(decimal amount, decimal step)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(step);
         if (amount <= 0)
@@ -343,6 +350,12 @@ public static class CashMath
             return 0;
         }
 
-        return checked((amount + step - 1) / step * step);
+        return Math.Ceiling(amount / step) * step;
     }
+}
+
+/// <summary>A quick cash button: the amount in the paid currency and its text ("20.00" or "150,000").</summary>
+public sealed record QuickCash(decimal Amount, Currency Currency)
+{
+    public string Text => Money.FormatAmount(Currency, Amount);
 }

@@ -161,8 +161,9 @@
                                 <Border Grid.Column="4" Style="{DynamicResource Card.Inset}" Padding="12,10">
                                     <StackPanel>
                                         <TextBlock Style="{DynamicResource Text.Overline}" Text="{ui:Loc {x:Static local:CafeteriaText.Price}}" />
-                                        <controls:MoneyText x:Name="DetailPrice" ShowCurrency="False" FontFamily="{DynamicResource Font.Heading}" FontSize="18"
+                                        <controls:MoneyText x:Name="DetailPrice" FontFamily="{DynamicResource Font.Heading}" FontSize="18"
                                                             FontWeight="Bold" Margin="0,9,0,0" HorizontalAlignment="Left" Foreground="{DynamicResource Brush.Gold}" />
+                                        <controls:SypText x:Name="DetailPriceSyp" FontSize="12" Margin="0,2,0,0" HorizontalAlignment="Left" />
                                     </StackPanel>
                                 </Border>
                             </Grid>

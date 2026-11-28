@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Media;
 using System.Windows;
 using System.Windows.Controls;
@@ -8,6 +9,7 @@ using Gym.Cafeteria.Hardware;
 using Gym.Cafeteria.Receipts;
 using Gym.Cafeteria.Sales;
 using Gym.Contracts;
+using Gym.Domain;
 using Gym.UI;
 using Gym.UI.Shell;
 
@@ -71,6 +73,9 @@ public partial class CashierPage : PageView
         Context.Live.ProductChanged += change => _ = Dispatcher.InvokeAsync(() => ReloadProductAsync(change.ProductId));
         Context.Live.SaleCompleted += sale => _ = Dispatcher.InvokeAsync(() => RefreshShiftQuietlyAsync());
 
+        // A new rate (or none any more) changes the amount in pounds and the quick amounts.
+        PropertyChangedEventManager.AddHandler(model.Rates, (_, _) => UpdateOrder(), string.Empty);
+
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
         UpdateOrder();
@@ -114,6 +119,59 @@ public partial class CashierPage : PageView
     /// <summary>Smoke screenshot "cashier-paid": sells the sample cart, so the paid panel shows.</summary>
     internal Task ChargeForScreenshotAsync() => ChargeAsync();
 
+    /// <summary>Smoke screenshot "cashier-syp": the sample cart paid in Syrian pounds, the pounds typed in, the change shown.</summary>
+    internal Task PayInSypForScreenshotAsync()
+    {
+        if (paid is not null)
+        {
+            StartNewOrder();
+        }
+
+        if (model.Cart.IsEmpty)
+        {
+            FillSampleCart();
+        }
+
+        CurrencyInput.Currency = Currency.Syp;
+        var due = model.AmountDue.Amount;
+        CashInput.Text = Money.FormatSypAmount(CashMath.RoundUp(due, 50_000));
+        UpdateOrder();
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Smoke screenshots of the exchange rate warning: the sample's rate becomes yesterday's (stale) or none at all,
+    /// then the cart is filled again in dollars. The shell shows the banner from the live update.
+    /// </summary>
+    internal async Task ShowRateStateForScreenshotAsync(ExchangeRateState state)
+    {
+        if (Context.Api is Gym.Client.Sample.SampleGymApi sample)
+        {
+            sample.SimulateExchangeRate(state);
+        }
+
+        await Dispatcher.Yield(DispatcherPriority.Background);
+        if (paid is not null)
+        {
+            StartNewOrder();
+        }
+
+        CurrencyInput.Currency = Currency.Usd;
+        if (model.Cart.IsEmpty)
+        {
+            FillSampleCart();
+        }
+
+        UpdateOrder();
+    }
+
+    /// <summary>Smoke screenshot "cashier-paid-syp": sells the sample cart in Syrian pounds (paid panel with the change in pounds).</summary>
+    internal async Task ChargeInSypForScreenshotAsync()
+    {
+        await PayInSypForScreenshotAsync().ConfigureAwait(true);
+        await ChargeAsync().ConfigureAwait(true);
+    }
+
     /// <summary>The smoke screenshots show a filled cart with the cash typed in (sample data only).</summary>
     private void FillSampleCart()
     {
@@ -127,7 +185,7 @@ public partial class CashierPage : PageView
 
         if (!model.Cart.IsEmpty)
         {
-            CashInput.Text = NumberText.Format(CashMath.RoundUp(model.Cart.Total, 50_000));
+            CashInput.Text = Money.FormatAmount(CashMath.RoundUp(model.Cart.Total, 10));
         }
     }
 
@@ -149,8 +207,13 @@ public partial class CashierPage : PageView
         ItemCountText.Text = cart.ItemCount == 1
             ? CafeteriaText.OneItem.For(language)
             : BidiText.FixNumbers(CafeteriaText.ItemCount.Format(language, NumberText.Format(cart.ItemCount)), language);
+        var due = model.AmountDue;
         TotalText.Amount = cart.Total;
-        ChargeButton.Content = BidiText.FixNumbers(CafeteriaText.ChargeAmount.Format(language, Money.Format(cart.Total, language)), language);
+        TotalSypText.Amount = cart.Total;
+        DueSypText.Text = BidiText.FixNumbers(CafeteriaText.DueInSyp.Format(language, Money.FormatSyp(due.Amount, language)), language);
+        DueSypText.Visibility = due.Currency == Currency.Syp && !cart.IsEmpty ? Visibility.Visible : Visibility.Collapsed;
+        ChargeButton.Content = BidiText.FixNumbers(CafeteriaText.ChargeAmount.Format(language, Money.Format(due.Currency, due.Amount, language)), language);
+        ThemeAssist.SetPlaceholder(CashInput, (due.Currency == Currency.Syp ? CafeteriaText.CashPlaceholderSyp : CafeteriaText.CashPlaceholder).For(language));
         ChargeButton.IsEnabled = !cart.IsEmpty;
         ClearButton.IsEnabled = !cart.IsEmpty;
         var showPaid = paid is not null && cart.IsEmpty;
@@ -159,21 +222,24 @@ public partial class CashierPage : PageView
         OrderFooter.Visibility = showPaid ? Visibility.Collapsed : Visibility.Visible;
         LinesScroller.Visibility = showPaid ? Visibility.Collapsed : Visibility.Visible;
         EmptyCart.Visibility = !showPaid && cart.IsEmpty ? Visibility.Visible : Visibility.Collapsed;
-        QuickCashList.ItemsSource = CashMath.QuickAmounts(cart.Total);
+        QuickCashList.ItemsSource = CashMath.QuickAmounts(due.Amount, due.Currency).Select(a => new QuickCash(a, due.Currency)).ToList();
         UpdateChange();
     }
 
     private void UpdateChange()
     {
-        var total = model.Cart.Total;
-        var cash = Money.Parse(CashInput.Text);
+        var due = model.AmountDue;
+        var cash = Money.Parse(due.Currency, CashInput.Text);
         var typed = CashInput.Text.Trim().Length > 0;
-        var tooLow = typed && (cash is null || cash < total) && total > 0;
-        var change = CashMath.ChangeDue(total, cash);
+        var tooLow = typed && (cash is null || cash < due.Amount) && due.Amount > 0;
+        var change = CashMath.ChangeDue(due.Amount, cash);
         ThemeAssist.SetHasError(CashInput, tooLow);
-        CashErrorText.Text = (cash is null ? CafeteriaText.InvalidAmount : CafeteriaText.CashTooLow).For(Context.Language);
+        CashErrorText.Text = (cash is null
+            ? due.Currency == Currency.Syp ? CafeteriaText.InvalidSypAmount : CafeteriaText.InvalidAmount
+            : CafeteriaText.CashTooLow).For(Context.Language);
         CashErrorText.Visibility = tooLow ? Visibility.Visible : Visibility.Collapsed;
-        ChangeText.Visibility = !tooLow && change is not null && total > 0 ? Visibility.Visible : Visibility.Collapsed;
+        ChangeText.Visibility = !tooLow && change is not null && due.Amount > 0 ? Visibility.Visible : Visibility.Collapsed;
+        ChangeText.Currency = due.Currency;
         ChangeText.Amount = change ?? 0;
         ChangeLabel.Opacity = change is not null || tooLow ? 1 : 0.5;
     }
@@ -217,8 +283,12 @@ public partial class CashierPage : PageView
     private void ShowPaid(ReceiptDto receipt)
     {
         var language = Context.Language;
-        PaidDetailText.Text = BidiText.FixNumbers(CafeteriaText.PaidDetail.Format(language, receipt.Number, Money.Format(receipt.Total, language)), language);
+        var paidText = receipt.Currency == Currency.Syp
+            ? Money.FormatWithSyp(receipt.Total, ReceiptLayout.AmountDue(receipt), language)
+            : Money.Format(receipt.Total, language);
+        PaidDetailText.Text = BidiText.FixNumbers(CafeteriaText.PaidDetail.Format(language, receipt.Number, paidText), language);
         PaidChangePanel.Visibility = receipt.Change is > 0 ? Visibility.Visible : Visibility.Collapsed;
+        PaidChangeText.Currency = receipt.Currency;
         PaidChangeText.Amount = receipt.Change ?? 0;
         PrintStatusText.Text = printError is { } error
             ? CafeteriaText.PrintFailedDetail.Format(language, error)
@@ -316,12 +386,12 @@ public partial class CashierPage : PageView
 
     private async Task ChargeAsync()
     {
-        var total = model.Cart.Total;
-        long? cash = null;
+        var due = model.AmountDue;
+        decimal? cash = null;
         if (CashInput.Text.Trim().Length > 0)
         {
-            cash = Money.Parse(CashInput.Text);
-            if (cash is null || cash < total)
+            cash = Money.Parse(due.Currency, CashInput.Text);
+            if (cash is null || cash < due.Amount)
             {
                 UpdateChange();
                 CashInput.Focus();
@@ -604,11 +674,24 @@ public partial class CashierPage : PageView
 
     private void OnQuickCashClick(object sender, RoutedEventArgs e)
     {
-        if (sender is FrameworkElement { DataContext: long amount })
+        if (sender is FrameworkElement { DataContext: QuickCash quick })
         {
-            CashInput.Text = NumberText.Format(amount);
+            CashInput.Text = quick.Text;
             CashInput.CaretIndex = CashInput.Text.Length;
         }
+    }
+
+    /// <summary>Dollars or pounds: the cash typed so far was in the other currency, so it is cleared.</summary>
+    private void OnCurrencyChanged(object? sender, EventArgs e)
+    {
+        if (model.PayCurrency == CurrencyInput.Currency)
+        {
+            return;
+        }
+
+        model.PayCurrency = CurrencyInput.Currency;
+        CashInput.Text = "";
+        UpdateOrder();
     }
 
     private void OnCashChanged(object sender, TextChangedEventArgs e) => UpdateChange();

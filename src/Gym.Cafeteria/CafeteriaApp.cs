@@ -1,5 +1,6 @@
 using Gym.Cafeteria.Pages;
 using Gym.Cafeteria.Receipts;
+using Gym.Domain;
 using Gym.UI;
 using Gym.UI.Shell;
 
@@ -30,12 +31,18 @@ internal static class CafeteriaApp
             new("receipts", UiIcons.Receipt, CafeteriaText.Receipts, context => new ReceiptsPage(context)) { Title = CafeteriaText.ReceiptsTitle },
         ],
 
-        // Extra screenshots (sample data): a sale just paid, the stock that cannot go below zero, the shift report.
+        // Extra screenshots (sample data): a sale just paid (in dollars, then in pounds), the stock that cannot go below
+        // zero, the shift report, a receipt paid in pounds, and last the exchange rate warnings (they stay on).
         SmokeStates =
         [
             new("cashier-paid", "cashier", view => ((CashierPage)view).ChargeForScreenshotAsync()),
+            new("cashier-syp", "cashier", view => ((CashierPage)view).PayInSypForScreenshotAsync()),
+            new("cashier-paid-syp", "cashier", view => ((CashierPage)view).ChargeInSypForScreenshotAsync()),
             new("stock-adjust", "stock", view => ((StockPage)view).OpenAdjustForScreenshotAsync()),
             new("shift-report", "shift-close", view => ((ShiftClosePage)view).OpenReportForScreenshot()),
+            new("receipts-syp", "receipts", view => ((ReceiptsPage)view).ShowSypSaleForScreenshotAsync()),
+            new("cashier-rate-stale", "cashier", view => ((CashierPage)view).ShowRateStateForScreenshotAsync(ExchangeRateState.Stale)),
+            new("cashier-no-rate", "cashier", view => ((CashierPage)view).ShowRateStateForScreenshotAsync(ExchangeRateState.None)),
         ],
         SelfTestChecks = CafeteriaSelfTest.Checks,
     };

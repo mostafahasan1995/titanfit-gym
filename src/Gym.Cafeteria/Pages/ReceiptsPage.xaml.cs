@@ -13,13 +13,18 @@ public sealed record SaleListItem(SaleSummaryDto Sale, AppLanguage Language)
 {
     public string Title => BidiText.FixNumbers(CafeteriaText.ReceiptNumbered.Format(Language, Sale.Number), Language);
 
+    /// <summary>"18:42 · 3 items", and the pounds taken for a sale paid in pounds.</summary>
     public string Detail => BidiText.FixNumbers(
         DateText.Time(Sale.At) + " · " + (Sale.ItemCount == 1
             ? CafeteriaText.OneItem.For(Language)
-            : CafeteriaText.ItemCount.Format(Language, NumberText.Format(Sale.ItemCount))),
+            : CafeteriaText.ItemCount.Format(Language, NumberText.Format(Sale.ItemCount)))
+        + (IsSyp ? " · " + Money.FormatSyp(Sale.PaidAmount, Language) : ""),
         Language);
 
-    public long Total => Sale.Total;
+    public bool IsSyp => Sale.Currency == Gym.Domain.Currency.Syp;
+
+    /// <summary>US dollars.</summary>
+    public decimal Total => Sale.Total;
 }
 
 /// <summary>
@@ -62,6 +67,21 @@ public partial class ReceiptsPage : PageView
     /// <summary>The receipt on screen (tests, smoke screenshots).</summary>
     public ReceiptDto? Shown => shown;
 
+    /// <summary>Smoke screenshot "receipts-syp": selects the newest sale of the day paid in Syrian pounds.</summary>
+    internal async Task ShowSypSaleForScreenshotAsync()
+    {
+        if (sales.FirstOrDefault(s => s.IsSyp) is not { } item)
+        {
+            return;
+        }
+
+        syncing = true;
+        SalesList.SelectedItem = item;
+        syncing = false;
+        shown = await Context.Api.GetSaleAsync(item.Sale.Id).ConfigureAwait(true);
+        ShowReceipt();
+    }
+
     public override async Task OnShownAsync(CancellationToken cancellationToken)
     {
         FillPrinters();
@@ -103,11 +123,16 @@ public partial class ReceiptsPage : PageView
         syncing = false;
         NoSales.Visibility = sales.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         var total = sales.Sum(s => s.Total);
-        DayTotalText.Text = BidiText.FixNumbers(
-            sales.Count == 1
-                ? CafeteriaText.OneSaleTotal.Format(language, Money.Format(total, language))
-                : CafeteriaText.SalesTotalLine.Format(language, NumberText.Format(sales.Count), Money.Format(total, language)),
-            language);
+        var pounds = sales.Where(s => s.IsSyp).Sum(s => s.Sale.PaidAmount);
+        var line = sales.Count == 1
+            ? CafeteriaText.OneSaleTotal.Format(language, Money.Format(total, language))
+            : CafeteriaText.SalesTotalLine.Format(language, NumberText.Format(sales.Count), Money.Format(total, language));
+        if (pounds > 0)
+        {
+            line += " · " + CafeteriaText.SypCollectedLine.Format(language, Money.FormatSyp(pounds, language));
+        }
+
+        DayTotalText.Text = BidiText.FixNumbers(line, language);
     }
 
     private void ShowReceipt()

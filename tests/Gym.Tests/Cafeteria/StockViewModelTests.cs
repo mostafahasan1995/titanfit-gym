@@ -83,12 +83,12 @@ public sealed class StockViewModelTests
     {
         var (_, model) = await StartAsync();
 
-        var saved = await model.SaveProductAsync(null, new SaveProductRequest("Granola bar", "لوح غرانولا", 3, 15_000, "6291001000998", 5));
+        var saved = await model.SaveProductAsync(null, new SaveProductRequest("Granola bar", "لوح غرانولا", 3, 1.25m, "6291001000998", 5));
 
         Assert.Contains(model.Rows, r => r.Id == saved.Id && r.Name == "Granola bar");
         Assert.Equal(saved.Id, model.Selected?.Id);
         var duplicate = await Assert.ThrowsAsync<GymApiException>(() =>
-            model.SaveProductAsync(null, new SaveProductRequest("Copy", "نسخة", 3, 1_000, "6291001000998")));
+            model.SaveProductAsync(null, new SaveProductRequest("Copy", "نسخة", 3, 0.10m, "6291001000998")));
         Assert.Equal("duplicate_barcode", duplicate.Code);
     }
 

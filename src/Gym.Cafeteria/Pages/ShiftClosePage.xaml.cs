@@ -89,6 +89,17 @@ public partial class ShiftClosePage : PageView
         SalesTotalText.Amount = shown.SalesTotal;
         OpeningCashText.Amount = shift.OpeningCash;
         ExpectedCashText.Amount = shown.ExpectedCash;
+        if (shown.Paid is { } paid)
+        {
+            PaidSplitText.Text = BidiText.FixNumbers(
+                CafeteriaText.PaidSplit.Format(language, Money.Format(paid.Usd, language), Money.FormatSyp(paid.Syp, language), Money.Format(paid.SypAsUsd, language)),
+                language);
+            PaidSplitText.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            PaidSplitText.Visibility = Visibility.Collapsed;
+        }
 
         CountedBox.Visibility = !isOpen ? Visibility.Visible : Visibility.Collapsed;
         if (shift.ClosingCash is { } counted)
@@ -126,7 +137,7 @@ public partial class ShiftClosePage : PageView
         ShowDifference(DifferenceText, difference);
     }
 
-    private static void ShowDifference(MoneyText text, long difference)
+    private static void ShowDifference(MoneyText text, decimal difference)
     {
         text.Visibility = Visibility.Visible;
         text.Amount = difference;
@@ -175,7 +186,7 @@ public partial class ShiftClosePage : PageView
         }
 
         var language = Context.Language;
-        long? counted = null;
+        decimal? counted = null;
         if (CountedInput.Text.Trim().Length > 0)
         {
             counted = Money.Parse(CountedInput.Text);

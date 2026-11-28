@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using Gym.Contracts;
+using Gym.Domain;
 using Gym.UI;
 
 namespace Gym.Cafeteria.Receipts;
@@ -21,7 +22,7 @@ public enum ReceiptRowKind
     /// <summary>An item name on its own line.</summary>
     Item,
 
-    /// <summary>"2 × 3,000" under the item name, with the line total at the end.</summary>
+    /// <summary>"2 × 1.50" under the item name, with the line total at the end.</summary>
     ItemDetail,
 
     /// <summary>The grand total in big type.</summary>
@@ -69,11 +70,28 @@ public sealed record ReceiptLayout(AppLanguage Language, IReadOnlyList<ReceiptRo
 
         rows.Add(new(ReceiptRowKind.Separator));
         rows.Add(new(ReceiptRowKind.Total, CafeteriaText.Total.For(language), Money.Format(receipt.Total, language)));
-        rows.Add(new(ReceiptRowKind.Amount, CafeteriaText.ReceiptPayment.For(language), CafeteriaText.Cash.For(language)));
+        var paidInSyp = receipt.Currency == Currency.Syp;
+        if (paidInSyp)
+        {
+            // Paid in pounds: the amount due in pounds and the rate used.
+            rows.Add(new(ReceiptRowKind.Total, CafeteriaText.TotalInSyp.For(language), Money.FormatSyp(AmountDue(receipt), language)));
+        }
+        else if (receipt.ExchangeRate is { } rate && rate > 0)
+        {
+            // Paid in dollars: the pounds at the day's rate, for information.
+            rows.Add(new(ReceiptRowKind.Amount, CafeteriaText.TotalInSyp.For(language), Money.FormatSyp(CurrencyRules.ToSyp(receipt.Total, rate), language)));
+        }
+
+        if (receipt.ExchangeRate is { } used && used > 0)
+        {
+            rows.Add(new(ReceiptRowKind.Amount, CafeteriaText.ReceiptRate.For(language), RateText(used, language)));
+        }
+
+        rows.Add(new(ReceiptRowKind.Amount, CafeteriaText.ReceiptPayment.For(language), (paidInSyp ? CafeteriaText.CashSyp : CafeteriaText.CashUsd).For(language)));
         if (receipt.CashReceived is { } cash)
         {
-            rows.Add(new(ReceiptRowKind.Amount, CafeteriaText.CashReceived.For(language), Money.Format(cash, language)));
-            rows.Add(new(ReceiptRowKind.Amount, CafeteriaText.Change.For(language), Money.Format(receipt.Change ?? 0, language)));
+            rows.Add(new(ReceiptRowKind.Amount, CafeteriaText.CashReceived.For(language), Money.Format(receipt.Currency, cash, language)));
+            rows.Add(new(ReceiptRowKind.Amount, CafeteriaText.Change.For(language), Money.Format(receipt.Currency, receipt.Change ?? 0, language)));
         }
 
         rows.Add(new(ReceiptRowKind.Separator));
@@ -109,6 +127,14 @@ public sealed record ReceiptLayout(AppLanguage Language, IReadOnlyList<ReceiptRo
         if (summary.CashDifference is { } difference)
         {
             rows.Add(new(ReceiptRowKind.Amount, CafeteriaText.CashDifference.For(language), SignedMoney(difference, language)));
+        }
+
+        if (summary.Paid is { } paid)
+        {
+            rows.Add(new(ReceiptRowKind.Separator));
+            rows.Add(new(ReceiptRowKind.Amount, CafeteriaText.PaidInUsd.For(language), Money.Format(paid.Usd, language)));
+            rows.Add(new(ReceiptRowKind.Amount, CafeteriaText.PaidInSyp.For(language), Money.FormatSyp(paid.Syp, language)));
+            rows.Add(new(ReceiptRowKind.Amount, CafeteriaText.PaidInSypValue.For(language), Money.Format(paid.SypAsUsd, language)));
         }
 
         rows.Add(new(ReceiptRowKind.Separator));
@@ -149,7 +175,7 @@ public sealed record ReceiptLayout(AppLanguage Language, IReadOnlyList<ReceiptRo
             new(ReceiptRowKind.Separator),
             new(ReceiptRowKind.Item, CafeteriaText.TestPageSample.En),
             new(ReceiptRowKind.Item, CafeteriaText.TestPageSample.Ar),
-            new(ReceiptRowKind.ItemDetail, QuantityTimesPrice(2, 3_000), Money.Format(6_000, language)),
+            new(ReceiptRowKind.ItemDetail, QuantityTimesPrice(2, 0.25m), Money.Format(0.50m, language)),
             new(ReceiptRowKind.Separator),
             new(ReceiptRowKind.Footer, CafeteriaText.TestPageFooter.For(language)),
         };
@@ -164,9 +190,20 @@ public sealed record ReceiptLayout(AppLanguage Language, IReadOnlyList<ReceiptRo
         return string.IsNullOrWhiteSpace(name) ? other : name;
     }
 
-    /// <summary>"2 × 3,000". Left-to-right marks keep it in that order inside Arabic text.</summary>
-    public static string QuantityTimesPrice(int quantity, long unitPrice) =>
-        $"‎{Number(quantity)} × {NumberText.Format(unitPrice)}‎";
+    /// <summary>"2 × 1.50" (dollars). Left-to-right marks keep it in that order inside Arabic text.</summary>
+    public static string QuantityTimesPrice(int quantity, decimal unitPrice) =>
+        $"‎{Number(quantity)} × {Money.FormatAmount(unitPrice)}‎";
+
+    /// <summary>What the customer had to pay in the sale's currency: the pounds for a sale paid in pounds, else the dollar total.</summary>
+    public static decimal AmountDue(ReceiptDto receipt)
+    {
+        ArgumentNullException.ThrowIfNull(receipt);
+        return receipt.Currency == Currency.Syp ? receipt.PaidAmount : receipt.Total;
+    }
+
+    /// <summary>"$1 = 11,500 SYP" (left-to-right runs kept in Arabic).</summary>
+    public static string RateText(decimal sypPerUsd, AppLanguage language) =>
+        BidiText.FixNumbers(CafeteriaText.RateValue.Format(language, Money.FormatSyp(sypPerUsd, language)), language);
 
     /// <summary>The rows as plain text, one per line ("label: value"), for tests and a future ESC/POS printer.</summary>
     public string ToPlainText()
@@ -177,7 +214,7 @@ public sealed record ReceiptLayout(AppLanguage Language, IReadOnlyList<ReceiptRo
             var line = row.Kind == ReceiptRowKind.Separator
                 ? new string('-', 32)
                 : row.Value is null ? row.Text : $"{row.Text}: {row.Value}";
-            text.AppendLine(line.Replace("‎", "", StringComparison.Ordinal));
+            text.AppendLine(line.Replace("‎", "", StringComparison.Ordinal).Replace("\u200F", "", StringComparison.Ordinal));
         }
 
         return text.ToString();
@@ -185,6 +222,6 @@ public sealed record ReceiptLayout(AppLanguage Language, IReadOnlyList<ReceiptRo
 
     private static string Number(long value) => value.ToString(CultureInfo.InvariantCulture);
 
-    private static string SignedMoney(long amount, AppLanguage language) =>
+    private static string SignedMoney(decimal amount, AppLanguage language) =>
         amount > 0 ? (language == AppLanguage.Arabic ? "‎+‎" : "+") + Money.Format(amount, language) : Money.Format(amount, language);
 }

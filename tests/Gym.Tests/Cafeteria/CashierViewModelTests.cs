@@ -2,6 +2,7 @@ using Gym.Cafeteria.Sales;
 using Gym.Client;
 using Gym.Client.Sample;
 using Gym.Contracts;
+using Gym.Domain;
 using Gym.UI;
 
 namespace Gym.Tests.Cafeteria;
@@ -12,7 +13,9 @@ public sealed class CashierViewModelTests
     {
         var api = new SampleGymApi();
         await api.LoginAsync("ahmad", SampleGymApi.SamplePassword);
-        var model = new CashierViewModel(api, () => "Cafeteria 2", language);
+        var rates = new ExchangeRates();
+        rates.Set(await api.GetExchangeRateAsync());
+        var model = new CashierViewModel(api, () => "Cafeteria 2", language, rates);
         await model.LoadAsync();
         return (api, model);
     }
@@ -105,20 +108,91 @@ public sealed class CashierViewModelTests
         model.Add(P(model, 1));
         model.Add(P(model, 9));
 
-        var outcome = await model.ChargeAsync(30_000);
+        var outcome = await model.ChargeAsync(5m);
 
         Assert.True(outcome.IsPaid);
         var receipt = outcome.Receipt!;
-        Assert.Equal(26_000, receipt.Total);
-        Assert.Equal(30_000, receipt.CashReceived);
-        Assert.Equal(4_000, receipt.Change);
+        Assert.Equal(2.25m, receipt.Total);
+        Assert.Equal(Currency.Usd, receipt.Currency);
+        Assert.Equal(5m, receipt.CashReceived);
+        Assert.Equal(2.75m, receipt.Change);
         Assert.Equal("Cafeteria 2", receipt.Station);
         Assert.Equal(receipt, model.LastReceipt);
         Assert.True(model.Cart.IsEmpty);
         Assert.Equal(waterStock - 2, P(model, 1).Stock);
         Assert.Equal(waterStock - 2, (await api.GetProductAsync(1)).Stock);
         Assert.Equal(15, model.Shift!.SaleCount);
-        Assert.Equal(before + 26_000, model.Shift.SalesTotal);
+        Assert.Equal(before + 2.25m, model.Shift.SalesTotal);
+    }
+
+    [Fact]
+    public async Task Paid_in_pounds_the_amount_due_is_the_total_at_the_rate_and_the_change_is_in_pounds()
+    {
+        var (_, model) = await StartAsync();
+        var poundsBefore = model.Shift!.Paid!.Syp;
+        model.Add(P(model, 1));
+        model.Add(P(model, 1));
+        model.Add(P(model, 9));
+        model.PayCurrency = Currency.Syp;
+
+        // $2.25 × 11,500 = 25,875 pounds.
+        Assert.Equal(SampleGymApi.SampleRate, model.Rates.SypPerUsd);
+        Assert.Equal(new PaymentAmount(Currency.Syp, 25_875m, SampleGymApi.SampleRate), model.AmountDue);
+        Assert.Equal(25_875m, model.TotalInSyp);
+
+        var outcome = await model.ChargeAsync(30_000m);
+
+        var receipt = outcome.Receipt!;
+        Assert.Equal(2.25m, receipt.Total);
+        Assert.Equal(Currency.Syp, receipt.Currency);
+        Assert.Equal(25_875m, receipt.PaidAmount);
+        Assert.Equal(SampleGymApi.SampleRate, receipt.ExchangeRate);
+        Assert.Equal(30_000m, receipt.CashReceived);
+        Assert.Equal(4_125m, receipt.Change);
+        Assert.Equal(poundsBefore + 25_875m, model.Shift!.Paid!.Syp);
+    }
+
+    [Fact]
+    public async Task The_pounds_due_are_rounded_with_the_admins_step()
+    {
+        var (api, model) = await StartAsync();
+        var settings = await api.GetSettingsAsync();
+        await api.UpdateSettingsAsync(settings with { SypRoundingStep = 500 });
+        model.Rates.Set(await api.GetExchangeRateAsync());
+        model.Add(P(model, 1));
+        model.Add(P(model, 1));
+        model.Add(P(model, 9));
+        model.PayCurrency = Currency.Syp;
+
+        // 25,875 pounds to the nearest 500.
+        Assert.Equal(26_000m, model.AmountDue.Amount);
+
+        var outcome = await model.ChargeAsync(26_000m);
+
+        Assert.Equal(26_000m, outcome.Receipt!.PaidAmount);
+        Assert.Equal(0m, outcome.Receipt.Change);
+    }
+
+    [Fact]
+    public async Task Without_a_rate_the_sale_is_in_dollars_even_when_pounds_were_chosen()
+    {
+        var (api, model) = await StartAsync();
+        api.SimulateExchangeRate(ExchangeRateState.None);
+        model.Rates.Set(await api.GetExchangeRateAsync());
+        model.Add(P(model, 9));
+        model.PayCurrency = Currency.Syp;
+
+        Assert.False(model.Rates.HasRate);
+        Assert.Null(model.TotalInSyp);
+        Assert.Equal(Currency.Usd, model.EffectiveCurrency);
+        Assert.Equal(new PaymentAmount(Currency.Usd, 1.75m, null), model.AmountDue);
+
+        var outcome = await model.ChargeAsync(2m);
+
+        Assert.True(outcome.IsPaid);
+        Assert.Equal(Currency.Usd, outcome.Receipt!.Currency);
+        Assert.Null(outcome.Receipt.ExchangeRate);
+        Assert.Equal(0.25m, outcome.Receipt.Change);
     }
 
     [Fact]
@@ -199,7 +273,7 @@ public sealed class CashierViewModelTests
         Assert.DoesNotContain(model.Tiles, t => t.Id == 9);
         Assert.Equal(15, model.Categories[0].Count);
 
-        model.ApplyProduct(bar with { Price = 22_000 });
-        Assert.Equal(22_000, model.Tiles.Single(t => t.Id == 9).Price);
+        model.ApplyProduct(bar with { Price = 2m });
+        Assert.Equal(2m, model.Tiles.Single(t => t.Id == 9).Price);
     }
 }

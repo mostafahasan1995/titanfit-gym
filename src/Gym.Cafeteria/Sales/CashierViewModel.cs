@@ -71,7 +71,8 @@ public sealed class ProductTile : ObservableObject
 
     public string Name => Receipts.ReceiptLayout.ProductName(Product.NameEn, Product.NameAr, Language);
 
-    public long Price => Product.Price;
+    /// <summary>US dollars.</summary>
+    public decimal Price => Product.Price;
 
     /// <summary>Stock left once the cart is sold.</summary>
     public int Left => Math.Max(0, Product.Stock - InCart);
@@ -93,7 +94,7 @@ public sealed class ProductTile : ObservableObject
 
     public Geometry Icon => CafeteriaIcons.ForCategory(Product.CategoryNameEn);
 
-    /// <summary>Screen reader text: "Add Water 500 ml, 3,000 SYP".</summary>
+    /// <summary>Screen reader text: "Add Water 500 ml, $0.25".</summary>
     public string AccessibleName => CafeteriaText.AddItem.Format(Language, Name, Money.Format(Price, Language));
 
     private void RaiseAll() => OnPropertyChanged(string.Empty);
@@ -162,14 +163,17 @@ public sealed class CashierViewModel : ObservableObject
     private AppLanguage language;
     private ReceiptDto? lastReceipt;
     private ShiftSummaryDto? shift;
+    private Currency payCurrency = Currency.Usd;
 
-    public CashierViewModel(IGymApi api, Func<string> station, AppLanguage language)
+    /// <param name="rates">The exchange rate to use (default: the station's <see cref="ExchangeRates.Current"/>).</param>
+    public CashierViewModel(IGymApi api, Func<string> station, AppLanguage language, ExchangeRates? rates = null)
     {
         ArgumentNullException.ThrowIfNull(api);
         ArgumentNullException.ThrowIfNull(station);
         this.api = api;
         this.station = station;
         this.language = language;
+        Rates = rates ?? ExchangeRates.Current;
         Cart.Language = language;
         Cart.Lines.CollectionChanged += (_, _) => SyncTiles();
         Cart.PropertyChanged += (_, e) =>
@@ -182,6 +186,25 @@ public sealed class CashierViewModel : ObservableObject
     }
 
     public Cart Cart { get; } = new();
+
+    /// <summary>The exchange rate used for the amount in pounds.</summary>
+    public ExchangeRates Rates { get; }
+
+    /// <summary>The currency the customer pays in (pounds only while a rate exists; otherwise dollars are used).</summary>
+    public Currency PayCurrency
+    {
+        get => payCurrency;
+        set => SetProperty(ref payCurrency, value);
+    }
+
+    /// <summary>The currency really used: pounds need a rate.</summary>
+    public Currency EffectiveCurrency => PayCurrency == Currency.Syp && Rates.HasRate ? Currency.Syp : Currency.Usd;
+
+    /// <summary>What the customer pays for the cart: the dollars, or the pounds at the rate (rounded with the admin's step).</summary>
+    public PaymentAmount AmountDue => Rates.Due(Cart.Total, EffectiveCurrency);
+
+    /// <summary>The cart total in pounds at the rate (to show next to the dollars), or null without a rate.</summary>
+    public decimal? TotalInSyp => Rates.ToSyp(Cart.Total);
 
     public ObservableCollection<CategoryTab> Categories { get; } = [];
 
@@ -307,11 +330,11 @@ public sealed class CashierViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Sells the cart (cash). On success the cart is emptied, the stock shown goes down and the receipt is
+    /// Sells the cart (cash, in <see cref="PayCurrency"/>; <paramref name="cashReceived"/> is in that currency). On success the cart is emptied, the stock shown goes down and the receipt is
     /// <see cref="LastReceipt"/>. When the server refuses with <c>insufficient_stock</c>, the stock is reloaded, the
     /// short lines are marked in the cart and listed in the outcome. Other errors come back in the outcome.
     /// </summary>
-    public async Task<ChargeOutcome> ChargeAsync(long? cashReceived, CancellationToken ct = default)
+    public async Task<ChargeOutcome> ChargeAsync(decimal? cashReceived, CancellationToken ct = default)
     {
         if (Cart.IsEmpty)
         {
@@ -322,7 +345,8 @@ public sealed class CashierViewModel : ObservableObject
         ReceiptDto receipt;
         try
         {
-            receipt = await api.CreateSaleAsync(new CreateSaleRequest(station(), Cart.ToSaleLines(), cashReceived), ct).ConfigureAwait(true);
+            var payment = Rates.Payment(EffectiveCurrency);
+            receipt = await api.CreateSaleAsync(new CreateSaleRequest(station(), Cart.ToSaleLines(), cashReceived, payment), ct).ConfigureAwait(true);
         }
         catch (GymApiException ex) when (ex.Code == "insufficient_stock")
         {

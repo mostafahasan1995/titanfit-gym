@@ -85,7 +85,14 @@ public static class CafeteriaText
 
     public static LocalText CashTooLow { get; } = new("Less than the total", "أقل من المجموع");
 
-    public static LocalText InvalidAmount { get; } = new("Enter an amount in SYP", "أدخل مبلغًا بالليرة السورية");
+    public static LocalText InvalidAmount { get; } = new("Enter an amount in US dollars, e.g. 12.50", "أدخل مبلغًا بالدولار، مثل 12.50");
+
+    public static LocalText InvalidSypAmount { get; } = new("Enter a whole amount in Syrian pounds", "أدخل مبلغًا صحيحًا بالليرة السورية");
+
+    public static LocalText CashPlaceholderSyp { get; } = new("Optional: pounds received, to see the change", "اختياري: الليرات المستلمة لمعرفة الباقي");
+
+    /// <summary>{0} = the amount due in pounds ("143,750 SYP").</summary>
+    public static LocalText DueInSyp { get; } = new("To pay in pounds: {0}", "المطلوب بالليرة: {0}");
 
     public static LocalText TotalCash { get; } = new("Total · cash", "المجموع · نقدًا");
 
@@ -215,6 +222,26 @@ public static class CafeteriaText
 
     public static LocalText Cash { get; } = new("Cash", "نقدًا");
 
+    public static LocalText CashUsd { get; } = new("Cash, US dollars", "نقدًا بالدولار");
+
+    public static LocalText CashSyp { get; } = new("Cash, Syrian pounds", "نقدًا بالليرة السورية");
+
+    public static LocalText TotalInSyp { get; } = new("Total in SYP", "المجموع بالليرة");
+
+    public static LocalText ReceiptRate { get; } = new("Exchange rate", "سعر الصرف");
+
+    /// <summary>{0} = the pounds for one dollar ("11,500 SYP").</summary>
+    public static LocalText RateValue { get; } = new("$1 = {0}", "1 دولار = {0}");
+
+    public static LocalText PaidInUsd { get; } = new("Paid in USD", "مدفوع بالدولار");
+
+    public static LocalText PaidInSyp { get; } = new("Paid in SYP", "مدفوع بالليرة");
+
+    public static LocalText PaidInSypValue { get; } = new("Paid in SYP (in USD)", "مدفوع بالليرة (بالدولار)");
+
+    /// <summary>The shift screen: {0} = dollars paid in dollars, {1} = pounds taken, {2} = their dollar value.</summary>
+    public static LocalText PaidSplit { get; } = new("Paid in USD: {0} · Paid in SYP: {1} ({2})", "بالدولار: {0} · بالليرة: {1} ({2})");
+
     public static LocalText ReceiptThanks { get; } = new("Thank you for your visit", "شكرًا لزيارتكم");
 
     public static LocalText ZReportTitle { get; } = new("Shift report (Z)", "تقرير إغلاق الوردية");
@@ -300,6 +327,9 @@ public static class CafeteriaText
     public static LocalText OneSaleTotal { get; } = new("1 sale · {0}", "عملية بيع واحدة · {0}");
 
     public static LocalText SalesTotalLine { get; } = new("{0} sales · {1}", "عدد المبيعات {0} · {1}");
+
+    /// <summary>Added to the day's total: {0} = the pounds taken that day.</summary>
+    public static LocalText SypCollectedLine { get; } = new("Taken in SYP: {0}", "المقبوض بالليرة: {0}");
 
     public static LocalText NoReceipts { get; } = new("No receipts", "لا توجد إيصالات");
 
@@ -439,7 +469,7 @@ public static class CafeteriaText
 
     public static LocalText Category { get; } = new("Category", "الفئة");
 
-    public static LocalText PriceSyp { get; } = new("Price (SYP)", "السعر بالليرة السورية");
+    public static LocalText PriceUsd { get; } = new("Price (US dollars)", "السعر بالدولار");
 
     public static LocalText BarcodeHint { get; } = new("Scan the item into this field, or type it.", "امسح الصنف داخل هذا الحقل أو اكتب الرقم.");
 
@@ -451,7 +481,7 @@ public static class CafeteriaText
 
     public static LocalText CategoryRequired { get; } = new("Pick a category.", "اختر فئة.");
 
-    public static LocalText EnterPrice { get; } = new("Enter the price in SYP, 0 or more.", "أدخل السعر بالليرة السورية، صفرًا أو أكثر.");
+    public static LocalText EnterPrice { get; } = new("Enter the price in US dollars, 0 or more (e.g. 1.50).", "أدخل السعر بالدولار، صفرًا أو أكثر (مثل 1.50).");
 
     public static LocalText ItemSaved { get; } = new("{0} saved.", "تم حفظ {0}.");
 }

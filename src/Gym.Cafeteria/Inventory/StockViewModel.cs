@@ -55,7 +55,7 @@ public sealed class StockRow : ObservableObject
 
     public string Barcode => Product.Barcode ?? "—";
 
-    public long Price => Product.Price;
+    public decimal Price => Product.Price;
 
     public int Stock => Product.Stock;
 

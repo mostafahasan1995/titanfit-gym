@@ -28,7 +28,7 @@ public partial class ProductForm : UserControl
         {
             NameEnInput.Text = product.NameEn;
             NameArInput.Text = product.NameAr;
-            PriceInput.Text = NumberText.Format(product.Price);
+            PriceInput.Text = Money.FormatAmount(product.Price);
             BarcodeInput.Text = product.Barcode ?? "";
             MinInput.Text = NumberText.Format(product.MinStock);
             ActiveInput.IsChecked = product.IsActive;
