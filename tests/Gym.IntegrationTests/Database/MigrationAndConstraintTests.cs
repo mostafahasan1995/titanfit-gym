@@ -23,7 +23,8 @@ public sealed class MigrationAndConstraintTests(PostgresFixture fx) : IClassFixt
         await using var db = fx.CreateContext();
         var settings = await db.Settings.SingleAsync();
         Assert.Equal(3, settings.ExpiringSoonDays);
-        Assert.Equal(100_000, settings.PrivateTrainingMonthlyFee);
+        Assert.Equal(25m, settings.PrivateTrainingMonthlyFee);
+        Assert.Equal(1, settings.SypRoundingStep);
         Assert.Equal(new[] { 1, 3, 6, 12 }, await db.Plans.OrderBy(p => p.Months).Select(p => p.Months).ToListAsync());
         Assert.Equal(
             new[] { "Drinks", "Shakes", "Snacks", "Supplements" },
@@ -75,7 +76,7 @@ public sealed class MigrationAndConstraintTests(PostgresFixture fx) : IClassFixt
         }
 
         var barcode = "62" + Random.Shared.NextInt64(10_000_000_000, 99_999_999_999);
-        Product NewProduct() => new() { NameEn = "Water", NameAr = "ماء", CategoryId = categoryId, Barcode = barcode, Price = 5_000 };
+        Product NewProduct() => new() { NameEn = "Water", NameAr = "ماء", CategoryId = categoryId, Barcode = barcode, Price = 0.50m };
         await AddAsync(NewProduct());
 
         await AssertUniqueViolationAsync("ux_products_barcode", NewProduct());

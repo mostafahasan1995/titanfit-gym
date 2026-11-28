@@ -23,7 +23,7 @@ public sealed class DashboardAndReportTests(ApiFactory fx) : IClassFixture<ApiFa
         Assert.Equal(CheckInResult.Active, (await reception.CheckInAsync(new CheckInRequest("Reception 1", Code: active.QrCode))).Result);
         Assert.Equal(CheckInResult.Expired, (await reception.CheckInAsync(new CheckInRequest("Reception 1", Code: expired.QrCode))).Result);
 
-        var water = await cashier.NewProductAsync(price: 5_000, stock: 3, minStock: 5);
+        var water = await cashier.NewProductAsync(price: 0.50m, stock: 3, minStock: 5);
         await cashier.CreateSaleAsync(new CreateSaleRequest("Cafeteria 1", [new(water.Id, 2)]));
 
         var dashboard = await admin.GetDashboardAsync();
@@ -33,27 +33,28 @@ public sealed class DashboardAndReportTests(ApiFactory fx) : IClassFixture<ApiFa
         Assert.Equal(1, dashboard.CheckInsByHour.Single(h => h.Hour == 9).Count);
         Assert.Equal((1, 1, 1), (dashboard.ActiveMembers, dashboard.ExpiringSoonMembers, dashboard.ExpiredMembers));
         Assert.Equal(expiring.Id, Assert.Single(dashboard.ExpiringSoon).Id);
-        Assert.Equal(400_000, dashboard.RevenueSubscriptions); // only today's payment
-        Assert.Equal(10_000, dashboard.RevenueCafeteria);
-        Assert.Equal(410_000, dashboard.RevenueTotal);
+        Assert.Equal(55m, dashboard.RevenueSubscriptions); // only today's payment (3 months, the default $55)
+        Assert.Equal(1.00m, dashboard.RevenueCafeteria);
+        Assert.Equal(56.00m, dashboard.RevenueTotal);
         Assert.Equal(water.Id, Assert.Single(dashboard.LowStock).ProductId);
 
         // With a threshold of 1 day, 2 days left is active.
-        await admin.UpdateSettingsAsync(new SettingsDto(1, 100_000));
+        await admin.UpdateSettingsAsync(new SettingsDto(1, 25m));
         var strict = await admin.GetDashboardAsync();
         Assert.Equal((2, 0, 1), (strict.ActiveMembers, strict.ExpiringSoonMembers, strict.ExpiredMembers));
-        await admin.UpdateSettingsAsync(new SettingsDto(3, 100_000));
+        await admin.UpdateSettingsAsync(new SettingsDto(3, 25m));
 
         var subscriptions = await admin.GetSubscriptionReportAsync(day.AddDays(-60), day);
-        Assert.Equal((3, 700_000L), (subscriptions.Count, subscriptions.Total));
-        Assert.Equal(new[] { (1, 2, 300_000L), (3, 1, 400_000L) }, subscriptions.ByPlan.Select(r => (r.Months, r.Count, r.Total)));
+        Assert.Equal((3, 95m), (subscriptions.Count, subscriptions.Total));
+        Assert.Equal(new[] { (1, 2, 40m), (3, 1, 55m) }, subscriptions.ByPlan.Select(r => (r.Months, r.Count, r.Total)));
+        Assert.Equal(new CurrencyTotals(95m, 0m, 0m, 3, 0), subscriptions.Paid);
         Assert.Equal(3, subscriptions.ByDay.Count);
 
         var attendance = await admin.GetAttendanceReportAsync(day, day);
         Assert.Equal((2, 1, 1, 1), (attendance.TotalScans, attendance.Admitted, attendance.Denied, attendance.UniqueMembers));
 
         var sales = await admin.GetSalesReportAsync(day, day);
-        Assert.Equal((1, 10_000L), (sales.SaleCount, sales.Total));
+        Assert.Equal((1, 1.00m), (sales.SaleCount, sales.Total));
         Assert.Equal((water.Id, 2), (Assert.Single(sales.ByProduct).ProductId, sales.ByProduct[0].Quantity));
         Assert.Single(sales.ByCashier);
 

@@ -10,7 +10,7 @@ public sealed class CafeteriaFlowTests(ApiFactory fx) : IClassFixture<ApiFactory
     {
         fx.Time.Set(TestTimeProvider.DefaultStart);
         var cashier = await fx.CashierAsync();
-        var shake = await cashier.NewProductAsync(price: 25_000, minStock: 2);
+        var shake = await cashier.NewProductAsync(price: 2.50m, minStock: 2);
         Assert.Equal(0, shake.Stock);
         Assert.True(shake.IsLowStock); // 0 is below the minimum of 2
 
@@ -19,13 +19,14 @@ public sealed class CafeteriaFlowTests(ApiFactory fx) : IClassFixture<ApiFactory
         Assert.Equal(shake.Id, (await cashier.FindProductByBarcodeAsync(shake.Barcode!))?.Id);
         Assert.Null(await cashier.FindProductByBarcodeAsync("0000000000000"));
 
-        var shift = await cashier.OpenShiftAsync(new OpenShiftRequest("Cafeteria 1", OpeningCash: 50_000));
+        var shift = await cashier.OpenShiftAsync(new OpenShiftRequest("Cafeteria 1", OpeningCash: 20m));
         Assert.Equal(shift.Id, (await cashier.OpenShiftAsync(new OpenShiftRequest("Cafeteria 1"))).Id); // already open
         Assert.Equal(shift.Id, (await cashier.GetCurrentShiftAsync())?.Id);
 
-        var receipt = await cashier.CreateSaleAsync(new CreateSaleRequest("Cafeteria 1", [new(shake.Id, 3)], CashReceived: 100_000));
-        Assert.Equal(75_000, receipt.Total);
-        Assert.Equal(25_000, receipt.Change);
+        var receipt = await cashier.CreateSaleAsync(new CreateSaleRequest("Cafeteria 1", [new(shake.Id, 3)], CashReceived: 10m));
+        Assert.Equal(7.50m, receipt.Total);
+        Assert.Equal(2.50m, receipt.Change);
+        Assert.Equal((Currency.Usd, 7.50m), (receipt.Currency, receipt.PaidAmount));
         Assert.Equal(shift.Id, receipt.ShiftId);
         Assert.Equal("صنف", Assert.Single(receipt.Lines).NameAr);
         Assert.Equal(receipt.Number, (await cashier.GetSaleAsync(receipt.Id)).Number);
@@ -37,11 +38,12 @@ public sealed class CafeteriaFlowTests(ApiFactory fx) : IClassFixture<ApiFactory
         Assert.Contains("shortages", tooMany.Body, StringComparison.Ordinal);
         Assert.Equal(7, (await cashier.GetProductAsync(shake.Id)).Stock);
 
-        var summary = await cashier.CloseShiftAsync(shift.Id, new CloseShiftRequest(ClosingCash: 120_000, Note: "Short 5,000"));
+        var summary = await cashier.CloseShiftAsync(shift.Id, new CloseShiftRequest(ClosingCash: 26.50m, Note: "Short $1"));
         Assert.Equal(1, summary.SaleCount);
-        Assert.Equal(75_000, summary.SalesTotal);
-        Assert.Equal(125_000, summary.ExpectedCash);
-        Assert.Equal(-5_000, summary.CashDifference);
+        Assert.Equal(7.50m, summary.SalesTotal);
+        Assert.Equal(27.50m, summary.ExpectedCash);
+        Assert.Equal(-1.00m, summary.CashDifference);
+        Assert.Equal(new CurrencyTotals(7.50m, 0m, 0m, 1, 0), summary.Paid);
         Assert.Equal(3, Assert.Single(summary.Products).Quantity);
         Assert.NotNull(summary.Shift.ClosedAt);
         Assert.Null(await cashier.GetCurrentShiftAsync());
@@ -55,7 +57,7 @@ public sealed class CafeteriaFlowTests(ApiFactory fx) : IClassFixture<ApiFactory
     public async Task Selling_without_an_open_shift_opens_one()
     {
         var cashier = await fx.CashierAsync();
-        var water = await cashier.NewProductAsync(price: 5_000, stock: 5);
+        var water = await cashier.NewProductAsync(price: 0.50m, stock: 5);
 
         var receipt = await cashier.CreateSaleAsync(new CreateSaleRequest("Cafeteria 2", [new(water.Id, 1)]));
 
@@ -105,11 +107,11 @@ public sealed class CafeteriaFlowTests(ApiFactory fx) : IClassFixture<ApiFactory
     {
         var cashier = await fx.CashierAsync();
         var category = await cashier.CreateCategoryAsync(new SaveCategoryRequest("Coffee", "قهوة", SortOrder: 5));
-        var product = await cashier.CreateProductAsync(new SaveProductRequest("Espresso", "إسبريسو", category.Id, 7_000));
+        var product = await cashier.CreateProductAsync(new SaveProductRequest("Espresso", "إسبريسو", category.Id, 1.75m));
 
-        var updated = await cashier.UpdateProductAsync(product.Id, new SaveProductRequest("Espresso", "إسبريسو", category.Id, 8_000, Barcode: " 6291234567890 ", IsActive: false));
+        var updated = await cashier.UpdateProductAsync(product.Id, new SaveProductRequest("Espresso", "إسبريسو", category.Id, 2.005m, Barcode: " 6291234567890 ", IsActive: false));
 
-        Assert.Equal((8_000L, "6291234567890", false), (updated.Price, updated.Barcode, updated.IsActive));
+        Assert.Equal((2.01m, "6291234567890", false), (updated.Price, updated.Barcode, updated.IsActive)); // cents kept
         Assert.DoesNotContain(await cashier.GetProductsAsync(), p => p.Id == product.Id);
         Assert.Contains(await cashier.GetProductsAsync(includeInactive: true), p => p.Id == product.Id);
         Assert.Contains(await cashier.GetProductsAsync(query: "espr", includeInactive: true), p => p.Id == product.Id);

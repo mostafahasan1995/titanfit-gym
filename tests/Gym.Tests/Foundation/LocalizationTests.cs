@@ -1,4 +1,5 @@
 using System.Net;
+using Gym.Domain;
 using Gym.Client;
 using Gym.UI;
 using Gym.UI.Shell;
@@ -31,8 +32,8 @@ public sealed class LocalizationTests
     [Fact]
     public void Money_has_Western_digits_and_the_currency()
     {
-        Assert.Equal("150,000 SYP", Money.Format(150_000, AppLanguage.English));
-        var arabic = Money.Format(1_400_000, AppLanguage.Arabic);
+        Assert.Equal("150,000 SYP", Money.FormatSyp(150_000, AppLanguage.English));
+        var arabic = Money.FormatSyp(1_400_000, AppLanguage.Arabic);
         Assert.Contains("1,400,000", arabic, StringComparison.Ordinal);
         Assert.EndsWith("ل.س", arabic, StringComparison.Ordinal);
         Assert.DoesNotContain(arabic, c => c is >= '٠' and <= '٩');
@@ -40,10 +41,31 @@ public sealed class LocalizationTests
     }
 
     [Fact]
+    public void Dollars_have_the_sign_and_two_decimals()
+    {
+        Assert.Equal("$1,250.50", Money.Format(1250.5m, AppLanguage.English));
+        Assert.Equal("$20.00", Money.Format(20m, AppLanguage.English));
+        Assert.Equal("-$2.00", Money.Format(-2m, AppLanguage.English));
+        Assert.Equal("\u200E$\u200E20.00\u200F", Money.Format(20m, AppLanguage.Arabic));
+        Assert.Equal("\u200E-$\u200E2.00\u200F", Money.Format(-2m, AppLanguage.Arabic));
+        Assert.Equal("12.50", Money.FormatAmount(12.5m));
+        Assert.Equal("230,000 SYP", Money.Format(Currency.Syp, 230_000m, AppLanguage.English));
+        Assert.Equal("$20.00 · 230,000 SYP", Money.FormatWithSyp(20m, 230_000m, AppLanguage.English));
+        Assert.Equal("$20.00", Money.FormatWithSyp(20m, null, AppLanguage.English));
+    }
+
+    [Fact]
+    public void A_dollar_amount_inside_an_Arabic_sentence_is_left_alone_by_FixNumbers()
+    {
+        var amount = Money.Format(1250.5m, AppLanguage.Arabic);
+        Assert.Equal(amount, BidiText.FixNumbers(amount, AppLanguage.Arabic));
+    }
+
+    [Fact]
     public void Negative_amounts_keep_the_minus_before_the_number_in_Arabic()
     {
-        Assert.Equal("-2,000 SYP", Money.Format(-2_000, AppLanguage.English));
-        Assert.Equal("\u200E-\u200E2,000 ل.س", Money.Format(-2_000, AppLanguage.Arabic));
+        Assert.Equal("-2,000 SYP", Money.FormatSyp(-2_000, AppLanguage.English));
+        Assert.Equal("\u200E-\u200E2,000 ل.س", Money.FormatSyp(-2_000, AppLanguage.Arabic));
     }
 
     [Theory]
@@ -64,9 +86,25 @@ public sealed class LocalizationTests
     [InlineData("١٥٠٬٠٠٠", 150_000L)]
     [InlineData("", null)]
     [InlineData("abc", null)]
-    public void Typed_amounts_are_read(string text, long? expected)
+    [InlineData("12.5", null)]
+    public void Typed_pounds_are_read(string text, long? expected)
     {
-        Assert.Equal(expected, Money.Parse(text));
+        Assert.Equal(expected, Money.ParseSyp(text));
+        Assert.Equal(expected, Money.Parse(Currency.Syp, text));
+    }
+
+    [Theory]
+    [InlineData("20", "20")]
+    [InlineData("12.5", "12.5")]
+    [InlineData("$1,250.75", "1250.75")]
+    [InlineData("١٢٫٥", "12.5")]
+    [InlineData("0.25", "0.25")]
+    [InlineData("1.234", null)]
+    [InlineData("", null)]
+    [InlineData("abc", null)]
+    public void Typed_dollars_are_read_with_up_to_two_decimals(string text, string? expected)
+    {
+        Assert.Equal(expected is null ? null : decimal.Parse(expected, System.Globalization.CultureInfo.InvariantCulture), Money.Parse(text));
     }
 
     [Fact]

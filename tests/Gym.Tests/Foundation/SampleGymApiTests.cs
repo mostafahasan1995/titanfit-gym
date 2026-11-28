@@ -127,13 +127,26 @@ public sealed class SampleGymApiTests
             Assert.All(receipt.Lines, l => Assert.Equal(l.UnitPrice * l.Quantity, l.LineTotal));
             Assert.Equal(receipt.Lines.Sum(l => l.LineTotal), receipt.Total);
             Assert.Contains(shifts, s => s.Id == receipt.ShiftId);
-            Assert.True(receipt.CashReceived >= receipt.Total);
+            Assert.True(receipt.CashReceived >= receipt.PaidAmount);
+            Assert.Equal(receipt.CashReceived - receipt.PaidAmount, receipt.Change);
+            if (receipt.Currency == Currency.Syp)
+            {
+                Assert.Equal(CurrencyRules.ToSyp(receipt.Total, receipt.ExchangeRate!.Value), receipt.PaidAmount);
+            }
+            else
+            {
+                Assert.Equal(receipt.Total, receipt.PaidAmount);
+            }
+
             inOpenShift += receipt.ShiftId == open.Id ? 1 : 0;
         }
 
         var summary = await api.GetShiftSummaryAsync(open.Id);
         Assert.Equal(inOpenShift, summary.SaleCount);
         Assert.Equal(open.OpeningCash + summary.SalesTotal, summary.ExpectedCash);
+        Assert.Equal(summary.SalesTotal, summary.Paid!.Usd + summary.Paid.SypAsUsd);
+        Assert.Contains(sales, s => s.Currency == Currency.Syp);
+        Assert.Contains(sales, s => s.Currency == Currency.Usd);
     }
 
     [Fact]
@@ -193,9 +206,61 @@ public sealed class SampleGymApiTests
         var settings = await api.GetSettingsAsync();
         var plans = await api.GetPlansAsync();
 
-        Assert.Equal(new SettingsDto(3, 100_000), settings);
+        Assert.Equal(new SettingsDto(3, 25m, 1), settings);
         Assert.Equal(new[] { 1, 3, 6, 12 }, plans.Select(p => p.Months));
-        Assert.Equal(new[] { 150_000L, 400_000L, 750_000L, 1_400_000L }, plans.Select(p => p.Price));
+        Assert.Equal(new[] { 20m, 55m, 100m, 180m }, plans.Select(p => p.Price));
+    }
+
+    [Fact]
+    public async Task The_sample_has_today_s_rate_and_a_month_of_history()
+    {
+        var status = await api.GetExchangeRateAsync();
+        var history = await api.GetExchangeRatesAsync();
+
+        Assert.Equal((ExchangeRateState.Today, (decimal?)SampleGymApi.SampleRate), (status.State, status.Rate?.SypPerUsd));
+        Assert.Equal(30, history.Count);
+        Assert.Equal(status.Rate, history[0]);
+    }
+
+    [Fact]
+    public async Task Without_today_s_rate_the_last_one_is_used_and_without_any_only_dollars_work()
+    {
+        await api.LoginAsync(SampleGymApi.UsernameFor(StaffRole.Reception), SampleGymApi.SamplePassword);
+        var member = (await AllMembersAsync()).First(m => m.Membership?.Status == SubscriptionStatus.Active);
+        var plan = (await api.GetPlansAsync())[0];
+
+        api.SimulateExchangeRate(ExchangeRateState.Stale);
+        var stale = await api.GetExchangeRateAsync();
+        Assert.Equal(ExchangeRateState.Stale, stale.State);
+        var paid = await api.RenewMemberAsync(member.Id, plan.Id, new PaymentRequest(Currency.Syp));
+        Assert.Equal((Currency.Syp, (decimal?)stale.Rate!.SypPerUsd), (paid.Currency, paid.ExchangeRate));
+        Assert.Equal(CurrencyRules.ToSyp(plan.Price, stale.Rate.SypPerUsd), paid.PaidAmount);
+
+        api.SimulateExchangeRate(ExchangeRateState.None);
+        Assert.Equal((ExchangeRateState.None, (ExchangeRateDto?)null), ((await api.GetExchangeRateAsync()).State, (await api.GetExchangeRateAsync()).Rate));
+        var refused = await Assert.ThrowsAsync<GymApiException>(() => api.RenewMemberAsync(member.Id, plan.Id, new PaymentRequest(Currency.Syp)));
+        Assert.Equal("no_exchange_rate", refused.Code);
+        var dollars = await api.RenewMemberAsync(member.Id, plan.Id);
+        Assert.Equal((Currency.Usd, plan.Price, (decimal?)null), (dollars.Currency, dollars.PaidAmount, dollars.ExchangeRate));
+    }
+
+    [Fact]
+    public async Task Entering_a_rate_publishes_it_and_rounds_with_the_step()
+    {
+        ExchangeRateStatusDto? published = null;
+        api.Live.ExchangeRateChanged += e => published = e;
+        await api.LoginAsync(SampleGymApi.UsernameFor(StaffRole.Admin), SampleGymApi.SamplePassword);
+        await api.UpdateSettingsAsync(new SettingsDto(3, 25m, 500));
+
+        var rate = await api.SetExchangeRateAsync(new SetExchangeRateRequest(11_480m));
+
+        Assert.Equal(rate, published?.Rate);
+        Assert.Equal(500, published?.SypRoundingStep);
+        await api.LoginAsync(SampleGymApi.UsernameFor(StaffRole.Cashier), SampleGymApi.SamplePassword);
+        var product = (await api.GetProductsAsync()).First(p => p.Stock >= 1 && p.Price == 1.50m);
+        var receipt = await api.CreateSaleAsync(new CreateSaleRequest("Cafeteria 1", [new SaleLineRequest(product.Id, 1)], 20_000m, new PaymentRequest(Currency.Syp, rate.Id)));
+        Assert.Equal((Currency.Syp, 17_000m, 3_000m), (receipt.Currency, receipt.PaidAmount, receipt.Change)); // 17,220 → 17,000
+        await Assert.ThrowsAsync<GymApiException>(() => api.SetExchangeRateAsync(new SetExchangeRateRequest(0m)));
     }
 
     [Fact]
@@ -220,10 +285,10 @@ public sealed class SampleGymApiTests
         await api.LoginAsync(SampleGymApi.UsernameFor(StaffRole.Cashier), SampleGymApi.SamplePassword);
         var product = (await api.GetProductsAsync()).First(p => p.Stock >= 2);
 
-        var receipt = await api.CreateSaleAsync(new CreateSaleRequest("Cafeteria 1", [new SaleLineRequest(product.Id, 2)], product.Price * 2 + 1_000));
+        var receipt = await api.CreateSaleAsync(new CreateSaleRequest("Cafeteria 1", [new SaleLineRequest(product.Id, 2)], product.Price * 2 + 1m));
 
         Assert.Equal(product.Stock - 2, (await api.GetProductAsync(product.Id)).Stock);
-        Assert.Equal(1_000, receipt.Change);
+        Assert.Equal(1m, receipt.Change);
         Assert.Equal(product.Stock - 2, Assert.Single(stock!.Products).Stock);
         Assert.Equal(receipt.Id, sold?.SaleId);
         var tooMany = await Assert.ThrowsAsync<GymApiException>(() =>

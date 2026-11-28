@@ -67,13 +67,14 @@ public sealed class CafeteriaTests
     {
         var sale = new Sale();
 
-        sale.AddLine(new Product { Id = 1, Price = 5_000 }, 3);
-        sale.AddLine(new Product { Id = 2, Price = 25_000 }, 1);
-        sale.SetCashReceived(50_000);
+        sale.AddLine(new Product { Id = 1, Price = 1.25m }, 3);
+        sale.AddLine(new Product { Id = 2, Price = 2.50m }, 1);
+        sale.SetCashReceived(10m);
 
-        Assert.Equal(40_000, sale.Total);
-        Assert.Equal(new[] { 15_000L, 25_000L }, sale.Lines.Select(l => l.LineTotal));
-        Assert.Equal(10_000, sale.Change);
+        Assert.Equal(6.25m, sale.Total);
+        Assert.Equal(new[] { 3.75m, 2.50m }, sale.Lines.Select(l => l.LineTotal));
+        Assert.Equal(3.75m, sale.Change);
+        Assert.Equal((Currency.Usd, 6.25m), (sale.Currency, sale.PaidAmount));
     }
 
     [Theory]
@@ -89,9 +90,9 @@ public sealed class CafeteriaTests
     public void Cash_received_cannot_be_below_the_total()
     {
         var sale = new Sale();
-        sale.AddLine(new Product { Price = 10_000 }, 1);
+        sale.AddLine(new Product { Price = 10m }, 1);
 
-        Assert.Equal("cash_received_too_low", Assert.Throws<DomainException>(() => sale.SetCashReceived(9_999)).Code);
+        Assert.Equal("cash_received_too_low", Assert.Throws<DomainException>(() => sale.SetCashReceived(9.99m)).Code);
         sale.SetCashReceived(null);
         Assert.Null(sale.Change);
     }
@@ -101,10 +102,10 @@ public sealed class CafeteriaTests
     {
         var shift = new Shift { OpenedAt = Now };
 
-        shift.Close(120_000, " ok ", Now.AddHours(8));
+        shift.Close(120.50m, " ok ", Now.AddHours(8));
 
         Assert.False(shift.IsOpen);
-        Assert.Equal(120_000, shift.ClosingCash);
+        Assert.Equal(120.50m, shift.ClosingCash);
         Assert.Equal("ok", shift.Note);
         Assert.Equal("shift_closed", Assert.Throws<ConflictException>(() => shift.Close(null, null, Now.AddHours(9))).Code);
     }

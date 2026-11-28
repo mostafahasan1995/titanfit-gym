@@ -36,8 +36,8 @@ public sealed class RenewalTests
     [Fact]
     public void Early_renewal_loses_no_day_and_counts_none_twice()
     {
-        var first = Subscription.Start(Guid.NewGuid(), SubscriptionKind.Membership, 1, 150_000, null, D("2026-11-26"), 1, Now);
-        var renewal = Subscription.Start(first.MemberId, SubscriptionKind.Membership, 1, 150_000, first.EndDate, D("2026-12-20"), 1, Now);
+        var first = Subscription.Start(Guid.NewGuid(), SubscriptionKind.Membership, 1, 20m, null, D("2026-11-26"), 1, Now);
+        var renewal = Subscription.Start(first.MemberId, SubscriptionKind.Membership, 1, 20m, first.EndDate, D("2026-12-20"), 1, Now);
 
         Assert.Equal(D("2026-11-26"), first.StartDate);
         Assert.Equal(D("2026-12-26"), first.EndDate);
@@ -60,13 +60,14 @@ public sealed class RenewalTests
     {
         var memberId = Guid.NewGuid();
 
-        var subscription = Subscription.Start(memberId, SubscriptionKind.Membership, 3, 400_000, null, D("2026-11-26"), 7, Now, planId: 2);
+        var subscription = Subscription.Start(memberId, SubscriptionKind.Membership, 3, 55m, null, D("2026-11-26"), 7, Now, planId: 2);
 
         Assert.Equal(memberId, subscription.MemberId);
         Assert.Equal(SubscriptionKind.Membership, subscription.Kind);
         Assert.Equal(2, subscription.PlanId);
         Assert.Equal(3, subscription.Months);
-        Assert.Equal(400_000, subscription.PricePaid);
+        Assert.Equal(55m, subscription.PricePaid);
+        Assert.Equal((Currency.Usd, 55m, (decimal?)null), (subscription.Currency, subscription.PaidAmount, subscription.ExchangeRate));
         Assert.Equal(7, subscription.CreatedById);
         Assert.Equal(Now, subscription.CreatedAt);
         Assert.Equal(D("2027-02-26"), subscription.EndDate);

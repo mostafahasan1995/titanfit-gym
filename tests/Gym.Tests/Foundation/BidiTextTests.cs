@@ -53,7 +53,7 @@ public sealed class BidiTextTests
         var once = FixNumbers("مثل 0944 123 456 أو #00412", AppLanguage.Arabic);
         Assert.Equal(once, FixNumbers(once, AppLanguage.Arabic));
 
-        var negative = Money.Format(-2_000, AppLanguage.Arabic);
+        var negative = Money.FormatSyp(-2_000, AppLanguage.Arabic);
         Assert.Equal(negative, FixNumbers(negative, AppLanguage.Arabic));
     }
 

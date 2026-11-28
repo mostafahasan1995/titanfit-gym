@@ -16,7 +16,7 @@ public sealed class PrivateTrainerAndRatingTests(ApiFactory fx) : IClassFixture<
 
         // The private training service: months × the fixed monthly fee (100,000 by default).
         var service = await reception.AddPrivateServiceAsync(trainer.Id, 2);
-        Assert.Equal((SubscriptionKind.PrivateTraining, 2, 200_000L), (service.Kind, service.Months, service.PricePaid));
+        Assert.Equal((SubscriptionKind.PrivateTraining, 2, 50m), (service.Kind, service.Months, service.PricePaid));
         Assert.Equal(fx.Today, service.StartDate);
         Assert.Null(service.PlanId);
 
@@ -63,10 +63,10 @@ public sealed class PrivateTrainerAndRatingTests(ApiFactory fx) : IClassFixture<
         var trainer = await reception.NewMemberAsync(type: MemberType.PrivateTrainer);
         var before = await admin.GetSettingsAsync();
 
-        await admin.UpdateSettingsAsync(before with { PrivateTrainingMonthlyFee = 125_000 });
+        await admin.UpdateSettingsAsync(before with { PrivateTrainingMonthlyFee = 30m });
         try
         {
-            Assert.Equal(375_000, (await reception.AddPrivateServiceAsync(trainer.Id, 3)).PricePaid);
+            Assert.Equal(90m, (await reception.AddPrivateServiceAsync(trainer.Id, 3)).PricePaid);
         }
         finally
         {

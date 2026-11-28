@@ -51,17 +51,17 @@ public sealed class SalesConcurrencyTests(PostgresFixture fx) : IClassFixture<Po
     [Fact]
     public async Task Sale_saves_lines_and_stock_movements_together()
     {
-        var water = await fx.AddProductAsync(stock: 10, price: 5_000);
-        var shake = await fx.AddProductAsync(stock: 4, price: 25_000);
+        var water = await fx.AddProductAsync(stock: 10, price: 0.50m);
+        var shake = await fx.AddProductAsync(stock: 4, price: 2.50m);
         var cashier = await fx.AddStaffAsync(StaffType.Cashier);
 
         await using var db = fx.CreateContext();
         var receipt = await fx.Sales(db).CreateAsync(
-            new CreateSaleRequest("Cafeteria 1", [new(water, 2), new(shake, 1), new(water, 1)], CashReceived: 50_000), cashier);
+            new CreateSaleRequest("Cafeteria 1", [new(water, 2), new(shake, 1), new(water, 1)], CashReceived: 10m), cashier);
 
         Assert.True(receipt.Number > 0);
-        Assert.Equal(40_000, receipt.Total); // water 3 × 5,000 + shake 25,000
-        Assert.Equal(10_000, receipt.Change);
+        Assert.Equal(4.00m, receipt.Total); // water 3 × $0.50 + shake $2.50
+        Assert.Equal(6.00m, receipt.Change);
         Assert.Equal(new[] { (water, 3), (shake, 1) }, receipt.Lines.OrderBy(l => l.ProductId).Select(l => (l.ProductId, l.Quantity)));
         Assert.Equal(7, await fx.StockOfAsync(water));
         Assert.Equal(3, await fx.StockOfAsync(shake));

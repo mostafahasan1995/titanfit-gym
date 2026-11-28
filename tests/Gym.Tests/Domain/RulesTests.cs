@@ -5,19 +5,19 @@ namespace Gym.Tests.Domain;
 public sealed class RulesTests
 {
     [Theory]
-    [InlineData(1, 100_000, 100_000)]
-    [InlineData(3, 100_000, 300_000)]
-    [InlineData(12, 125_000, 1_500_000)]
+    [InlineData(1, 25, 25)]
+    [InlineData(3, 25, 75)]
+    [InlineData(12, 12.5, 150)]
     [InlineData(2, 0, 0)]
-    public void Private_training_price_is_months_times_the_fixed_fee(int months, long fee, long expected)
+    public void Private_training_price_is_months_times_the_fixed_fee(int months, double fee, double expected)
     {
-        Assert.Equal(expected, PrivateTrainingRules.CalculatePrice(months, fee));
+        Assert.Equal((decimal)expected, PrivateTrainingRules.CalculatePrice(months, (decimal)fee));
     }
 
     [Fact]
     public void Private_training_price_rejects_bad_input()
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => PrivateTrainingRules.CalculatePrice(0, 100_000));
+        Assert.Throws<ArgumentOutOfRangeException>(() => PrivateTrainingRules.CalculatePrice(0, 25m));
         Assert.Throws<ArgumentOutOfRangeException>(() => PrivateTrainingRules.CalculatePrice(1, -1));
     }
 
@@ -55,20 +55,21 @@ public sealed class RulesTests
     public void Settings_defaults_and_validation()
     {
         var settings = new GymSettings();
-        Assert.Equal((3, 100_000L), (settings.ExpiringSoonDays, settings.PrivateTrainingMonthlyFee));
+        Assert.Equal((3, 25m, 1), (settings.ExpiringSoonDays, settings.PrivateTrainingMonthlyFee, settings.SypRoundingStep));
 
-        settings.Update(5, 120_000, DateTime.UtcNow);
-        Assert.Equal((5, 120_000L), (settings.ExpiringSoonDays, settings.PrivateTrainingMonthlyFee));
+        settings.Update(5, 30.5m, DateTime.UtcNow, sypRoundingStep: 500);
+        Assert.Equal((5, 30.5m, 500), (settings.ExpiringSoonDays, settings.PrivateTrainingMonthlyFee, settings.SypRoundingStep));
 
         Assert.Equal("invalid_setting", Assert.Throws<DomainException>(() => settings.Update(-1, 1, DateTime.UtcNow)).Code);
         Assert.Equal("invalid_setting", Assert.Throws<DomainException>(() => settings.Update(3, -1, DateTime.UtcNow)).Code);
+        Assert.Equal("invalid_setting", Assert.Throws<DomainException>(() => settings.Update(3, 1, DateTime.UtcNow, sypRoundingStep: 0)).Code);
     }
 
     [Fact]
     public void Default_plans_match_the_sample_prices()
     {
         Assert.Equal(
-            new[] { (1, 150_000L), (3, 400_000L), (6, 750_000L), (12, 1_400_000L) },
+            new[] { (1, 20m), (3, 55m), (6, 100m), (12, 180m) },
             Plan.Defaults().Select(p => (p.Months, p.Price)));
     }
 }

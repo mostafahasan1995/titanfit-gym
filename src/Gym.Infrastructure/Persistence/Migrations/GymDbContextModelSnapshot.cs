@@ -93,6 +93,50 @@ namespace Gym.Infrastructure.Persistence.Migrations
                     b.ToTable("check_ins", (string)null);
                 });
 
+            modelBuilder.Entity("Gym.Domain.ExchangeRate", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date")
+                        .HasColumnName("date");
+
+                    b.Property<DateTime>("EnteredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("entered_at");
+
+                    b.Property<int>("EnteredById")
+                        .HasColumnType("integer")
+                        .HasColumnName("entered_by_id");
+
+                    b.Property<decimal>("SypPerUsd")
+                        .HasPrecision(14, 2)
+                        .HasColumnType("numeric(14,2)")
+                        .HasColumnName("syp_per_usd");
+
+                    b.HasKey("Id")
+                        .HasName("pk_exchange_rates");
+
+                    b.HasIndex("Date")
+                        .HasDatabaseName("ix_exchange_rates_date");
+
+                    b.HasIndex("EnteredAt")
+                        .HasDatabaseName("ix_exchange_rates_entered_at");
+
+                    b.HasIndex("EnteredById")
+                        .HasDatabaseName("ix_exchange_rates_entered_by_id");
+
+                    b.ToTable("exchange_rates", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_exchange_rates_rate", "syp_per_usd > 0");
+                        });
+                });
+
             modelBuilder.Entity("Gym.Domain.GymSettings", b =>
                 {
                     b.Property<int>("Id")
@@ -103,9 +147,16 @@ namespace Gym.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("expiring_soon_days");
 
-                    b.Property<long>("PrivateTrainingMonthlyFee")
-                        .HasColumnType("bigint")
+                    b.Property<decimal>("PrivateTrainingMonthlyFee")
+                        .HasPrecision(14, 2)
+                        .HasColumnType("numeric(14,2)")
                         .HasColumnName("private_training_monthly_fee");
+
+                    b.Property<int>("SypRoundingStep")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1)
+                        .HasColumnName("syp_rounding_step");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -121,6 +172,8 @@ namespace Gym.Infrastructure.Persistence.Migrations
                             t.HasCheckConstraint("ck_settings_private_training_fee", "private_training_monthly_fee >= 0");
 
                             t.HasCheckConstraint("ck_settings_single_row", "id = 1");
+
+                            t.HasCheckConstraint("ck_settings_syp_rounding_step", "syp_rounding_step >= 1");
                         });
 
                     b.HasData(
@@ -128,7 +181,8 @@ namespace Gym.Infrastructure.Persistence.Migrations
                         {
                             Id = 1,
                             ExpiringSoonDays = 3,
-                            PrivateTrainingMonthlyFee = 100000L,
+                            PrivateTrainingMonthlyFee = 25m,
+                            SypRoundingStep = 1,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         });
                 });
@@ -270,8 +324,9 @@ namespace Gym.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("months");
 
-                    b.Property<long>("Price")
-                        .HasColumnType("bigint")
+                    b.Property<decimal>("Price")
+                        .HasPrecision(14, 2)
+                        .HasColumnType("numeric(14,2)")
                         .HasColumnName("price");
 
                     b.HasKey("Id")
@@ -327,8 +382,9 @@ namespace Gym.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("name_en");
 
-                    b.Property<long>("Price")
-                        .HasColumnType("bigint")
+                    b.Property<decimal>("Price")
+                        .HasPrecision(14, 2)
+                        .HasColumnType("numeric(14,2)")
                         .HasColumnName("price");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -401,19 +457,38 @@ namespace Gym.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("at");
 
-                    b.Property<long?>("CashReceived")
-                        .HasColumnType("bigint")
+                    b.Property<decimal?>("CashReceived")
+                        .HasPrecision(14, 2)
+                        .HasColumnType("numeric(14,2)")
                         .HasColumnName("cash_received");
 
                     b.Property<int>("CashierId")
                         .HasColumnType("integer")
                         .HasColumnName("cashier_id");
 
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)")
+                        .HasDefaultValue("Usd")
+                        .HasColumnName("currency");
+
+                    b.Property<decimal?>("ExchangeRate")
+                        .HasPrecision(14, 2)
+                        .HasColumnType("numeric(14,2)")
+                        .HasColumnName("exchange_rate");
+
                     b.Property<long>("Number")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("number")
                         .HasDefaultValueSql("nextval('sale_numbers')");
+
+                    b.Property<decimal>("PaidAmount")
+                        .HasPrecision(14, 2)
+                        .HasColumnType("numeric(14,2)")
+                        .HasColumnName("paid_amount");
 
                     b.Property<int?>("ShiftId")
                         .HasColumnType("integer")
@@ -425,8 +500,9 @@ namespace Gym.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(64)")
                         .HasColumnName("station");
 
-                    b.Property<long>("Total")
-                        .HasColumnType("bigint")
+                    b.Property<decimal>("Total")
+                        .HasPrecision(14, 2)
+                        .HasColumnType("numeric(14,2)")
                         .HasColumnName("total");
 
                     b.HasKey("Id")
@@ -460,8 +536,9 @@ namespace Gym.Infrastructure.Persistence.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<long>("LineTotal")
-                        .HasColumnType("bigint")
+                    b.Property<decimal>("LineTotal")
+                        .HasPrecision(14, 2)
+                        .HasColumnType("numeric(14,2)")
                         .HasColumnName("line_total");
 
                     b.Property<int>("ProductId")
@@ -476,8 +553,9 @@ namespace Gym.Infrastructure.Persistence.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("sale_id");
 
-                    b.Property<long>("UnitPrice")
-                        .HasColumnType("bigint")
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(14, 2)
+                        .HasColumnType("numeric(14,2)")
                         .HasColumnName("unit_price");
 
                     b.HasKey("Id")
@@ -512,8 +590,9 @@ namespace Gym.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("closed_at");
 
-                    b.Property<long?>("ClosingCash")
-                        .HasColumnType("bigint")
+                    b.Property<decimal?>("ClosingCash")
+                        .HasPrecision(14, 2)
+                        .HasColumnType("numeric(14,2)")
                         .HasColumnName("closing_cash");
 
                     b.Property<string>("Note")
@@ -525,8 +604,9 @@ namespace Gym.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("opened_at");
 
-                    b.Property<long>("OpeningCash")
-                        .HasColumnType("bigint")
+                    b.Property<decimal>("OpeningCash")
+                        .HasPrecision(14, 2)
+                        .HasColumnType("numeric(14,2)")
                         .HasColumnName("opening_cash");
 
                     b.Property<string>("Station")
@@ -757,9 +837,22 @@ namespace Gym.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("created_by_id");
 
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)")
+                        .HasDefaultValue("Usd")
+                        .HasColumnName("currency");
+
                     b.Property<DateOnly>("EndDate")
                         .HasColumnType("date")
                         .HasColumnName("end_date");
+
+                    b.Property<decimal?>("ExchangeRate")
+                        .HasPrecision(14, 2)
+                        .HasColumnType("numeric(14,2)")
+                        .HasColumnName("exchange_rate");
 
                     b.Property<string>("Kind")
                         .IsRequired()
@@ -775,12 +868,18 @@ namespace Gym.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("months");
 
+                    b.Property<decimal>("PaidAmount")
+                        .HasPrecision(14, 2)
+                        .HasColumnType("numeric(14,2)")
+                        .HasColumnName("paid_amount");
+
                     b.Property<int?>("PlanId")
                         .HasColumnType("integer")
                         .HasColumnName("plan_id");
 
-                    b.Property<long>("PricePaid")
-                        .HasColumnType("bigint")
+                    b.Property<decimal>("PricePaid")
+                        .HasPrecision(14, 2)
+                        .HasColumnType("numeric(14,2)")
                         .HasColumnName("price_paid");
 
                     b.Property<DateOnly>("StartDate")
@@ -829,6 +928,18 @@ namespace Gym.Infrastructure.Persistence.Migrations
                     b.Navigation("Member");
 
                     b.Navigation("Staff");
+                });
+
+            modelBuilder.Entity("Gym.Domain.ExchangeRate", b =>
+                {
+                    b.HasOne("Gym.Domain.StaffMember", "EnteredBy")
+                        .WithMany()
+                        .HasForeignKey("EnteredById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_exchange_rates_staff_entered_by_id");
+
+                    b.Navigation("EnteredBy");
                 });
 
             modelBuilder.Entity("Gym.Domain.Member", b =>

@@ -69,6 +69,9 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         }
     }
 
+    /// <summary>A context on this factory's database, to check what the API stored.</summary>
+    public GymDbContext CreateDbContext() => database.CreateContext();
+
     public GymApiClient Anonymous() => new(CreateClient());
 
     public GymApiClient WithToken(string token) => new(CreateClient()) { AccessToken = token };
@@ -130,7 +133,7 @@ internal static class TestData
             Type: type, PlanId: planId));
     }
 
-    public static async Task<ProductDto> NewProductAsync(this GymApiClient client, long price = 10_000, int stock = 0, int minStock = 0)
+    public static async Task<ProductDto> NewProductAsync(this GymApiClient client, decimal price = 2.5m, int stock = 0, int minStock = 0)
     {
         var categoryId = (await client.GetCategoriesAsync()).First().Id;
         var product = await client.CreateProductAsync(new SaveProductRequest(

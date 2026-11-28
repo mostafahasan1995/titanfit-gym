@@ -109,7 +109,7 @@ public sealed class MemberFlowTests(ApiFactory fx) : IClassFixture<ApiFactory>
         Assert.Equal(firstEnd.AddDays(1), renewal.StartDate);
         Assert.Equal(firstEnd.AddDays(1).AddMonths(3), renewal.EndDate);
         Assert.Equal(3, renewal.Months);
-        Assert.Equal(400_000, renewal.PricePaid);
+        Assert.Equal(55m, renewal.PricePaid);
         Assert.Equal(renewal.EndDate, (await reception.GetMemberAsync(member.Id)).Membership?.EndDate);
         var history = await reception.GetMemberSubscriptionsAsync(member.Id);
         Assert.Equal(new[] { renewal.StartDate, fx.Today }, history.Select(s => s.StartDate));
