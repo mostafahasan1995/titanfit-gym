@@ -228,20 +228,21 @@
                     </DockPanel>
                 </Border>
 
-                <Border Style="{DynamicResource Divider}" Margin="0,16,0,12" />
+                <Border Style="{DynamicResource Divider}" Margin="0,12,0,10" />
+                <!-- Pay in: dollars or pounds; then the amount due in that currency (gold) and the other currency beside it. -->
                 <DockPanel>
-                    <!-- The amount due in the chosen currency (gold), the other currency under it. -->
-                    <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center">
-                        <controls:MoneyText x:Name="TotalText" FontSize="30" HorizontalAlignment="Right" />
-                        <TextBlock x:Name="TotalOther" Style="{DynamicResource Text.Caption}" FontSize="13" HorizontalAlignment="Right" />
-                    </StackPanel>
+                    <controls:CurrencyPicker x:Name="CurrencyChoice" DockPanel.Dock="Right" CurrencyChanged="OnCurrencyChanged" />
+                    <TextBlock Style="{DynamicResource Text.Label}" VerticalAlignment="Center" Text="{ui:Loc {x:Static ui:CommonText.PayIn}}" />
+                </DockPanel>
+                <DockPanel Margin="0,8,0,0">
+                    <controls:MoneyText x:Name="TotalText" DockPanel.Dock="Right" FontSize="28" VerticalAlignment="Center" />
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Style="{DynamicResource Text.Label}" Text="{ui:Loc {x:Static local:ReceptionText.Total}}" />
-                        <controls:CurrencyPicker x:Name="CurrencyChoice" Margin="0,8,0,0" CurrencyChanged="OnCurrencyChanged" />
+                        <TextBlock x:Name="TotalOther" Style="{DynamicResource Text.Caption}" FontSize="12" TextWrapping="Wrap" />
                     </StackPanel>
                 </DockPanel>
 
-                <StackPanel x:Name="SavePanel" Margin="0,16,0,0">
+                <StackPanel x:Name="SavePanel" Margin="0,12,0,0">
                     <Button x:Name="SaveButton" Style="{DynamicResource Button.Primary}" Height="56" FontSize="16"
                             ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Check}" Click="OnSaveClick"
                             Content="{ui:Loc {x:Static local:ReceptionText.SaveMember}}" />
