@@ -68,7 +68,7 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:StaffText.ColumnStatus}}" Width="1.3*" MinWidth="100">
+                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:StaffText.ColumnStatus}}" Width="110">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <controls:StatusPill Tone="{Binding Tone}" Text="{Binding StatusText}" HorizontalAlignment="Left" />

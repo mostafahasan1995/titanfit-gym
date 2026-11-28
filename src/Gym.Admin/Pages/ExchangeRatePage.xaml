@@ -16,12 +16,21 @@
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <!-- Today's rate and the entry form -->
-        <!-- The cards scroll on a short window; Save rate stays docked below them. -->
+        <!-- Today's rate and the entry form. The new rate field and Save stay docked at the bottom (always visible);
+             today's rate and the example scroll above them on a short window. -->
         <DockPanel>
-            <Button x:Name="SaveButton" DockPanel.Dock="Bottom" Style="{DynamicResource Button.Primary}" Margin="0,16,0,0" HorizontalAlignment="Left" MinWidth="180"
-                    ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Check}" Content="{ui:Loc {x:Static pages:ExchangeRateText.SaveRate}}"
-                    Click="OnSaveClick" />
+            <Border DockPanel.Dock="Bottom" Style="{DynamicResource Card}" Margin="0,16,0,0">
+                <DockPanel>
+                    <Button x:Name="SaveButton" DockPanel.Dock="Bottom" Style="{DynamicResource Button.Primary}" Margin="0,14,0,0" HorizontalAlignment="Left" MinWidth="180"
+                            ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Check}" Content="{ui:Loc {x:Static pages:ExchangeRateText.SaveRate}}"
+                            Click="OnSaveClick" />
+                    <controls:FormField x:Name="RateField" Label="{ui:Loc {x:Static pages:ExchangeRateText.NewRate}}"
+                                        Hint="{ui:Loc {x:Static pages:ExchangeRateText.NewRateHint}}">
+                        <TextBox x:Name="RateBox" FlowDirection="LeftToRight" MaxLength="12" Width="220" HorizontalAlignment="Left"
+                                 KeyDown="OnRateKeyDown" />
+                    </controls:FormField>
+                </DockPanel>
+            </Border>
             <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
                 <StackPanel>
                     <Border Style="{DynamicResource Card}">
@@ -43,15 +52,9 @@
                         </StackPanel>
                     </Border>
 
-                    <Border Style="{DynamicResource Card}" Margin="0,20,0,0">
+                    <Border Style="{DynamicResource Card}" Margin="0,16,0,0">
                         <StackPanel>
-                            <controls:FormField x:Name="RateField" Label="{ui:Loc {x:Static pages:ExchangeRateText.NewRate}}"
-                                                Hint="{ui:Loc {x:Static pages:ExchangeRateText.NewRateHint}}">
-                                <TextBox x:Name="RateBox" FlowDirection="LeftToRight" MaxLength="12" Width="220" HorizontalAlignment="Left"
-                                         KeyDown="OnRateKeyDown" />
-                            </controls:FormField>
-
-                            <Border Style="{DynamicResource Card.Inset}" Margin="0,18,0,0" Padding="14,12">
+                            <Border Style="{DynamicResource Card.Inset}" Padding="14,12">
                                 <DockPanel>
                                     <controls:Icon DockPanel.Dock="Left" Data="{x:Static ui:UiIcons.Info}" Size="18" Foreground="{DynamicResource Brush.Accent}" VerticalAlignment="Top" />
                                     <TextBlock x:Name="ExampleText" Style="{DynamicResource Text.Caption}" Margin="10,0,0,0" TextWrapping="Wrap" TextTrimming="None"
