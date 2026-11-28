@@ -15,6 +15,8 @@ public static class AdminText
 
     public static LocalText Dashboard { get; } = new("Dashboard", "لوحة التحكم");
 
+    public static LocalText ExchangeRate { get; } = new("Exchange rate", "سعر الصرف");
+
     public static LocalText Members { get; } = new("Members", "المشتركون");
 
     public static LocalText Plans { get; } = new("Plans & prices", "الخطط والأسعار");
@@ -65,7 +67,9 @@ public static class AdminText
 
     public static LocalText Required { get; } = new("Required.", "حقل مطلوب.");
 
-    public static LocalText AmountInvalid { get; } = new("Enter an amount in SYP, e.g. 150000.", "أدخل مبلغًا بالليرة، مثل 150000.");
+    public static LocalText AmountInvalid { get; } = new("Enter an amount in US dollars, e.g. 20 or 12.50.", "أدخل مبلغًا بالدولار، مثل 20 أو 12.50.");
+
+    public static LocalText RateInvalid { get; } = new("Enter the Syrian pounds for 1 dollar, a number above 0, e.g. 11500.", "أدخل عدد الليرات السورية لكل 1 دولار، رقمًا أكبر من 0، مثل 11500.");
 
     // Counted words. Arabic: 1, 2, 3 to 10 and 11 and more each have their own form.
 

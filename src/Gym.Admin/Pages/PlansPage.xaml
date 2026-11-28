@@ -44,7 +44,10 @@
                         <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:PlansText.Price}}" Width="190">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <controls:MoneyText Amount="{Binding Price}" Style="{DynamicResource Text.Strong}" Foreground="{DynamicResource Brush.Gold}" />
+                                    <StackPanel VerticalAlignment="Center">
+                                        <controls:MoneyText Amount="{Binding Price}" Style="{DynamicResource Text.Strong}" Foreground="{DynamicResource Brush.Gold}" />
+                                        <controls:SypText Amount="{Binding Price}" FontSize="12" />
+                                    </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
@@ -95,6 +98,7 @@
                     <TextBlock Style="{DynamicResource Text.Overline}" Text="{ui:Loc {x:Static pages:PlansText.PrivateFee}}" />
                     <controls:MoneyText x:Name="FeeText" Style="{DynamicResource Text.Number}" FontSize="26" Margin="0,8,0,0"
                                         Foreground="{DynamicResource Brush.Gold}" HorizontalAlignment="Left" />
+                    <controls:SypText x:Name="FeeSypText" FontSize="13" Margin="0,2,0,0" HorizontalAlignment="Left" />
                     <TextBlock Style="{DynamicResource Text.Caption}" Margin="0,6,0,0" TextWrapping="Wrap" TextTrimming="None"
                                Text="{ui:Loc {x:Static pages:PlansText.PrivateFeeHint}}" />
                 </StackPanel>

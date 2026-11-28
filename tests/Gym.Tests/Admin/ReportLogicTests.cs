@@ -79,7 +79,7 @@ public sealed class ReportLogicTests
             "من 1 إلى 27",
             new DateOnly(2026, 11, 1),
             Friday,
-            [new ReportTotal("الإجمالي", "1,400,000 ل.س", "1400000", true)],
+            [new ReportTotal("الإجمالي", "$1,400.00", "1400.00", true)],
             [
                 new ReportTable(
                     "حسب الصنف",
@@ -99,7 +99,7 @@ public sealed class ReportLogicTests
         Assert.Equal("تقرير المبيعات,من,2026-11-01,إلى,2026-11-27", lines[0]);
         Assert.Equal("", lines[1]);
         Assert.Equal("الإجماليات", lines[2]);
-        Assert.Equal("الإجمالي,1400000", lines[3]);
+        Assert.Equal("الإجمالي,1400.00", lines[3]);
         Assert.Equal("حسب الصنف", lines[5]);
         Assert.Equal("الصنف,الكمية", lines[6]);
         Assert.Equal("مياه,12", lines[7]);
@@ -109,40 +109,61 @@ public sealed class ReportLogicTests
     }
 
     [Fact]
-    public void Subscription_report_splits_memberships_and_private_training_with_raw_numbers()
+    public void Subscription_report_splits_memberships_and_private_training_in_dollars_with_raw_numbers()
     {
         var from = new DateOnly(2026, 11, 1);
         var report = new SubscriptionReportDto(
             from,
             Friday,
             4,
-            1_950_000,
+            270m,
             [
-                new SubscriptionReportRow(SubscriptionKind.Membership, 1, 2, 300_000),
-                new SubscriptionReportRow(SubscriptionKind.Membership, 12, 1, 1_400_000),
-                new SubscriptionReportRow(SubscriptionKind.PrivateTraining, 2, 1, 250_000),
+                new SubscriptionReportRow(SubscriptionKind.Membership, 1, 2, 40m),
+                new SubscriptionReportRow(SubscriptionKind.Membership, 12, 1, 180m),
+                new SubscriptionReportRow(SubscriptionKind.PrivateTraining, 2, 1, 50m),
             ],
-            [new DayAmount(from, 3, 1_700_000), new DayAmount(from.AddDays(1), 1, 250_000)],
-            [new StaffAmount(2, "سارة منصور", 4, 1_950_000)]);
+            [new DayAmount(from, 3, 220m), new DayAmount(from.AddDays(1), 1, 50m)],
+            [new StaffAmount(2, "سارة منصور", 4, 270m)],
+            new CurrencyTotals(90m, 2_070_000m, 180m, 3, 1));
 
         var en = ReportTables.Subscriptions(report, AppLanguage.English);
         Assert.Equal("subscriptions", en.FileKey);
-        Assert.Equal(new[] { "4", "1950000", "1700000", "250000" }, en.Totals.Select(t => t.Raw));
-        Assert.Equal(new[] { false, true, true, true }, en.Totals.Select(t => t.IsMoney));
-        Assert.Equal("1,950,000 SYP", en.Totals[1].Display);
-        Assert.Equal(3, en.Tables.Count);
+        Assert.Equal(new[] { "4", "270.00", "220.00", "50.00", "2070000" }, en.Totals.Select(t => t.Raw));
+        Assert.Equal(new[] { false, true, true, true, true }, en.Totals.Select(t => t.IsMoney));
+        Assert.Equal("$270.00", en.Totals[1].Display);
+        Assert.Equal("2,070,000 SYP", en.Totals[4].Display);
+        Assert.Equal(4, en.Tables.Count);
         Assert.Equal(new[] { "Membership · 1 month", "Membership · 12 months", "Private training · 2 months" }, en.Tables[1].Rows.Select(r => r[0].Display));
         Assert.Equal("2026-11-01", en.Tables[0].Rows[0][0].Raw);
-        Assert.Equal("1700000", en.Tables[0].Rows[0][2].Raw);
+        Assert.Equal("220.00", en.Tables[0].Rows[0][2].Raw);
+
+        // The currency split: dollars paid in dollars, pounds paid in pounds and their dollar value.
+        var byCurrency = en.Tables[3];
+        Assert.Equal("By currency paid", byCurrency.Title);
+        Assert.Equal(new[] { "US dollars", "3", "$90.00", "$90.00" }, byCurrency.Rows[0].Select(c => c.Display));
+        Assert.Equal(new[] { "Syrian pounds", "1", "2,070,000 SYP", "$180.00" }, byCurrency.Rows[1].Select(c => c.Display));
+        Assert.Equal(new[] { "Syrian pounds", "1", "2070000", "180.00" }, byCurrency.Rows[1].Select(c => c.Raw));
 
         var ar = ReportTables.Subscriptions(report, AppLanguage.Arabic);
         Assert.Equal("اشتراك · 12 شهرًا", ar.Tables[1].Rows[1][0].Display);
-        Assert.Equal("1950000", ar.Totals[1].Raw);
-        Assert.Contains("سارة منصور,4,1950000", CsvExport.Build(ar, AppLanguage.Arabic), StringComparison.Ordinal);
+        Assert.Equal("270.00", ar.Totals[1].Raw);
+        Assert.Equal("2,070,000 ل.س", ar.Totals[4].Display);
+        var csv = CsvExport.Build(ar, AppLanguage.Arabic);
+        Assert.Contains("سارة منصور,4,270.00", csv, StringComparison.Ordinal);
+        Assert.Contains("ليرة سورية,1,2070000,180.00", csv, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void Attendance_by_hour_lists_only_hours_with_check_ins_and_sales_average_is_whole_pounds()
+    public void A_report_without_the_currency_split_has_no_pound_total()
+    {
+        var day = new DateOnly(2026, 11, 27);
+        var report = ReportTables.Subscriptions(new SubscriptionReportDto(day, day, 0, 0m, [], [], []), AppLanguage.English);
+        Assert.Equal(4, report.Totals.Count);
+        Assert.Equal(3, report.Tables.Count);
+    }
+
+    [Fact]
+    public void Attendance_by_hour_lists_only_hours_with_check_ins_and_sales_average_is_rounded_to_cents()
     {
         var day = new DateOnly(2026, 11, 27);
         var attendance = ReportTables.Attendance(
@@ -152,9 +173,9 @@ public sealed class ReportLogicTests
         Assert.Equal(day.ToString("d MMM yyyy", System.Globalization.CultureInfo.InvariantCulture), attendance.Range);
 
         var sales = ReportTables.Sales(
-            new SalesReportDto(day, day, 3, 100_000, [new DayAmount(day, 3, 100_000)], [new ProductSalesDto(1, "Water", "مياه", 7, 35_000)], []),
+            new SalesReportDto(day, day, 3, 10m, [new DayAmount(day, 3, 10m)], [new ProductSalesDto(1, "Water", "مياه", 7, 1.75m)], []),
             AppLanguage.Arabic);
-        Assert.Equal(new[] { "3", "100000", "33333", "7" }, sales.Totals.Select(t => t.Raw));
+        Assert.Equal(new[] { "3", "10.00", "3.33", "7" }, sales.Totals.Select(t => t.Raw));
         Assert.Equal("مياه", sales.Tables[0].Rows[0][0].Display);
     }
 

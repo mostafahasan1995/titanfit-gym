@@ -25,7 +25,7 @@ public partial class PrivateTrainersPage : PageView
     private readonly List<ClientRow> clients = [];
     private Guid? selectedId;
     private ImageSource? trainerPhoto;
-    private long monthlyFee;
+    private decimal monthlyFee;
     private int detailVersion;
 
     public PrivateTrainersPage(PageContext context)
@@ -51,6 +51,7 @@ public partial class PrivateTrainersPage : PageView
             monthlyFee = settings.PrivateTrainingMonthlyFee;
             ShowDetails();
         });
+        System.ComponentModel.PropertyChangedEventManager.AddHandler(ExchangeRates.Current, OnRateChanged, string.Empty);
         ShowDetails();
     }
 
@@ -73,12 +74,12 @@ public partial class PrivateTrainersPage : PageView
         ShowDetails();
     }
 
-    /// <summary>Smoke screenshots: the pay dialog for the selected trainer.</summary>
-    internal Task ShowPaySampleAsync()
+    /// <summary>Smoke screenshots: the pay dialog for the selected trainer (paid in <paramref name="currency"/>).</summary>
+    internal Task ShowPaySampleAsync(Currency currency = Currency.Usd)
     {
         if (Selected is { } row)
         {
-            _ = PayAsync(row.Trainer);
+            _ = PayAsync(row.Trainer, currency);
         }
 
         return Task.CompletedTask;
@@ -157,6 +158,8 @@ public partial class PrivateTrainersPage : PageView
         ShowDetails();
     }
 
+    private void OnRateChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) => ShowDetails();
+
     private void ShowDetails()
     {
         if (Selected is not { } row)
@@ -177,7 +180,8 @@ public partial class PrivateTrainersPage : PageView
         ServicePill.Text = BidiText.FixNumbers(ReceptionDialogs.ServiceLine(trainer.PrivateService, language), language);
         MembershipPill.Status = trainer.Membership?.Status;
         MembershipText.Text = BidiText.FixNumbers(ReceptionDialogs.CurrentLine(trainer.Membership, language), language);
-        FeeText.Text = BidiText.FixNumbers(ReceptionText.MonthlyFee.Format(language, Money.Format(monthlyFee, language)), language);
+        FeeText.Text = BidiText.FixNumbers(
+            ReceptionText.MonthlyFee.Format(language, Money.FormatWithSyp(monthlyFee, ExchangeRates.Current.ToSyp(monthlyFee), language)), language);
         PayButton.Content = (trainer.PrivateService is null ? ReceptionText.PayPrivate : ReceptionText.RenewPrivate).For(language);
 
         ClientsList.ItemsSource = null;
@@ -196,12 +200,12 @@ public partial class PrivateTrainersPage : PageView
         }
     }
 
-    private async Task PayAsync(PrivateTrainerDto trainer)
+    private async Task PayAsync(PrivateTrainerDto trainer, Currency currency = Currency.Usd)
     {
         try
         {
             var paid = await ReceptionDialogs.PayPrivateServiceAsync(
-                Context, trainer.Id, trainer.FullName, trainer.MemberNoText, trainer.Phone, trainer.PrivateService, trainerPhoto).ConfigureAwait(true);
+                Context, trainer.Id, trainer.FullName, trainer.MemberNoText, trainer.Phone, trainer.PrivateService, trainerPhoto, currency).ConfigureAwait(true);
             if (paid is not null)
             {
                 await ReloadAsync(CancellationToken.None).ConfigureAwait(true);

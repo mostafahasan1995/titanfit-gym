@@ -103,7 +103,7 @@ public partial class DashboardPage : PageView
     private DashboardDto? dashboard;
     private SettingsDto? settings;
     private BackupStatusDto? backup;
-    private (long Memberships, long Private, long Cafeteria, DateOnly From, DateOnly To)? month;
+    private (decimal Memberships, decimal Private, decimal Cafeteria, DateOnly From, DateOnly To)? month;
     private bool loading;
 
     public DashboardPage(PageContext context)
@@ -236,8 +236,9 @@ public partial class DashboardPage : PageView
         ExpiringSub.Text = DashboardText.WithinDays.Format(language, AdminText.Days(threshold, language));
         ExpiredValue.Text = NumberText.Format(d.ExpiredMembers);
         RevenueValue.Amount = d.RevenueTotal;
+        RevenueSyp.Amount = d.RevenueTotal;
         RevenueSub.Text = DashboardText.RevenueSplit.Format(
-            language, Money.FormatAmount(d.RevenueSubscriptions + d.RevenuePrivateTraining), Money.FormatAmount(d.RevenueCafeteria));
+            language, Money.Format(d.RevenueSubscriptions + d.RevenuePrivateTraining, language), Money.Format(d.RevenueCafeteria, language));
 
         ShowChart(d.CheckInsByHour);
         PeakText.Text = peak is null ? "" : DashboardText.Peak.Format(language, HourText(peak.Hour), NumberText.Format(peak.Count));
@@ -248,6 +249,7 @@ public partial class DashboardPage : PageView
             MonthRange.Text = DashboardText.MonthRange.Format(language, DateText.ShortDate(m.From, language), DateText.ShortDate(m.To, language));
             var total = m.Memberships + m.Private + m.Cafeteria;
             MonthTotal.Amount = total;
+            MonthSyp.Amount = total;
             MonthRows.ItemsSource = new[]
             {
                 ShareRow.Create(DashboardText.Memberships.For(language), m.Memberships, total, ThemeBrush("Brush.Accent")),
@@ -408,12 +410,14 @@ public partial class DashboardPage : PageView
         Application.Current?.TryFindResource(key) is Color c ? new SKColor(c.R, c.G, c.B, c.A) : SKColors.White;
 
     /// <summary>A labelled amount with a bar for its share.</summary>
-    public sealed record ShareRow(string Label, long Amount, GridLength Share, GridLength Rest, Brush Brush)
+    public sealed record ShareRow(string Label, decimal Amount, GridLength Share, GridLength Rest, Brush Brush)
     {
-        public static ShareRow Create(string label, long amount, long total, Brush brush) =>
-            new(label, amount, Part(amount, Math.Max(1, total)), Part(Math.Max(0, total - amount), Math.Max(1, total)), brush);
+        public static ShareRow Create(string label, decimal amount, decimal total, Brush brush) =>
+            new(label, amount, Part(amount, total), Part(Math.Max(0, total - amount), total), brush);
 
-        public static GridLength Part(long part, long total) => new(Math.Max(0, (double)part / total), GridUnitType.Star);
+        /// <summary>The bar share; a total of 0 shows empty bars.</summary>
+        public static GridLength Part(decimal part, decimal total) =>
+            new(total <= 0 ? 0 : Math.Max(0, (double)(part / total)), GridUnitType.Star);
     }
 
     public sealed record ExpiringRow(string Name, FlowDirection NameDirection, string Number, string Phone, string Ends, string Left);

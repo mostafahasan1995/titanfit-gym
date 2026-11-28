@@ -30,7 +30,7 @@ public partial class NewMemberPage : PageView
     private readonly PhoneInput phone;
     private IReadOnlyList<PlanDto> plans = [];
     private PlanDto? selectedPlan;
-    private long serviceFee;
+    private decimal serviceFee;
     private byte[]? photo;
     private MemberDto? saved;
     private IdCardFields? lastScan;
@@ -50,6 +50,7 @@ public partial class NewMemberPage : PageView
             ApplyScan(ScanBox.Text);
         };
         Unloaded += (_, _) => StopCamera();
+        System.ComponentModel.PropertyChangedEventManager.AddHandler(ExchangeRates.Current, OnRateChanged, string.Empty);
         ShowPhoto();
         ShowScanStatus();
     }
@@ -95,6 +96,8 @@ public partial class NewMemberPage : PageView
     /// <summary>Smoke screenshots: the form filled in from a sample scan, with a phone, a photo and the 3-month plan.</summary>
     internal Task FillSampleAsync()
     {
+        RegularChoice.IsChecked = true;
+        CurrencyChoice.Currency = Currency.Usd;
         ScanBox.Text = SampleScan;
         scanTimer.Stop();
         ApplyScan(ScanBox.Text);
@@ -109,6 +112,16 @@ public partial class NewMemberPage : PageView
 
         UpdateSummary();
         return Task.CompletedTask;
+    }
+
+    /// <summary>Smoke screenshots: the filled-in form as a private trainer paying in Syrian pounds (membership + service).</summary>
+    internal async Task FillSampleSypAsync()
+    {
+        await FillSampleAsync().ConfigureAwait(true);
+        TrainerChoice.IsChecked = true;
+        ServiceCheck.IsChecked = true;
+        CurrencyChoice.Currency = Currency.Syp;
+        UpdateSummary();
     }
 
     /// <summary>Smoke screenshots: saves the filled-in sample form (creates the member in the sample data).</summary>
@@ -250,6 +263,7 @@ public partial class NewMemberPage : PageView
             var content = new StackPanel();
             content.Children.Add(new TextBlock { Text = ReceptionFormat.Months(plan.Months, language), FontWeight = FontWeights.SemiBold, FontSize = 15 });
             content.Children.Add(new MoneyText { Amount = plan.Price, FontSize = 14, Margin = new Thickness(0, 4, 0, 0) });
+            content.Children.Add(new SypText { Amount = plan.Price, FontSize = 12, Margin = new Thickness(0, 2, 0, 0) });
             var button = new RadioButton { Content = content, Margin = new Thickness(0, 0, 8, 8), Tag = plan, IsEnabled = saved is null };
             button.SetResourceReference(StyleProperty, "Choice.Card");
             button.IsChecked = plan.Id == selectedPlan?.Id;
@@ -280,11 +294,23 @@ public partial class NewMemberPage : PageView
         }
     }
 
+    private void OnCurrencyChanged(object? sender, EventArgs e)
+    {
+        if (IsInitialized)
+        {
+            UpdateSummary();
+        }
+    }
+
+    private void OnRateChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) => UpdateSummary();
+
     private bool IsTrainer => TrainerChoice?.IsChecked == true;
+
+    private bool PaysService => IsTrainer && ServiceCheck.IsChecked == true;
 
     private void UpdateSummary()
     {
-        if (StartsText is null || ServicePanel is null)
+        if (StartsText is null || ServicePanel is null || TotalOther is null || CurrencyChoice is null)
         {
             return; // still loading the XAML
         }
@@ -307,9 +333,23 @@ public partial class NewMemberPage : PageView
         var serviceTotal = PrivateTrainingRules.CalculatePrice(months, serviceFee);
         ServicePanel.Visibility = IsTrainer ? Visibility.Visible : Visibility.Collapsed;
         ServiceAmount.Amount = serviceTotal;
+        ServiceSyp.Amount = serviceTotal;
         ServiceDetail.Text = BidiText.FixNumbers(
             ReceptionText.ServiceDetail.Format(language, ReceptionFormat.Months(months, language), Money.Format(serviceFee, language)), language);
-        TotalText.Amount = (selectedPlan?.Price ?? 0) + (IsTrainer && ServiceCheck.IsChecked == true ? serviceTotal : 0);
+
+        // Each payment is converted on its own (as the server stores it); the total is their sum.
+        var payments = new List<decimal> { selectedPlan?.Price ?? 0m };
+        if (PaysService)
+        {
+            payments.Add(serviceTotal);
+        }
+
+        var due = PaymentDue.Now(payments, CurrencyChoice.Currency);
+        TotalText.Currency = due.Currency;
+        TotalText.Amount = due.Amount;
+        TotalOther.Text = selectedPlan is null && !PaysService
+            ? ""
+            : PaymentDue.OtherLine(payments.Sum(), due, ExchangeRates.Current.RoundingStep, language);
     }
 
     // Save
@@ -376,7 +416,8 @@ public partial class NewMemberPage : PageView
             phone.Phone,
             null,
             trainer ? MemberType.PrivateTrainer : MemberType.Regular,
-            selectedPlan?.Id);
+            selectedPlan?.Id,
+            Payment: ExchangeRates.Current.Payment(CurrencyChoice.Currency));
 
         MemberDto member;
         try
@@ -412,7 +453,7 @@ public partial class NewMemberPage : PageView
         {
             try
             {
-                await Context.Api.AddPrivateServiceAsync(member.Id, plan.Months).ConfigureAwait(true);
+                await Context.Api.AddPrivateServiceAsync(member.Id, plan.Months, ExchangeRates.Current.Payment(CurrencyChoice.Currency)).ConfigureAwait(true);
             }
             catch (Exception ex) when (ex is GymApiException or System.Net.Http.HttpRequestException or TaskCanceledException)
             {
@@ -444,6 +485,7 @@ public partial class NewMemberPage : PageView
         TypeChoices.IsEnabled = false;
         PlanChoices.IsEnabled = false;
         ServicePanel.IsEnabled = false;
+        CurrencyChoice.IsEnabled = false;
         PhotoButton.IsEnabled = false;
     }
 
@@ -470,6 +512,8 @@ public partial class NewMemberPage : PageView
         TypeChoices.IsEnabled = true;
         PlanChoices.IsEnabled = true;
         ServicePanel.IsEnabled = true;
+        CurrencyChoice.IsEnabled = true;
+        CurrencyChoice.Currency = Currency.Usd;
         PhotoButton.IsEnabled = true;
         selectedPlan = plans.FirstOrDefault(p => p.Months == 1) ?? plans.FirstOrDefault();
         BuildPlanChoices();

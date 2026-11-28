@@ -215,7 +215,10 @@
 
                 <Border x:Name="ServicePanel" Style="{DynamicResource Card.Inset}" Margin="0,14,0,0" Padding="14,10" Visibility="Collapsed">
                     <DockPanel>
-                        <controls:MoneyText x:Name="ServiceAmount" DockPanel.Dock="Right" FontSize="15" VerticalAlignment="Center" Margin="10,0,0,0" />
+                        <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center" Margin="10,0,0,0">
+                            <controls:MoneyText x:Name="ServiceAmount" FontSize="15" HorizontalAlignment="Right" />
+                            <controls:SypText x:Name="ServiceSyp" FontSize="12" HorizontalAlignment="Right" />
+                        </StackPanel>
                         <CheckBox x:Name="ServiceCheck" IsChecked="True" Checked="OnServiceChanged" Unchecked="OnServiceChanged">
                             <StackPanel>
                                 <TextBlock FontWeight="SemiBold" TextWrapping="Wrap" Text="{ui:Loc {x:Static local:ReceptionText.PayServiceNow}}" />
@@ -227,8 +230,15 @@
 
                 <Border Style="{DynamicResource Divider}" Margin="0,16,0,12" />
                 <DockPanel>
-                    <controls:MoneyText x:Name="TotalText" DockPanel.Dock="Right" FontSize="30" VerticalAlignment="Center" />
-                    <TextBlock Style="{DynamicResource Text.Label}" VerticalAlignment="Center" Text="{ui:Loc {x:Static local:ReceptionText.Total}}" />
+                    <!-- The amount due in the chosen currency (gold), the other currency under it. -->
+                    <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center">
+                        <controls:MoneyText x:Name="TotalText" FontSize="30" HorizontalAlignment="Right" />
+                        <TextBlock x:Name="TotalOther" Style="{DynamicResource Text.Caption}" FontSize="13" HorizontalAlignment="Right" />
+                    </StackPanel>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Style="{DynamicResource Text.Label}" Text="{ui:Loc {x:Static local:ReceptionText.Total}}" />
+                        <controls:CurrencyPicker x:Name="CurrencyChoice" Margin="0,8,0,0" CurrencyChanged="OnCurrencyChanged" />
+                    </StackPanel>
                 </DockPanel>
 
                 <StackPanel x:Name="SavePanel" Margin="0,16,0,0">

@@ -184,6 +184,8 @@
                                                 <TextBlock Text="{Binding Title}" Style="{DynamicResource Text.Strong}" FontSize="14" />
                                                 <TextBlock Text="{Binding Period}" Style="{DynamicResource Text.Caption}" FontSize="12" Margin="0,2,0,0" />
                                                 <TextBlock Text="{Binding Paid}" Style="{DynamicResource Text.Caption}" FontSize="12" Margin="0,2,0,0" />
+                                                <TextBlock Text="{Binding CurrencyLine}" Visibility="{Binding CurrencyVisibility}" Style="{DynamicResource Text.Caption}"
+                                                           FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap" TextTrimming="None" />
                                             </StackPanel>
                                         </DockPanel>
                                     </Border>

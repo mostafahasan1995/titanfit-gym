@@ -9,16 +9,73 @@ namespace Gym.Tests.Admin;
 public sealed class AdminFormTests
 {
     [Theory]
-    [InlineData("3", "100000", 3, 100_000L)]
-    [InlineData(" 0 ", "150,000", 0, 150_000L)]
-    [InlineData("60", "0", 60, 0L)]
-    [InlineData("٧", "١٥٠٬٠٠٠", 7, 150_000L)] // Arabic-Indic digits typed on an Arabic keyboard
-    public void Settings_form_accepts_valid_values(string days, string fee, int expectedDays, long expectedFee)
+    [InlineData("3", "25", "1", 3, "25", 1)]
+    [InlineData(" 0 ", "12.50", "500", 0, "12.5", 500)]
+    [InlineData("60", "0", "1,000", 60, "0", 1000)]
+    [InlineData("٧", "١٢٫٥", "١", 7, "12.5", 1)] // Arabic-Indic digits and decimal sign typed on an Arabic keyboard
+    [InlineData("3", "$1,250.75", "1", 3, "1250.75", 1)]
+    public void Settings_form_accepts_valid_values(string days, string fee, string step, int expectedDays, string expectedFee, int expectedStep)
     {
-        var result = SettingsForm.Validate(days, fee);
+        var result = SettingsForm.Validate(days, fee, step);
 
         Assert.True(result.IsValid);
-        Assert.Equal((expectedDays, expectedFee), (result.ExpiringSoonDays, result.PrivateTrainingFee));
+        Assert.Equal(
+            (expectedDays, decimal.Parse(expectedFee, System.Globalization.CultureInfo.InvariantCulture), expectedStep),
+            (result.ExpiringSoonDays!.Value, result.PrivateTrainingFee!.Value, result.SypRoundingStep!.Value));
+    }
+
+    [Fact]
+    public void Settings_form_checks_the_rounding_step()
+    {
+        Assert.Equal(1, SettingsForm.Validate("3", "25").SypRoundingStep);
+
+        var zero = SettingsForm.Validate("3", "25", "0");
+        Assert.False(zero.IsValid);
+        Assert.Equal("Enter a number from 1 to 100000.", zero.StepError?.En);
+
+        Assert.Equal(AdminText.WholeNumber, SettingsForm.Validate("3", "25", "2.5").StepError);
+        Assert.Equal(AdminText.Required, SettingsForm.Validate("3", "25", " ").StepError);
+    }
+
+    [Theory]
+    [InlineData("20", "20")]
+    [InlineData("12.5", "12.5")]
+    [InlineData("1,250.50", "1250.50")]
+    [InlineData("$7", "7")]
+    [InlineData("٠٫٧٥", "0.75")]
+    public void Dollar_amounts_are_read_with_cents(string text, string expected)
+    {
+        var (value, error) = FormChecks.Amount(text);
+        Assert.Null(error);
+        Assert.Equal(decimal.Parse(expected, System.Globalization.CultureInfo.InvariantCulture), value);
+    }
+
+    [Theory]
+    [InlineData("12.505")] // more than 2 decimals
+    [InlineData("-1")]
+    [InlineData("twelve")]
+    public void Wrong_dollar_amounts_are_explained(string text) => Assert.Equal(AdminText.AmountInvalid, FormChecks.Amount(text).Error);
+
+    [Theory]
+    [InlineData("11500", "11500")]
+    [InlineData("11,500", "11500")]
+    [InlineData(" ١١٥٠٠ ", "11500")]
+    [InlineData("115.25", "115.25")]
+    public void Exchange_rates_are_pounds_for_one_dollar(string text, string expected)
+    {
+        var (value, error) = FormChecks.Rate(text);
+        Assert.Null(error);
+        Assert.Equal(decimal.Parse(expected, System.Globalization.CultureInfo.InvariantCulture), value);
+    }
+
+    [Fact]
+    public void An_exchange_rate_must_be_above_zero()
+    {
+        Assert.Equal(AdminText.RateInvalid, FormChecks.Rate("0").Error);
+        Assert.Equal(AdminText.RateInvalid, FormChecks.Rate("-11500").Error);
+        Assert.Equal(AdminText.RateInvalid, FormChecks.Rate("abc").Error);
+        Assert.Equal(AdminText.Required, FormChecks.Rate("").Error);
+        Assert.Null(FormChecks.Rate("").Value);
     }
 
     [Fact]

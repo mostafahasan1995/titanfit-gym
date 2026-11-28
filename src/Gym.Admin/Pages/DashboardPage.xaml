@@ -114,10 +114,10 @@
                         <TextBlock Style="{DynamicResource Text.Caption}" Margin="8,0,0,0" VerticalAlignment="Center" Text="{ui:Loc {x:Static pages:DashboardText.RevenueToday}}" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                        <controls:MoneyText x:Name="RevenueValue" ShowCurrency="False" Style="{StaticResource TileValue}" Margin="0" FontSize="26"
+                        <controls:MoneyText x:Name="RevenueValue" Style="{StaticResource TileValue}" Margin="0" FontSize="26"
                                             Foreground="{DynamicResource Brush.Gold}" VerticalAlignment="Bottom" />
-                        <TextBlock Style="{DynamicResource Text.Caption}" Margin="6,0,0,4" VerticalAlignment="Bottom" Text="{ui:Loc {x:Static ui:CommonText.Currency}}" />
                     </StackPanel>
+                    <controls:SypText x:Name="RevenueSyp" FontSize="12" Margin="0,2,0,0" HorizontalAlignment="Left" />
                     <TextBlock x:Name="RevenueSub" Style="{StaticResource TileSub}" Margin="0,6,0,0" TextWrapping="Wrap" TextTrimming="None" />
                 </StackPanel>
             </Border>
@@ -145,6 +145,7 @@
                     <TextBlock x:Name="MonthRange" Style="{DynamicResource Text.Caption}" Margin="0,2,0,0" />
                     <controls:MoneyText x:Name="MonthTotal" Style="{DynamicResource Text.Number}" FontSize="28" Margin="0,12,0,0"
                                         Foreground="{DynamicResource Brush.Gold}" HorizontalAlignment="Left" />
+                    <controls:SypText x:Name="MonthSyp" FontSize="13" Margin="0,2,0,0" HorizontalAlignment="Left" />
                     <ItemsControl x:Name="MonthRows" Margin="0,10,0,0" Focusable="False">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>

@@ -1,4 +1,5 @@
 using Gym.Admin.Pages;
+using Gym.Domain;
 using Gym.UI;
 using Gym.UI.Shell;
 
@@ -19,6 +20,7 @@ internal static class AdminApp
         Pages =
         [
             new("dashboard", UiIcons.Dashboard, AdminText.Dashboard, context => new DashboardPage(context)),
+            new("exchange-rate", UiIcons.Cash, AdminText.ExchangeRate, context => new ExchangeRatePage(context)),
             new("members", UiIcons.Users, AdminText.Members, context => new MembersPage(context)),
             new("plans", UiIcons.Tag, AdminText.Plans, context => new PlansPage(context)),
             new("cafeteria-items", UiIcons.Box, AdminText.CafeteriaItems, context => new CafeteriaItemsPage(context)),
@@ -39,6 +41,10 @@ internal static class AdminApp
             new("reports-sales", "reports", view => ((ReportsPage)view).ShowForSmokeAsync(sales: true)),
             new("dashboard-backup-warning", "dashboard", view => ((DashboardPage)view).ShowBackupFailureForSmokeAsync()),
             new("backups-failed", "backups", _ => Task.CompletedTask),
+
+            // Last: they change the sample's exchange rate (the banner stays for the shots after them).
+            new("exchange-rate-stale", "exchange-rate", view => ((ExchangeRatePage)view).ShowStateForSmokeAsync(ExchangeRateState.Stale)),
+            new("exchange-rate-none", "exchange-rate", view => ((ExchangeRatePage)view).ShowStateForSmokeAsync(ExchangeRateState.None)),
         ],
         SelfTestChecks = AdminSelfTest.Checks,
     };

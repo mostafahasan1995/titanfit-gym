@@ -74,6 +74,16 @@ public static class ReportsText
 
     public static LocalText TotalItemsSold { get; } = new("Items sold", "القطع المباعة");
 
+    public static LocalText TotalPaidInSyp { get; } = new("Taken in Syrian pounds", "المقبوض بالليرة السورية");
+
+    public static LocalText ByCurrency { get; } = new("By currency paid", "حسب عملة الدفع");
+
+    public static LocalText ColumnCurrency { get; } = new("Currency", "العملة");
+
+    public static LocalText ColumnPaid { get; } = new("Amount taken", "المبلغ المقبوض");
+
+    public static LocalText ColumnUsdValue { get; } = new("Value in USD", "القيمة بالدولار");
+
     public static LocalText ByDay { get; } = new("By day", "حسب اليوم");
 
     public static LocalText ByPlan { get; } = new("By plan", "حسب الخطة");

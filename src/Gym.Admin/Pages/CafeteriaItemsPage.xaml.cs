@@ -56,7 +56,7 @@ public static class ItemsText
 
     public static LocalText NameAr { get; } = new("Name in Arabic", "الاسم بالعربية");
 
-    public static LocalText PriceLabel { get; } = new("Price (SYP)", "السعر (ل.س)");
+    public static LocalText PriceLabel { get; } = new("Price (US dollars)", "السعر (بالدولار)");
 
     public static LocalText MinimumLabel { get; } = new("Low-stock minimum", "الحد الأدنى للمخزون");
 
@@ -367,7 +367,7 @@ public partial class CafeteriaItemsPage : PageView
         FlowDirection OtherDirection,
         string Category,
         string Barcode,
-        long Price,
+        decimal Price,
         string Stock,
         Brush StockBrush,
         PillTone StockTone,

@@ -85,13 +85,33 @@ public partial class MembersPage : PageView
         ScanCamera.ApplyLanguage();
     }
 
-    /// <summary>Smoke screenshots: an expired member with the renew dialog open.</summary>
-    internal async Task ShowRenewSampleAsync()
+    /// <summary>Smoke screenshots: an expired member with the renew dialog open (paid in <paramref name="currency"/>).</summary>
+    internal async Task ShowRenewSampleAsync(Currency currency = Currency.Usd)
     {
         await SelectSampleAsync(SubscriptionStatus.Expired).ConfigureAwait(true);
         if (member is not null)
         {
-            _ = ReceptionDialogs.RenewAsync(Context, member, memberPhoto);
+            _ = ReceptionDialogs.RenewAsync(Context, member, memberPhoto, currency);
+        }
+    }
+
+    /// <summary>Smoke screenshots: a member who paid in Syrian pounds (the payments list shows the pounds).</summary>
+    internal async Task ShowSypPaymentSampleAsync()
+    {
+        foreach (var status in new[] { SubscriptionStatus.Active, SubscriptionStatus.ExpiringSoon, SubscriptionStatus.Expired })
+        {
+            var page = await Context.Api.SearchMembersAsync(status: status, pageSize: 50).ConfigureAwait(true);
+            foreach (var pick in page.Items)
+            {
+                var paidInSyp = (await Context.Api.GetMemberSubscriptionsAsync(pick.Id).ConfigureAwait(true)).Any(s => s.Currency == Currency.Syp);
+                if (paidInSyp)
+                {
+                    Search.Text = pick.FullName;
+                    await SearchAsync(CancellationToken.None).ConfigureAwait(true);
+                    await LoadDetailsAsync(pick.Id).ConfigureAwait(true);
+                    return;
+                }
+            }
         }
     }
 
@@ -283,7 +303,9 @@ public partial class MembersPage : PageView
                 BidiText.FixNumbers(ReceptionFormat.Months(p.Months, language), language),
                 BidiText.FixNumbers(ReceptionText.PeriodFrom.Format(language, DateText.ShortDate(p.StartDate, language)), language),
                 BidiText.FixNumbers(ReceptionText.PeriodTo.Format(language, DateText.ShortDate(p.EndDate, language)), language),
-                p.PricePaid))
+                p.PricePaid,
+                PaymentDue.PaidLine(p.Currency, p.PaidAmount, language),
+                PaymentDue.PaidDetail(p.Currency, p.PaidAmount, p.ExchangeRate, language)))
             .ToList();
         CheckInsGrid.ItemsSource = visits
             .Select(c => new VisitRow(
@@ -546,8 +568,11 @@ public partial class MembersPage : PageView
         public async Task LoadPhotoAsync(IGymApi api) => Photo = await PhotoCache.GetAsync(api, Summary.PhotoUrl).ConfigureAwait(true);
     }
 
-    /// <summary>A payment in the details.</summary>
-    public sealed record PaymentRow(string What, string Months, string From, string To, long Paid);
+    /// <summary>A payment in the details: the dollars, and for a payment in pounds the pounds paid (the rate in the tooltip).</summary>
+    public sealed record PaymentRow(string What, string Months, string From, string To, decimal Paid, string PaidInSyp, string? PaidDetail)
+    {
+        public Visibility PaidInSypVisibility => PaidInSyp.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
 
     /// <summary>A check-in in the details.</summary>
     public sealed record VisitRow(string Day, string Detail, string Result, PillTone Tone);

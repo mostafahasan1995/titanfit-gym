@@ -275,6 +275,9 @@ public static class ReceptionText
 
     public static LocalText Total { get; } = new("Total", "المجموع");
 
+    /// <summary>Under the amount due: the same amount in the other currency.</summary>
+    public static LocalText EqualsAmount { get; } = new("That is {0}", "أي ما يعادل {0}");
+
     public static LocalText TodayNote { get; } = new("Today", "اليوم");
 
     public static LocalText PayServiceNow { get; } = new("Pay the private training service now", "دفع خدمة التدريب الخاص الآن");

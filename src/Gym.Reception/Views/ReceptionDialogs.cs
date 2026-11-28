@@ -27,8 +27,11 @@ internal static class ReceptionDialogs
             member.NationalNo, member.Phone, member.Notes, member.Type);
     }
 
-    /// <summary>Renew a membership: choose the plan, see the new dates and the price, confirm. The new subscription, or null.</summary>
-    public static async Task<SubscriptionDto?> RenewAsync(PageContext context, MemberDto member, ImageSource? photo)
+    /// <summary>
+    /// Renew a membership: choose the plan, see the new dates and the price, pay in dollars or pounds
+    /// (<paramref name="currency"/> preselected), confirm. The new subscription, or null.
+    /// </summary>
+    public static async Task<SubscriptionDto?> RenewAsync(PageContext context, MemberDto member, ImageSource? photo, Currency currency = Currency.Usd)
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(member);
@@ -40,7 +43,7 @@ internal static class ReceptionDialogs
             Parts.IdLine(member.MemberNoText, member.Phone, language),
             photo,
             CurrentLine(member.Membership, language));
-        var view = new PeriodChoiceView(person, ReceptionText.Duration, choices, member.Membership?.EndDate, Today, preselectMonths: 1);
+        var view = new PeriodChoiceView(person, ReceptionText.Duration, choices, member.Membership?.EndDate, Today, preselectMonths: 1, currency: currency);
         SubscriptionDto? renewed = null;
         await context.Ui.ShowDialogAsync(new DialogRequest
         {
@@ -56,7 +59,7 @@ internal static class ReceptionDialogs
                     return false;
                 }
 
-                renewed = await context.Api.RenewMemberAsync(member.Id, planId).ConfigureAwait(true);
+                renewed = await context.Api.RenewMemberAsync(member.Id, planId, view.Payment).ConfigureAwait(true);
                 return true;
             }),
         }).ConfigureAwait(true);
@@ -71,7 +74,8 @@ internal static class ReceptionDialogs
 
     /// <summary>Buy or renew the private training service (months × the monthly fee). The new period, or null.</summary>
     public static async Task<SubscriptionDto?> PayPrivateServiceAsync(
-        PageContext context, Guid trainerId, string name, string memberNoText, string? phone, SubscriptionStatusDto? service, ImageSource? photo)
+        PageContext context, Guid trainerId, string name, string memberNoText, string? phone, SubscriptionStatusDto? service, ImageSource? photo,
+        Currency currency = Currency.Usd)
     {
         ArgumentNullException.ThrowIfNull(context);
         var language = context.Language;
@@ -79,7 +83,7 @@ internal static class ReceptionDialogs
         var fee = settings.PrivateTrainingMonthlyFee;
         var choices = PrivateServiceMonths.Select(m => new PeriodChoice(m, PrivateTrainingRules.CalculatePrice(m, fee), null)).ToList();
         var person = Parts.Person(name, Parts.IdLine(memberNoText, phone, language), photo, ServiceLine(service, language));
-        var view = new PeriodChoiceView(person, ReceptionText.PrivateServiceDuration, choices, service?.EndDate, Today, preselectMonths: 1);
+        var view = new PeriodChoiceView(person, ReceptionText.PrivateServiceDuration, choices, service?.EndDate, Today, preselectMonths: 1, currency: currency);
         SubscriptionDto? paid = null;
         await context.Ui.ShowDialogAsync(new DialogRequest
         {
@@ -96,7 +100,7 @@ internal static class ReceptionDialogs
                     return false;
                 }
 
-                paid = await context.Api.AddPrivateServiceAsync(trainerId, choice.Months).ConfigureAwait(true);
+                paid = await context.Api.AddPrivateServiceAsync(trainerId, choice.Months, view.Payment).ConfigureAwait(true);
                 return true;
             }),
         }).ConfigureAwait(true);

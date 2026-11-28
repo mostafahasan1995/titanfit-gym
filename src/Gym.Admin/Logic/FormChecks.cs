@@ -23,15 +23,26 @@ public static class FormChecks
         return value < min || value > max ? (null, RangeError(min, max)) : (value, null);
     }
 
-    /// <summary>An amount in whole SYP, 0 or more ("150000", "150,000", "١٥٠٬٠٠٠").</summary>
-    public static (long? Value, LocalText? Error) Amount(string? text)
+    /// <summary>An amount in US dollars, 0 or more, at most 2 decimals ("20", "12.50", "1,250.00", "١٢٫٥").</summary>
+    public static (decimal? Value, LocalText? Error) Amount(string? text)
     {
         if (string.IsNullOrWhiteSpace(text))
         {
             return (null, AdminText.Required);
         }
 
-        return Money.Parse(text) is { } amount and >= 0 ? (amount, null) : (null, AdminText.AmountInvalid);
+        return Money.Parse(text) is { } amount && amount >= 0 && amount <= CurrencyRules.MaxUsd ? (amount, null) : (null, AdminText.AmountInvalid);
+    }
+
+    /// <summary>An exchange rate: Syrian pounds for 1 US dollar, more than 0 ("11500", "11,500", "١١٥٠٠").</summary>
+    public static (decimal? Value, LocalText? Error) Rate(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return (null, AdminText.Required);
+        }
+
+        return Money.Parse(text) is { } rate && rate > 0 && rate <= ExchangeRate.MaxSypPerUsd ? (rate, null) : (null, AdminText.RateInvalid);
     }
 
     /// <summary>Trimmed text, or the "required" message when empty.</summary>
@@ -47,20 +58,25 @@ public static class FormChecks
     public static string? Optional(string? text) => string.IsNullOrWhiteSpace(text) ? null : text.Trim();
 }
 
-/// <summary>The settings page form: expiring-soon days (0 to 60) and the private training fee (whole SYP).</summary>
+/// <summary>
+/// The settings page form: expiring-soon days (0 to 60), the private training fee (US dollars) and the rounding step of
+/// amounts in Syrian pounds (whole pounds, 1 or more).
+/// </summary>
 public static class SettingsForm
 {
     public const int MaxExpiringSoonDays = GymSettings.MaxExpiringSoonDays;
 
-    public sealed record Result(int? ExpiringSoonDays, long? PrivateTrainingFee, LocalText? DaysError, LocalText? FeeError)
+    public sealed record Result(
+        int? ExpiringSoonDays, decimal? PrivateTrainingFee, int? SypRoundingStep, LocalText? DaysError, LocalText? FeeError, LocalText? StepError = null)
     {
-        public bool IsValid => DaysError is null && FeeError is null;
+        public bool IsValid => DaysError is null && FeeError is null && StepError is null;
     }
 
-    public static Result Validate(string? days, string? fee)
+    public static Result Validate(string? days, string? fee, string? roundingStep = "1")
     {
         var (dayValue, dayError) = FormChecks.WholeNumber(days, 0, MaxExpiringSoonDays);
         var (feeValue, feeError) = FormChecks.Amount(fee);
-        return new Result(dayValue, feeValue, dayError, feeError);
+        var (stepValue, stepError) = FormChecks.WholeNumber(roundingStep, 1, CurrencyRules.MaxSypRoundingStep);
+        return new Result(dayValue, feeValue, stepValue, dayError, feeError, stepError);
     }
 }

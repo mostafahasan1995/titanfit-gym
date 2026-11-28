@@ -1,9 +1,11 @@
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using Gym.Client;
 using Gym.Contracts;
+using Gym.Domain;
 using Gym.Reception.Hardware;
 using Gym.Reception.Logic;
 using Gym.UI;
@@ -83,8 +85,9 @@ internal static class Parts
 }
 
 /// <summary>
-/// The body of the renew and private-training dialogs: who, the choices (months and price), the dates the new period
-/// would get (the server's renewal rule) and the total in gold.
+/// The body of the renew and private-training dialogs: who, the choices (months and price in dollars, the pounds at
+/// the day's rate under it), the dates the new period would get (the server's renewal rule), "Pay in" dollars or
+/// pounds and the amount due in gold in that currency (the other currency under it).
 /// </summary>
 internal sealed class PeriodChoiceView : UserControl
 {
@@ -96,8 +99,12 @@ internal sealed class PeriodChoiceView : UserControl
     private readonly TextBlock endText;
     private readonly TextBlock errorText;
     private readonly MoneyText total;
+    private readonly TextBlock totalOther;
+    private readonly CurrencyPicker currencyPicker;
 
-    public PeriodChoiceView(FrameworkElement person, LocalText choiceLabel, IReadOnlyList<PeriodChoice> choices, DateOnly? currentEnd, DateOnly today, int? preselectMonths)
+    public PeriodChoiceView(
+        FrameworkElement person, LocalText choiceLabel, IReadOnlyList<PeriodChoice> choices, DateOnly? currentEnd, DateOnly today, int? preselectMonths,
+        Currency currency = Currency.Usd)
     {
         ArgumentNullException.ThrowIfNull(choices);
         this.choices = choices;
@@ -120,6 +127,7 @@ internal sealed class PeriodChoiceView : UserControl
             var months = new TextBlock { Text = ReceptionFormat.Months(choice.Months, language), FontWeight = FontWeights.SemiBold, FontSize = 15 };
             content.Children.Add(months);
             content.Children.Add(new MoneyText { Amount = choice.Price, FontSize = 14, Margin = new Thickness(0, 4, 0, 0) });
+            content.Children.Add(new SypText { Amount = choice.Price, FontSize = 12, Margin = new Thickness(0, 2, 0, 0) });
             var button = new RadioButton { Content = content, Margin = new Thickness(0, 0, 8, 8), Tag = choice };
             button.SetResourceReference(StyleProperty, "Choice.Card");
             button.Checked += (_, _) => Select(choice);
@@ -148,13 +156,22 @@ internal sealed class PeriodChoiceView : UserControl
         root.Children.Add(divider);
 
         var totalRow = new DockPanel { LastChildFill = false };
-        var totalLabel = Parts.Text(ReceptionText.Total.For(language), "Text.Label");
-        totalLabel.VerticalAlignment = VerticalAlignment.Center;
-        totalRow.Children.Add(totalLabel);
-        total = new MoneyText { FontSize = 26, VerticalAlignment = VerticalAlignment.Center };
-        DockPanel.SetDock(total, Dock.Right);
-        totalRow.Children.Add(total);
+        var totalLeft = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+        totalLeft.Children.Add(Parts.Text(ReceptionText.Total.For(language), "Text.Label"));
+        currencyPicker = new CurrencyPicker { Currency = currency, Margin = new Thickness(0, 8, 0, 0) };
+        currencyPicker.CurrencyChanged += (_, _) => ShowTotal();
+        totalLeft.Children.Add(currencyPicker);
+        totalRow.Children.Add(totalLeft);
+        var totalRight = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+        total = new MoneyText { FontSize = 26, HorizontalAlignment = HorizontalAlignment.Right };
+        totalOther = Parts.Text("", "Text.Caption", 13);
+        totalOther.HorizontalAlignment = HorizontalAlignment.Right;
+        totalRight.Children.Add(total);
+        totalRight.Children.Add(totalOther);
+        DockPanel.SetDock(totalRight, Dock.Right);
+        totalRow.Children.Add(totalRight);
         root.Children.Add(totalRow);
+        PropertyChangedEventManager.AddHandler(ExchangeRates.Current, OnRateChanged, string.Empty);
 
         errorText = new TextBlock { Visibility = Visibility.Collapsed, Margin = new Thickness(0, 10, 0, 0), TextWrapping = TextWrapping.Wrap };
         errorText.SetResourceReference(TextBlock.ForegroundProperty, "Brush.Bad");
@@ -169,6 +186,12 @@ internal sealed class PeriodChoiceView : UserControl
     }
 
     public PeriodChoice? Selected { get; private set; }
+
+    /// <summary>The currency the customer pays in (pounds only while a rate exists).</summary>
+    public Currency Currency => currencyPicker.Currency;
+
+    /// <summary>The payment to send with the request: the currency and the rate shown.</summary>
+    public PaymentRequest Payment => ExchangeRates.Current.Payment(Currency);
 
     /// <summary>False (and a red line) when nothing is chosen.</summary>
     public bool Validate()
@@ -198,7 +221,7 @@ internal sealed class PeriodChoiceView : UserControl
             startText.Text = "—";
             endText.Text = "—";
             startNote.Text = "";
-            total.Amount = 0;
+            ShowTotal();
             return;
         }
 
@@ -206,12 +229,24 @@ internal sealed class PeriodChoiceView : UserControl
         startText.Text = DateText.ShortDate(preview.Start, language);
         endText.Text = DateText.ShortDate(preview.End, language);
         startNote.Text = (preview.ContinuesCurrent ? ReceptionText.StartsAfterCurrent : ReceptionText.StartsToday).For(language);
-        total.Amount = choice.Price;
+        ShowTotal();
+    }
+
+    private void OnRateChanged(object? sender, PropertyChangedEventArgs e) => ShowTotal();
+
+    /// <summary>The amount due in the chosen currency, and the other currency under it.</summary>
+    private void ShowTotal()
+    {
+        var usd = Selected?.Price ?? 0m;
+        var due = PaymentDue.Now([usd], currencyPicker.Currency);
+        total.Currency = due.Currency;
+        total.Amount = due.Amount;
+        totalOther.Text = Selected is null ? "" : PaymentDue.OtherLine(usd, due, ExchangeRates.Current.RoundingStep, UiLanguage.Current);
     }
 }
 
 /// <summary>One choice of <see cref="PeriodChoiceView"/>: months, price and the plan (null for the private training service).</summary>
-internal sealed record PeriodChoice(int Months, long Price, int? PlanId);
+internal sealed record PeriodChoice(int Months, decimal Price, int? PlanId);
 
 /// <summary>The phone input with +963 in front (always left-to-right) and the stored form under it.</summary>
 internal sealed class PhoneInput : UserControl

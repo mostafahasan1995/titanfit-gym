@@ -7,7 +7,7 @@ namespace Gym.Admin.Logic;
 
 /// <summary>
 /// The CSV file of a report for Excel: UTF-8 with a byte order mark (so Excel shows Arabic), commas, CRLF lines,
-/// fields quoted only when needed, numbers and money as plain digits, dates as yyyy-MM-dd.
+/// fields quoted only when needed, numbers as plain digits, dollars with 2 decimals ("12.50"), pounds whole, dates as yyyy-MM-dd.
 /// Layout: a title line (report, from, to), the totals, then each table with its title and column headers.
 /// </summary>
 public static class CsvExport

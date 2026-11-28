@@ -1,5 +1,6 @@
 <!--
-    Settings: the gym rules from GET/PUT /api/settings (expiring-soon threshold, private training monthly fee), the
+    Settings: the gym rules from GET/PUT /api/settings (expiring-soon threshold, private training monthly fee in US dollars,
+    rounding step of amounts in Syrian pounds), the
     server and this PC, and a summary of the daily backup (changed on the Backups page).
 -->
 <shell:PageView x:Class="Gym.Admin.Pages.SettingsPage"
@@ -42,6 +43,11 @@
                 <controls:FormField x:Name="FeeField" Margin="0,18,0,0" Label="{ui:Loc {x:Static pages:SettingsText.PrivateFee}}"
                                     Hint="{ui:Loc {x:Static pages:SettingsText.PrivateFeeHint}}">
                     <TextBox x:Name="FeeBox" FlowDirection="LeftToRight" MaxLength="15" Width="240" HorizontalAlignment="Left" />
+                </controls:FormField>
+
+                <controls:FormField x:Name="StepField" Margin="0,18,0,0" Label="{ui:Loc {x:Static pages:SettingsText.RoundingStep}}"
+                                    Hint="{ui:Loc {x:Static pages:SettingsText.RoundingStepHint}}">
+                    <TextBox x:Name="StepBox" FlowDirection="LeftToRight" MaxLength="7" Width="160" HorizontalAlignment="Left" />
                 </controls:FormField>
 
                 <Border Style="{DynamicResource Card.Inset}" Margin="0,20,0,0" Padding="14,12">

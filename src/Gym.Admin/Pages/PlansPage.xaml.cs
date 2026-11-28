@@ -31,7 +31,7 @@ public static class PlansText
 
     public static LocalText MonthsLabel { get; } = new("Months", "عدد الأشهر");
 
-    public static LocalText PriceLabel { get; } = new("Price (SYP)", "السعر (ل.س)");
+    public static LocalText PriceLabel { get; } = new("Price (US dollars)", "السعر (بالدولار)");
 
     public static LocalText ActiveLabel { get; } = new("Active (reception can sell it)", "فعّالة (يمكن للاستقبال بيعها)");
 
@@ -74,6 +74,7 @@ public partial class PlansPage : PageView
         plans = await Context.Api.GetPlansAsync(includeInactive: true, ct: cancellationToken).ConfigureAwait(true);
         var settings = await Context.Api.GetSettingsAsync(cancellationToken).ConfigureAwait(true);
         FeeText.Amount = settings.PrivateTrainingMonthlyFee;
+        FeeSypText.Amount = settings.PrivateTrainingMonthlyFee;
         ShowPlans();
     }
 
@@ -89,7 +90,7 @@ public partial class PlansPage : PageView
                 p,
                 AdminText.Months(p.Months, language),
                 p.Price,
-                p.Months > 0 ? p.Price / p.Months : p.Price,
+                p.Months > 0 ? Gym.Domain.CurrencyRules.RoundUsd(p.Price / p.Months) : p.Price,
                 (p.IsActive ? AdminText.Active : AdminText.Inactive).For(language),
                 p.IsActive ? PillTone.Good : PillTone.Neutral))
             .ToList();
@@ -158,5 +159,5 @@ public partial class PlansPage : PageView
     }
 
     /// <summary>A row of the plans list.</summary>
-    public sealed record PlanRow(PlanDto Plan, string Name, long Price, long PerMonth, string StatusText, PillTone Tone);
+    public sealed record PlanRow(PlanDto Plan, string Name, decimal Price, decimal PerMonth, string StatusText, PillTone Tone);
 }

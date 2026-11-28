@@ -65,7 +65,10 @@
                         <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:ItemsText.Price}}" Width="130">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <controls:MoneyText Amount="{Binding Price}" Style="{DynamicResource Text.Strong}" FontSize="14" Foreground="{DynamicResource Brush.Gold}" />
+                                    <StackPanel VerticalAlignment="Center">
+                                        <controls:MoneyText Amount="{Binding Price}" Style="{DynamicResource Text.Strong}" FontSize="14" Foreground="{DynamicResource Brush.Gold}" />
+                                        <controls:SypText Amount="{Binding Price}" FontSize="12" />
+                                    </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>

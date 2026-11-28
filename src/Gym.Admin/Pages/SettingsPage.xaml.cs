@@ -3,6 +3,7 @@ using System.Windows;
 using Gym.Admin.Logic;
 using Gym.Client;
 using Gym.Contracts;
+using Gym.Domain;
 using Gym.UI;
 using Gym.UI.Controls;
 using Gym.UI.Shell;
@@ -23,7 +24,13 @@ public static class SettingsText
         "A member shows as expiring this many days before the end date (0 to 60).",
         "يظهر المشترك كمنتهٍ قريبًا قبل تاريخ الانتهاء بهذا العدد من الأيام (من 0 إلى 60).");
 
-    public static LocalText PrivateFee { get; } = new("Private training, monthly fee (SYP)", "رسم التدريب الخاص الشهري (ل.س)");
+    public static LocalText PrivateFee { get; } = new("Private training, monthly fee (US dollars)", "رسم التدريب الخاص الشهري (بالدولار)");
+
+    public static LocalText RoundingStep { get; } = new("Rounding of Syrian pound amounts (pounds)", "تقريب المبالغ بالليرة السورية (بالليرة)");
+
+    public static LocalText RoundingStepHint { get; } = new(
+        "Amounts in pounds are rounded to the nearest multiple of this number. 1 = whole pounds; 500 rounds to the nearest 500.",
+        "تُقرَّب المبالغ بالليرة إلى أقرب مضاعف لهذا الرقم. 1 = ليرة كاملة؛ 500 تقرّب إلى أقرب 500.");
 
     public static LocalText PrivateFeeHint { get; } = new(
         "A private trainer pays months × this fee for the training service. The fee is saved with each payment.",
@@ -32,6 +39,9 @@ public static class SettingsText
     public static LocalText Example { get; } = new(
         "With these values: a member whose subscription ends in {0} shows as expiring, and 3 months of private training cost {1}.",
         "بهذه القيم: المشترك الذي ينتهي اشتراكه خلال {0} يظهر كمنتهٍ قريبًا، و3 أشهر من التدريب الخاص تكلّف {1}.");
+
+    /// <summary>{0} = the pounds for 1 dollar.</summary>
+    public static LocalText ExampleRate { get; } = new("(pounds at today's rate, $1 = {0})", "(الليرة بسعر اليوم، 1 دولار = {0})");
 
     public static LocalText Undo { get; } = new("Undo changes", "تراجع عن التغييرات");
 
@@ -77,6 +87,7 @@ public partial class SettingsPage : PageView
         InitializeComponent();
         DaysBox.TextChanged += (_, _) => ShowExample();
         FeeBox.TextChanged += (_, _) => ShowExample();
+        StepBox.TextChanged += (_, _) => ShowExample();
     }
 
     public override async Task OnShownAsync(CancellationToken cancellationToken)
@@ -100,7 +111,7 @@ public partial class SettingsPage : PageView
     {
         ShowInfo();
         ShowExample();
-        if (DaysField.Error is not null || FeeField.Error is not null)
+        if (DaysField.Error is not null || FeeField.Error is not null || StepField.Error is not null)
         {
             Validate();
         }
@@ -115,8 +126,10 @@ public partial class SettingsPage : PageView
 
         DaysBox.Text = s.ExpiringSoonDays.ToString(CultureInfo.InvariantCulture);
         FeeBox.Text = Money.FormatAmount(s.PrivateTrainingMonthlyFee);
+        StepBox.Text = s.SypRoundingStep.ToString(CultureInfo.InvariantCulture);
         DaysField.Error = null;
         FeeField.Error = null;
+        StepField.Error = null;
         ShowExample();
     }
 
@@ -147,18 +160,33 @@ public partial class SettingsPage : PageView
     private void ShowExample()
     {
         var language = Context.Language;
-        var result = SettingsForm.Validate(DaysBox.Text, FeeBox.Text);
-        ExampleText.Text = result.IsValid
-            ? SettingsText.Example.Format(language, AdminText.Days(result.ExpiringSoonDays!.Value, language), Money.Format(result.PrivateTrainingFee!.Value * 3, language))
-            : "";
+        var result = SettingsForm.Validate(DaysBox.Text, FeeBox.Text, StepBox.Text);
+        if (!result.IsValid)
+        {
+            ExampleText.Text = "";
+            return;
+        }
+
+        // Three months in dollars, and in pounds at today's rate with the typed rounding step (when a rate exists).
+        var usd = result.PrivateTrainingFee!.Value * 3;
+        var rate = ExchangeRates.Current.SypPerUsd;
+        var syp = rate is { } r && r > 0 ? CurrencyRules.ToSyp(usd, r, result.SypRoundingStep!.Value) : (decimal?)null;
+        var text = SettingsText.Example.Format(language, AdminText.Days(result.ExpiringSoonDays!.Value, language), Money.FormatWithSyp(usd, syp, language));
+        if (rate is { } shown && syp is not null)
+        {
+            text += " " + SettingsText.ExampleRate.Format(language, Money.FormatSyp(shown, language));
+        }
+
+        ExampleText.Text = BidiText.FixNumbers(text, language);
     }
 
     private SettingsForm.Result Validate()
     {
         var language = Context.Language;
-        var result = SettingsForm.Validate(DaysBox.Text, FeeBox.Text);
+        var result = SettingsForm.Validate(DaysBox.Text, FeeBox.Text, StepBox.Text);
         DaysField.Error = result.DaysError?.For(language);
         FeeField.Error = result.FeeError?.For(language);
+        StepField.Error = result.StepError?.For(language);
         return result;
     }
 
@@ -173,7 +201,8 @@ public partial class SettingsPage : PageView
         SaveButton.IsEnabled = false;
         try
         {
-            settings = await Context.Api.UpdateSettingsAsync(new SettingsDto(result.ExpiringSoonDays!.Value, result.PrivateTrainingFee!.Value)).ConfigureAwait(true);
+            settings = await Context.Api.UpdateSettingsAsync(
+                new SettingsDto(result.ExpiringSoonDays!.Value, result.PrivateTrainingFee!.Value, result.SypRoundingStep!.Value)).ConfigureAwait(true);
             FillForm();
             Context.Ui.Toast(CommonText.SettingsSaved);
         }

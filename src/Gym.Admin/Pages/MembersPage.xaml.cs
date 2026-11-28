@@ -344,7 +344,9 @@ public partial class MembersPage : PageView
             (p.Kind == SubscriptionKind.PrivateTraining ? MembersText.PrivateServiceOf : MembersText.MembershipOf).Format(language, AdminText.Months(p.Months, language)),
             MembersText.PeriodText.Format(language, DateText.ShortDate(p.StartDate, language), DateText.ShortDate(p.EndDate, language)),
             MembersText.PaidBy.Format(language, DateText.DateAndTime(p.CreatedAt, language), p.CreatedBy),
-            p.PricePaid)).ToList();
+            p.PricePaid,
+            CurrencyLine(p, language),
+            p.Currency == Currency.Syp ? Visibility.Visible : Visibility.Collapsed)).ToList();
         NoPayments.Visibility = d.Payments.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 
         CheckInsTitle.Text = MembersText.CheckInsTitle.Format(language, NumberText.Format(d.CheckIns.Count(c => c.Admitted)));
@@ -354,6 +356,13 @@ public partial class MembersPage : PageView
             c.Admitted ? PillTone.Good : PillTone.Bad)).ToList();
         NoCheckIns.Visibility = d.CheckIns.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
     }
+
+    /// <summary>A payment in pounds: "Paid 230,000 SYP at $1 = 11,500 SYP". Empty for a payment in dollars.</summary>
+    private static string CurrencyLine(SubscriptionDto payment, AppLanguage language) =>
+        payment.Currency == Currency.Syp && payment.ExchangeRate is { } rate
+            ? BidiText.FixNumbers(
+                CommonText.PaidInSypAtRate.Format(language, Money.FormatSyp(payment.PaidAmount, language), Money.FormatSyp(rate, language)), language)
+            : "";
 
     private static string StatusLine(SubscriptionStatusDto? status, AppLanguage language) => status switch
     {
@@ -516,7 +525,7 @@ public partial class MembersPage : PageView
 
     public sealed record ClientRow(string Name, FlowDirection NameDirection, SubscriptionStatus? Status);
 
-    public sealed record PaymentRow(string Title, string Period, string Paid, long Price);
+    public sealed record PaymentRow(string Title, string Period, string Paid, decimal Price, string CurrencyLine, Visibility CurrencyVisibility);
 
     public sealed record CheckInRow(string When, string Result, PillTone Tone);
 

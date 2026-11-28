@@ -6,7 +6,7 @@ using Gym.UI;
 
 namespace Gym.Admin.Logic;
 
-/// <summary>How a column's values are written: text, a count, or money (whole SYP).</summary>
+/// <summary>How a column's values are written: text, a count, or money (US dollars, or pounds in the currency table).</summary>
 public enum ReportColumnKind
 {
     Text,
@@ -68,8 +68,9 @@ public static class ReportTables
                 MoneyTotal(ReportsText.TotalRevenue, report.Total, language),
                 MoneyTotal(ReportsText.TotalMemberships, memberships, language),
                 MoneyTotal(ReportsText.TotalPrivateTraining, privateTraining, language),
+                .. SypTotal(report.Paid, language),
             ],
-            [byDay, byPlan, byStaff]);
+            [byDay, byPlan, byStaff, .. CurrencyTable(report.Paid, ReportsText.ColumnPayments, language)]);
     }
 
     public static ReportDocument Attendance(AttendanceReportDto report, AppLanguage language)
@@ -129,10 +130,11 @@ public static class ReportTables
             [
                 NumberTotal(ReportsText.TotalSales, report.SaleCount, language),
                 MoneyTotal(ReportsText.TotalRevenue, report.Total, language),
-                MoneyTotal(ReportsText.TotalAverageSale, report.SaleCount > 0 ? report.Total / report.SaleCount : 0, language),
+                MoneyTotal(ReportsText.TotalAverageSale, report.SaleCount > 0 ? CurrencyRules.RoundUsd(report.Total / report.SaleCount) : 0, language),
                 NumberTotal(ReportsText.TotalItemsSold, report.ByProduct.Sum(p => (long)p.Quantity), language),
+                .. SypTotal(report.Paid, language),
             ],
-            [byItem, byDay, byCashier]);
+            [byItem, byDay, byCashier, .. CurrencyTable(report.Paid, ReportsText.ColumnSales, language)]);
     }
 
     /// <summary>"Membership · 3 months" / "اشتراك · 3 أشهر".</summary>
@@ -154,7 +156,39 @@ public static class ReportTables
 
     public static ReportCell NumberCell(long value) => new(NumberText.Format(value), value.ToString(CultureInfo.InvariantCulture));
 
-    public static ReportCell MoneyCell(long amount, AppLanguage language) => new(Money.Format(amount, language), amount.ToString(CultureInfo.InvariantCulture));
+    /// <summary>US dollars: "$12.50" on screen, "12.50" in the CSV file.</summary>
+    public static ReportCell MoneyCell(decimal amount, AppLanguage language) => new(Money.Format(amount, language), UsdRaw(amount));
+
+    /// <summary>Syrian pounds: "230,000 SYP" on screen, "230000" in the CSV file.</summary>
+    public static ReportCell SypCell(decimal pounds, AppLanguage language) => new(Money.FormatSyp(pounds, language), SypRaw(pounds));
+
+    /// <summary>
+    /// The payments per currency (CSV and print; the screen shows the first three tables): dollars paid in dollars,
+    /// pounds paid in pounds with their dollar value. None when the server sent no split.
+    /// </summary>
+    public static IReadOnlyList<ReportTable> CurrencyTable(CurrencyTotals? paid, LocalText countHeader, AppLanguage language)
+    {
+        if (paid is null)
+        {
+            return Array.Empty<ReportTable>();
+        }
+
+        return new[]
+        {
+            new ReportTable(
+                ReportsText.ByCurrency.For(language),
+                [
+                    new(ReportsText.ColumnCurrency.For(language), ReportColumnKind.Text),
+                    new(countHeader.For(language), ReportColumnKind.Number),
+                    new(ReportsText.ColumnPaid.For(language), ReportColumnKind.Money),
+                    new(ReportsText.ColumnUsdValue.For(language), ReportColumnKind.Money),
+                ],
+                [
+                    Row(TextCell(CommonText.CurrencyUsd.For(language)), NumberCell(paid.UsdCount), MoneyCell(paid.Usd, language), MoneyCell(paid.Usd, language)),
+                    Row(TextCell(CommonText.CurrencySyp.For(language)), NumberCell(paid.SypCount), SypCell(paid.Syp, language), MoneyCell(paid.SypAsUsd, language)),
+                ]),
+        };
+    }
 
     public static ReportCell DateCell(DateOnly date, AppLanguage language) =>
         new(DateText.ShortDate(date, language), date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
@@ -164,6 +198,22 @@ public static class ReportTables
     private static ReportTotal NumberTotal(LocalText label, long value, AppLanguage language) =>
         new(label.For(language), NumberText.Format(value), value.ToString(CultureInfo.InvariantCulture), false);
 
-    private static ReportTotal MoneyTotal(LocalText label, long amount, AppLanguage language) =>
-        new(label.For(language), Money.Format(amount, language), amount.ToString(CultureInfo.InvariantCulture), true);
+    private static ReportTotal MoneyTotal(LocalText label, decimal amount, AppLanguage language) =>
+        new(label.For(language), Money.Format(amount, language), UsdRaw(amount), true);
+
+    /// <summary>The pounds taken (whole pounds), when the server sent the split.</summary>
+    private static List<ReportTotal> SypTotal(CurrencyTotals? paid, AppLanguage language)
+    {
+        var totals = new List<ReportTotal>();
+        if (paid is not null)
+        {
+            totals.Add(new ReportTotal(ReportsText.TotalPaidInSyp.For(language), Money.FormatSyp(paid.Syp, language), SypRaw(paid.Syp), true));
+        }
+
+        return totals;
+    }
+
+    private static string UsdRaw(decimal amount) => CurrencyRules.RoundUsd(amount).ToString("0.00", CultureInfo.InvariantCulture);
+
+    private static string SypRaw(decimal pounds) => Math.Round(pounds, 0, MidpointRounding.AwayFromZero).ToString("0", CultureInfo.InvariantCulture);
 }

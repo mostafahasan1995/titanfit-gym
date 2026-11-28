@@ -161,7 +161,11 @@
                                     <DataGridTemplateColumn Header="{ui:Loc {x:Static local:ReceptionText.ColumnPaid}}" Width="128">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
-                                                <controls:MoneyText Amount="{Binding Paid}" FontSize="14" VerticalAlignment="Center" />
+                                                <StackPanel VerticalAlignment="Center" ToolTip="{Binding PaidDetail}">
+                                                    <controls:MoneyText Amount="{Binding Paid}" FontSize="14" />
+                                                    <TextBlock Text="{Binding PaidInSyp}" FontSize="12" Visibility="{Binding PaidInSypVisibility}"
+                                                               Foreground="{DynamicResource Brush.TextSecondary}" TextTrimming="CharacterEllipsis" />
+                                                </StackPanel>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
