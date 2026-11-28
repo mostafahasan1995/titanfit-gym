@@ -13,7 +13,7 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="24" />
-            <ColumnDefinition Width="0.6*" MinWidth="280" MaxWidth="380" />
+            <ColumnDefinition Width="0.6*" MinWidth="264" MaxWidth="380" />
         </Grid.ColumnDefinitions>
 
         <!-- Staff list -->
@@ -34,7 +34,7 @@
                 </DockPanel>
                 <DataGrid x:Name="StaffGrid" SelectionChanged="OnSelectionChanged" MouseDoubleClick="OnGridDoubleClick">
                     <DataGrid.Columns>
-                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:StaffText.ColumnName}}" Width="2.5*" MinWidth="90">
+                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:StaffText.ColumnName}}" Width="2.5*" MinWidth="84">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding Name}" Style="{DynamicResource Text.Strong}" FontSize="14" VerticalAlignment="Center" />
