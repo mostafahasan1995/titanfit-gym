@@ -3,7 +3,8 @@
     check-ins by hour (LiveCharts2, SkiaSharp), this month's revenue, members expiring soon and low stock.
     It refreshes on the live events (check-ins, members, sales, stock, settings) and once a minute.
 -->
-<shell:PageView x:Class="Gym.Admin.Pages.DashboardPage"
+<!-- Read-only overview: on a short window the whole page scrolls (MinHeight), the lists keep their room. -->
+<shell:PageView x:Class="Gym.Admin.Pages.DashboardPage" MinHeight="760"
                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                 xmlns:ui="clr-namespace:Gym.UI;assembly=Gym.UI"
@@ -56,8 +57,9 @@
         </Border>
 
         <!-- Today's numbers -->
-        <UniformGrid Grid.Row="1" Rows="1" Columns="5" Margin="-6,0">
-            <Border Style="{StaticResource Tile}" Margin="6,0">
+        <!-- Five tiles in a row (fewer per row only on a very narrow window). -->
+        <controls:ResponsiveColumns Grid.Row="1" Columns="5" MinColumnWidth="140" Gap="12" RowGap="12">
+            <Border Style="{StaticResource Tile}">
                 <StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <Border Style="{StaticResource TileIcon}" Background="{DynamicResource Brush.AccentSoft}">
@@ -69,7 +71,7 @@
                     <TextBlock x:Name="CheckInsSub" Style="{StaticResource TileSub}" />
                 </StackPanel>
             </Border>
-            <Border Style="{StaticResource Tile}" Margin="6,0">
+            <Border Style="{StaticResource Tile}">
                 <StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <Border Style="{StaticResource TileIcon}" Background="{DynamicResource Brush.GoodSoft}">
@@ -81,7 +83,7 @@
                     <TextBlock x:Name="ActiveSub" Style="{StaticResource TileSub}" />
                 </StackPanel>
             </Border>
-            <Border Style="{StaticResource Tile}" Margin="6,0">
+            <Border Style="{StaticResource Tile}">
                 <StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <Border Style="{StaticResource TileIcon}" Background="{DynamicResource Brush.WarningSoft}">
@@ -93,7 +95,7 @@
                     <TextBlock x:Name="ExpiringSub" Style="{StaticResource TileSub}" Foreground="{DynamicResource Brush.Warning}" />
                 </StackPanel>
             </Border>
-            <Border Style="{StaticResource Tile}" Margin="6,0">
+            <Border Style="{StaticResource Tile}">
                 <StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <Border Style="{StaticResource TileIcon}" Background="{DynamicResource Brush.BadSoft}">
@@ -105,7 +107,7 @@
                     <TextBlock Style="{StaticResource TileSub}" Foreground="{DynamicResource Brush.Bad}" Text="{ui:Loc {x:Static pages:DashboardText.NotRenewed}}" />
                 </StackPanel>
             </Border>
-            <Border Style="{StaticResource Tile}" Margin="6,0">
+            <Border Style="{StaticResource Tile}">
                 <StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <Border Style="{StaticResource TileIcon}" Background="{DynamicResource Brush.GoldSoft}">
@@ -113,22 +115,23 @@
                         </Border>
                         <TextBlock Style="{DynamicResource Text.Caption}" Margin="8,0,0,0" VerticalAlignment="Center" Text="{ui:Loc {x:Static pages:DashboardText.RevenueToday}}" />
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                    <!-- Shrinks to fit a narrow tile instead of being cut. -->
+                    <Viewbox Stretch="Uniform" StretchDirection="DownOnly" HorizontalAlignment="Left" Margin="0,8,0,0">
                         <controls:MoneyText x:Name="RevenueValue" Style="{StaticResource TileValue}" Margin="0" FontSize="26"
                                             Foreground="{DynamicResource Brush.Gold}" VerticalAlignment="Bottom" />
-                    </StackPanel>
+                    </Viewbox>
                     <controls:SypText x:Name="RevenueSyp" FontSize="12" Margin="0,2,0,0" HorizontalAlignment="Left" />
                     <TextBlock x:Name="RevenueSub" Style="{StaticResource TileSub}" Margin="0,6,0,0" TextWrapping="Wrap" TextTrimming="None" />
                 </StackPanel>
             </Border>
-        </UniformGrid>
+        </controls:ResponsiveColumns>
 
         <!-- Check-ins by hour, and this month's revenue -->
         <Grid Grid.Row="3">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="20" />
-                <ColumnDefinition Width="344" />
+                <ColumnDefinition Width="0.6*" MinWidth="280" MaxWidth="344" />
             </Grid.ColumnDefinitions>
             <Border Style="{DynamicResource Card}" Padding="20,16,20,12">
                 <DockPanel>
@@ -175,7 +178,7 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="20" />
-                <ColumnDefinition Width="344" />
+                <ColumnDefinition Width="0.6*" MinWidth="280" MaxWidth="344" />
             </Grid.ColumnDefinitions>
             <Border Style="{DynamicResource Card}" Padding="12,16,12,4">
                 <DockPanel>
@@ -186,7 +189,7 @@
                     <Grid>
                         <DataGrid x:Name="ExpiringGrid" RowHeight="46">
                             <DataGrid.Columns>
-                                <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:DashboardText.Member}}" Width="*">
+                                <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:DashboardText.Member}}" Width="2.2*" MinWidth="120">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -196,7 +199,7 @@
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:DashboardText.Phone}}" Width="150">
+                                <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:DashboardText.Phone}}" Width="1.5*" MinWidth="105">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <TextBlock Text="{Binding Phone}" Style="{DynamicResource Text.Body}" FontSize="14" Foreground="{DynamicResource Brush.TextTertiary}"
@@ -204,14 +207,14 @@
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:DashboardText.Ends}}" Width="170">
+                                <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:DashboardText.Ends}}" Width="1.7*" MinWidth="119">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <TextBlock Text="{Binding Ends}" Style="{DynamicResource Text.Body}" FontSize="14" Foreground="{DynamicResource Brush.TextTertiary}" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:DashboardText.TimeLeft}}" Width="130">
+                                <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:DashboardText.TimeLeft}}" Width="1.3*" MinWidth="91">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <controls:StatusPill Tone="Warning" Text="{Binding Left}" HorizontalAlignment="Left" />

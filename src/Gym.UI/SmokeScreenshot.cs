@@ -14,18 +14,19 @@ using Gym.UI.Shell;
 namespace Gym.UI;
 
 /// <summary>
-/// <c>--smoke-screenshots &lt;dir&gt; [--lang en|ar]</c>: runs the app on <see cref="SampleGymApi"/> (no server),
-/// renders the login screen, the server settings dialog, every page of the app (and its extra smoke states), the control gallery and a dialog
-/// offscreen at 1440 x 900, saves <c>&lt;dir&gt;/&lt;App&gt;-&lt;page&gt;-&lt;lang&gt;.png</c> and a manifest
-/// <c>&lt;dir&gt;/&lt;App&gt;-&lt;lang&gt;.json</c>, and exits. A page that throws, a missing translation or a font that
-/// did not load fails the run. Exit code 0 = all fine, 1 = something failed, 2 = bad arguments.
-/// CI reads the manifest, so a new page gets its screenshot without a workflow change.
+/// <c>--smoke-screenshots &lt;dir&gt; [--lang en|ar] [--screen 1366x768@125]</c>: runs the app on <see cref="SampleGymApi"/>
+/// (no server), renders the login screen, the server settings dialog, every page of the app (and its extra smoke states),
+/// the control gallery and a dialog offscreen at each test screen (<see cref="SmokeScreen.All"/>, or the one given), saves
+/// <c>&lt;dir&gt;/&lt;App&gt;-&lt;page&gt;-&lt;lang&gt;-&lt;screen&gt;.png</c> and a manifest <c>&lt;dir&gt;/&lt;App&gt;-&lt;lang&gt;.json</c>,
+/// and exits. Each screenshot also runs <see cref="LayoutAudit"/>: a control outside the window or cut off fails it.
+/// A page that throws, a missing translation, a layout problem or a font that did not load fails the run.
+/// Exit code 0 = all fine, 1 = something failed, 2 = bad arguments.
+/// CI reads the manifest, so a new page gets its screenshots and its layout check without a workflow change.
 /// </summary>
 public static class SmokeScreenshot
 {
     public const string Flag = "--smoke-screenshots";
-    public const int Width = 1440;
-    public const int Height = 900;
+    public const string ScreenFlag = "--screen";
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { WriteIndented = true };
 
@@ -39,11 +40,12 @@ public static class SmokeScreenshot
         return $"{definition.Id}-{language.ToCode()}.json";
     }
 
-    /// <summary>The screenshot file name of a page: <c>Reception-check-in-en.png</c>.</summary>
-    public static string FileName(AppDefinition definition, string name, AppLanguage language)
+    /// <summary>The screenshot file name of a page: <c>Reception-check-in-en-1366x768-125.png</c>.</summary>
+    public static string FileName(AppDefinition definition, string name, AppLanguage language, SmokeScreen screen)
     {
         ArgumentNullException.ThrowIfNull(definition);
-        return $"{definition.Id}-{name}-{language.ToCode()}.png";
+        ArgumentNullException.ThrowIfNull(screen);
+        return $"{definition.Id}-{name}-{language.ToCode()}-{screen.Id}.png";
     }
 
     public static int Run(Application app, IReadOnlyList<string> args, AppDefinition definition)
@@ -53,10 +55,12 @@ public static class SmokeScreenshot
 
         string folder;
         AppLanguage language;
+        IReadOnlyList<SmokeScreen> screens;
         try
         {
             folder = ReadOutputFolder(args);
             language = AppLanguages.FromArgs(args) ?? AppLanguage.English;
+            screens = ReadScreens(args);
         }
         catch (ArgumentException ex)
         {
@@ -77,7 +81,7 @@ public static class SmokeScreenshot
             var exitCode = 1;
             try
             {
-                exitCode = await RunAsync(definition, folder, language, unhandled).ConfigureAwait(true);
+                exitCode = await RunAsync(definition, folder, language, screens, unhandled).ConfigureAwait(true);
             }
 #pragma warning disable CA1031 // Report every failure as a failed run.
             catch (Exception ex)
@@ -93,11 +97,14 @@ public static class SmokeScreenshot
         return app.Run();
     }
 
-    private static async Task<int> RunAsync(AppDefinition definition, string folder, AppLanguage language, List<string> unhandled)
+    private static async Task<int> RunAsync(
+        AppDefinition definition, string folder, AppLanguage language, IReadOnlyList<SmokeScreen> screens, List<string> unhandled)
     {
         VerifyEmbeddedFont("Font.Heading", FontWeights.Bold);
         VerifyEmbeddedFont("Font.Body", FontWeights.Normal);
         VerifyEmbeddedFont("Font.Body", FontWeights.SemiBold);
+        var dpiAwareness = DpiAwareness.Current();
+        Console.WriteLine($"DPI awareness: {dpiAwareness}");
 
         var assemblies = new[] { Assembly.GetEntryAssembly(), typeof(CommonText).Assembly }.OfType<Assembly>().Distinct();
         var textProblems = assemblies.SelectMany(LocalTextAudit.FindProblems).ToList();
@@ -110,27 +117,64 @@ public static class SmokeScreenshot
         PresentationTraceSources.DataBindingSource.Listeners.Add(bindings);
         PresentationTraceSources.DataBindingSource.Switch.Level = SourceLevels.Warning;
 
+        Directory.CreateDirectory(folder);
+        var shots = new List<SmokeShot>();
+        foreach (var screen in screens)
+        {
+            await RunScreenAsync(definition, folder, language, screen, shots).ConfigureAwait(true);
+        }
+
+        PresentationTraceSources.DataBindingSource.Listeners.Remove(bindings);
+        var layoutProblems = shots.Sum(s => s.LayoutProblems.Count);
+        var failed = shots.Count(s => !s.Ok) + textProblems.Count + unhandled.Count;
+        var manifest = new SmokeManifest(
+            definition.Id, language.ToCode(), failed == 0, dpiAwareness, screens.Select(s => s.Id).ToList(), shots, textProblems, unhandled, bindings.Messages);
+        await File.WriteAllTextAsync(Path.Combine(folder, ManifestName(definition, language)), JsonSerializer.Serialize(manifest, Json)).ConfigureAwait(true);
+
+        Console.WriteLine($"{definition.Id} ({language.ToCode()}): {shots.Count} screenshots at {screens.Count} screen sizes, {shots.Count(s => !s.Ok)} failed, " +
+                          $"{shots.Sum(s => s.ControlsChecked)} controls checked ({shots.Sum(s => s.PrimaryChecked)} primary), {layoutProblems} layout problems, " +
+                          $"{textProblems.Count} text problems, {unhandled.Count} unhandled errors, {bindings.Messages.Count} binding warnings.");
+        foreach (var warning in bindings.Messages.Take(20))
+        {
+            Console.WriteLine("  Binding: " + warning);
+        }
+
+        return failed == 0 ? 0 : 1;
+    }
+
+    /// <summary>Every screen of the app at one screen size, on fresh sample data.</summary>
+    private static async Task RunScreenAsync(AppDefinition definition, string folder, AppLanguage language, SmokeScreen screen, List<SmokeShot> shots)
+    {
         var sample = new SampleGymApi();
         if (definition.SampleSetup is { } setup)
         {
             await setup(sample).ConfigureAwait(true);
         }
 
-        Directory.CreateDirectory(folder);
+        var client = screen.Client;
         var window = new StationWindow(definition, StationServices.ForSample(sample), language);
-        var root = window.Root;
+        var root = window.ScaledRoot;
         window.Content = null;
-        var host = new AdornerDecorator { Width = Width, Height = Height, Child = root };
-        using var source = CreateHiddenSource(host);
-        var shots = new List<SmokeShot>();
+        var host = new AdornerDecorator { Width = client.Width, Height = client.Height, Child = root };
+        using var source = CreateHiddenSource(host, client);
+        Console.WriteLine($"Screen {screen}: window content {client.Width}x{client.Height} logical px, UI {root}");
 
         async Task CaptureAsync(string name, Exception? error = null)
         {
-            await SettleAsync(host).ConfigureAwait(true);
-            var file = FileName(definition, name, language);
-            Save(host, Path.Combine(folder, file));
-            shots.Add(new SmokeShot(name, file, error is null, error?.ToString()));
-            Console.WriteLine(error is null ? $"  OK   {file}" : $"  FAIL {file}: {error.GetType().Name}: {error.Message}");
+            await SettleAsync(host, client).ConfigureAwait(true);
+            var file = FileName(definition, name, language, screen);
+            Save(host, Path.Combine(folder, file), screen);
+            var layout = LayoutAudit.Check(host);
+            var ok = error is null && layout.Ok;
+            shots.Add(new SmokeShot(name, screen.Id, file, ok, error?.ToString(), layout.Checked, layout.Primary, layout.Problems));
+            Console.WriteLine(error is not null
+                ? $"  FAIL {file}: {error.GetType().Name}: {error.Message}"
+                : $"  {(layout.Ok ? "OK  " : "FAIL")} {file}: {layout.Checked} controls in bounds check ({layout.Primary} primary), {layout.Problems.Count} problems");
+            foreach (var problem in layout.Problems)
+            {
+                Console.WriteLine($"       layout: {problem}");
+            }
+
             window.Overlay.CloseAll();
         }
 
@@ -171,7 +215,7 @@ public static class SmokeScreenshot
             {
                 try
                 {
-                    await SettleAsync(host).ConfigureAwait(true);
+                    await SettleAsync(host, client).ConfigureAwait(true);
                     await state.Prepare(view).ConfigureAwait(true);
                 }
 #pragma warning disable CA1031 // Reported as a failed screenshot.
@@ -193,20 +237,23 @@ public static class SmokeScreenshot
         window.Overlay.Toast(CommonText.SettingsSaved);
         await CaptureAsync("dialog", firstError).ConfigureAwait(true);
 
-        PresentationTraceSources.DataBindingSource.Listeners.Remove(bindings);
-        var failed = shots.Count(s => !s.Ok) + textProblems.Count + unhandled.Count;
-        var manifest = new SmokeManifest(definition.Id, language.ToCode(), failed == 0, shots, textProblems, unhandled, bindings.Messages);
-        await File.WriteAllTextAsync(Path.Combine(folder, ManifestName(definition, language)), JsonSerializer.Serialize(manifest, Json)).ConfigureAwait(true);
+        host.Child = null;
+        window.Close();
+    }
 
-        Console.WriteLine($"{definition.Id} ({language.ToCode()}): {shots.Count} screenshots, {shots.Count(s => !s.Ok)} failed pages, " +
-                          $"{textProblems.Count} text problems, {unhandled.Count} unhandled errors, {bindings.Messages.Count} binding warnings.");
-        foreach (var warning in bindings.Messages.Take(20))
+    private static IReadOnlyList<SmokeScreen> ReadScreens(IReadOnlyList<string> args)
+    {
+        for (var i = 0; i < args.Count; i++)
         {
-            Console.WriteLine("  Binding: " + warning);
+            if (string.Equals(args[i], ScreenFlag, StringComparison.OrdinalIgnoreCase))
+            {
+                return i + 1 < args.Count && SmokeScreen.TryParse(args[i + 1], out var screen)
+                    ? [screen]
+                    : throw new ArgumentException($"{ScreenFlag} needs a screen like 1366x768@125 (pixels and scaling %).");
+            }
         }
 
-        window.Close();
-        return failed == 0 ? 0 : 1;
+        return SmokeScreen.All;
     }
 
     private static string ReadOutputFolder(IReadOnlyList<string> args)
@@ -229,7 +276,7 @@ public static class SmokeScreenshot
     }
 
     /// <summary>A hidden window for the content, so Loaded events, focus and layout work like in the real window.</summary>
-    private static HwndSource? CreateHiddenSource(AdornerDecorator host)
+    private static HwndSource? CreateHiddenSource(AdornerDecorator host, Size client)
     {
         try
         {
@@ -237,8 +284,8 @@ public static class SmokeScreenshot
             const int WsExToolWindow = 0x00000080;
             var source = new HwndSource(new HwndSourceParameters("TITANFIT smoke")
             {
-                Width = Width,
-                Height = Height,
+                Width = (int)client.Width,
+                Height = (int)client.Height,
                 PositionX = -32000,
                 PositionY = -32000,
                 WindowStyle = WsPopup,
@@ -260,20 +307,23 @@ public static class SmokeScreenshot
     }
 
     /// <summary>Lets bindings, templates, Loaded handlers and queued work run, then lays out again.</summary>
-    private static async Task SettleAsync(FrameworkElement host)
+    private static async Task SettleAsync(FrameworkElement host, Size client)
     {
-        for (var i = 0; i < 3; i++)
+        for (var i = 0; i < 4; i++)
         {
-            host.Measure(new Size(Width, Height));
-            host.Arrange(new Rect(0, 0, Width, Height));
+            host.Measure(client);
+            host.Arrange(new Rect(client));
             host.UpdateLayout();
             await Dispatcher.Yield(DispatcherPriority.ContextIdle);
         }
     }
 
-    private static void Save(FrameworkElement host, string path)
+    /// <summary>Saves the screen in physical pixels: 1093 x 534 logical at 125 % is a 1366 x 668 PNG, like on the gym PC.</summary>
+    private static void Save(FrameworkElement host, string path, SmokeScreen screen)
     {
-        var bitmap = new RenderTargetBitmap(Width, Height, 96, 96, PixelFormats.Pbgra32);
+        var dpi = 96 * screen.Scale;
+        var bitmap = new RenderTargetBitmap(
+            (int)Math.Round(host.ActualWidth * screen.Scale), (int)Math.Round(host.ActualHeight * screen.Scale), dpi, dpi, PixelFormats.Pbgra32);
         bitmap.Render(host);
         var encoder = new PngBitmapEncoder();
         encoder.Frames.Add(BitmapFrame.Create(bitmap));
@@ -306,12 +356,15 @@ public static class SmokeScreenshot
         return uri;
     }
 
-    private sealed record SmokeShot(string Name, string File, bool Ok, string? Error);
+    private sealed record SmokeShot(
+        string Name, string Screen, string File, bool Ok, string? Error, int ControlsChecked, int PrimaryChecked, IReadOnlyList<string> LayoutProblems);
 
     private sealed record SmokeManifest(
         string App,
         string Language,
         bool Ok,
+        string DpiAwareness,
+        IReadOnlyList<string> Screens,
         IReadOnlyList<SmokeShot> Screenshots,
         IReadOnlyList<string> TextProblems,
         IReadOnlyList<string> UnhandledErrors,
@@ -335,5 +388,63 @@ public static class SmokeScreenshot
                 Messages.Add(message);
             }
         }
+    }
+}
+
+/// <summary>
+/// A test screen of the smoke screenshots: pixels and Windows display scaling. The window content is the screen in
+/// logical px minus the taskbar (48) and the title bar of a maximized window (32): 1366 x 768 at 125 % is 1093 x 534.
+/// </summary>
+public sealed record SmokeScreen(int PixelWidth, int PixelHeight, int ScalePercent)
+{
+    public const double TaskbarHeight = 48;
+    public const double TitleBarHeight = 32;
+
+    /// <summary>The sizes the owner's PCs may have: 1366 x 768 at 100 % and 125 %, 1920 x 1080 at 125 % and 100 %.</summary>
+    public static IReadOnlyList<SmokeScreen> All { get; } =
+    [
+        new(1366, 768, 100),
+        new(1366, 768, 125),
+        new(1920, 1080, 125),
+        new(1920, 1080, 100),
+    ];
+
+    public double Scale => ScalePercent / 100.0;
+
+    /// <summary>The maximized window's content area in logical px.</summary>
+    public Size Client => new(
+        Math.Round(PixelWidth / Scale),
+        Math.Round(PixelHeight / Scale) - TaskbarHeight - TitleBarHeight);
+
+    /// <summary>"1366x768-125": part of the file names.</summary>
+    public string Id => FormattableString.Invariant($"{PixelWidth}x{PixelHeight}-{ScalePercent}");
+
+    public override string ToString() => FormattableString.Invariant($"{PixelWidth}x{PixelHeight} at {ScalePercent} %");
+
+    /// <summary>Reads "1366x768@125" (or "1366x768-125", or "1920x1080" = 100 %).</summary>
+    public static bool TryParse(string? text, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out SmokeScreen? screen)
+    {
+        screen = null;
+        var parts = (text ?? "").Trim().Split(['x', 'X', '@', '-'], StringSplitOptions.TrimEntries);
+        if (parts.Length is < 2 or > 3
+            || !int.TryParse(parts[0], System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var width)
+            || !int.TryParse(parts[1], System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var height))
+        {
+            return false;
+        }
+
+        var percent = 100;
+        if (parts.Length == 3 && !int.TryParse(parts[2].TrimEnd('%'), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out percent))
+        {
+            return false;
+        }
+
+        if (width < 640 || height < 480 || percent is < 100 or > 300)
+        {
+            return false;
+        }
+
+        screen = new SmokeScreen(width, height, percent);
+        return true;
     }
 }

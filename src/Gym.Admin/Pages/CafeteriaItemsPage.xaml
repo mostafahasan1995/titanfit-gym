@@ -37,7 +37,7 @@
             <Grid>
                 <DataGrid x:Name="ItemsGrid" MouseDoubleClick="OnGridDoubleClick">
                     <DataGrid.Columns>
-                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:ItemsText.Item}}" Width="*">
+                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:ItemsText.Item}}" Width="3.7*" MinWidth="100">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel VerticalAlignment="Center">
@@ -48,21 +48,21 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:ItemsText.Category}}" Width="120">
+                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:ItemsText.Category}}" Width="1.2*" MinWidth="74">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding Category}" Style="{DynamicResource Text.Body}" FontSize="14" Foreground="{DynamicResource Brush.TextTertiary}" />
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:ItemsText.Barcode}}" Width="140">
+                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:ItemsText.Barcode}}" Width="1.4*" MinWidth="80">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding Barcode}" Style="{DynamicResource Text.Caption}" FontSize="13" FlowDirection="LeftToRight" HorizontalAlignment="Left" />
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:ItemsText.Price}}" Width="130">
+                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:ItemsText.Price}}" Width="1.3*" MinWidth="84">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel VerticalAlignment="Center">
@@ -72,7 +72,7 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:ItemsText.Stock}}" Width="166">
+                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:ItemsText.Stock}}" Width="1.66*" MinWidth="100">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -83,21 +83,21 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:ItemsText.Minimum}}" Width="80">
+                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:ItemsText.Minimum}}" Width="0.8*" MinWidth="70">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding Minimum}" Style="{DynamicResource Text.Body}" FontSize="14" Foreground="{DynamicResource Brush.TextTertiary}" />
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:ItemsText.Status}}" Width="104">
+                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:ItemsText.Status}}" Width="1.3*" MinWidth="104">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <controls:StatusPill Tone="{Binding Tone}" Text="{Binding StatusText}" HorizontalAlignment="Left" />
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Width="196">
+                        <DataGridTemplateColumn Width="Auto">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">

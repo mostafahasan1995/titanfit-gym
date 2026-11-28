@@ -18,140 +18,146 @@
         </Grid.ColumnDefinitions>
 
         <!-- Column 1: buttons and inputs -->
-        <StackPanel Grid.Column="0">
-            <Border Style="{DynamicResource Card}" Padding="20">
-                <StackPanel>
-                    <TextBlock Style="{DynamicResource Text.Overline}" Text="{ui:Loc {x:Static shell:GalleryText.Buttons}}" />
-                    <WrapPanel Margin="0,12,0,0">
-                        <Button Style="{DynamicResource Button.Primary}" Margin="0,0,8,8" ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Check}"
-                                Content="{ui:Loc {x:Static ui:CommonText.Save}}" />
-                        <Button Style="{DynamicResource Button.Secondary}" Margin="0,0,8,8" Content="{ui:Loc {x:Static ui:CommonText.Cancel}}" />
-                        <Button Style="{DynamicResource Button.Gold}" Margin="0,0,8,8" ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Renew}"
-                                Content="{ui:Loc {x:Static shell:GalleryText.Renew}}" />
-                        <Button Style="{DynamicResource Button.Danger}" Margin="0,0,8,8" ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Trash}"
-                                Content="{ui:Loc {x:Static ui:CommonText.Delete}}" />
-                        <Button Style="{DynamicResource Button.Ghost}" Margin="0,0,8,8" ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Logout}"
-                                Content="{ui:Loc {x:Static ui:CommonText.LogOut}}" />
-                        <Button Style="{DynamicResource Button.Icon}" Margin="0,0,8,8" ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Printer}" />
-                        <Button Style="{DynamicResource Button.Primary}" Margin="0,0,8,8" IsEnabled="False"
-                                Content="{ui:Loc {x:Static shell:GalleryText.Disabled}}" />
-                    </WrapPanel>
-                </StackPanel>
-            </Border>
+        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+            <StackPanel>
+                <Border Style="{DynamicResource Card}" Padding="20">
+                    <StackPanel>
+                        <TextBlock Style="{DynamicResource Text.Overline}" Text="{ui:Loc {x:Static shell:GalleryText.Buttons}}" />
+                        <WrapPanel Margin="0,12,0,0">
+                            <Button Style="{DynamicResource Button.Primary}" Margin="0,0,8,8" ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Check}"
+                                    Content="{ui:Loc {x:Static ui:CommonText.Save}}" />
+                            <Button Style="{DynamicResource Button.Secondary}" Margin="0,0,8,8" Content="{ui:Loc {x:Static ui:CommonText.Cancel}}" />
+                            <Button Style="{DynamicResource Button.Gold}" Margin="0,0,8,8" ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Renew}"
+                                    Content="{ui:Loc {x:Static shell:GalleryText.Renew}}" />
+                            <Button Style="{DynamicResource Button.Danger}" Margin="0,0,8,8" ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Trash}"
+                                    Content="{ui:Loc {x:Static ui:CommonText.Delete}}" />
+                            <Button Style="{DynamicResource Button.Ghost}" Margin="0,0,8,8" ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Logout}"
+                                    Content="{ui:Loc {x:Static ui:CommonText.LogOut}}" />
+                            <Button Style="{DynamicResource Button.Icon}" Margin="0,0,8,8" ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Printer}" />
+                            <Button Style="{DynamicResource Button.Primary}" Margin="0,0,8,8" IsEnabled="False"
+                                    Content="{ui:Loc {x:Static shell:GalleryText.Disabled}}" />
+                        </WrapPanel>
+                    </StackPanel>
+                </Border>
 
-            <Border Style="{DynamicResource Card}" Padding="20" Margin="0,16,0,0">
-                <StackPanel>
-                    <TextBlock Style="{DynamicResource Text.Overline}" Text="{ui:Loc {x:Static shell:GalleryText.Inputs}}" />
-                    <controls:FormField Margin="0,12,0,0" Label="{ui:Loc {x:Static ui:CommonText.FullName}}">
-                        <TextBox ui:ThemeAssist.Placeholder="{ui:Loc {x:Static shell:GalleryText.NamePlaceholder}}" />
-                    </controls:FormField>
-                    <controls:FormField Margin="0,14,0,0" Label="{ui:Loc {x:Static ui:CommonText.Password}}">
-                        <PasswordBox ui:ThemeAssist.Placeholder="••••••" />
-                    </controls:FormField>
-                    <controls:FormField Margin="0,14,0,0" Label="{ui:Loc {x:Static shell:GalleryText.Plan}}">
-                        <ComboBox x:Name="PlanBox" />
-                    </controls:FormField>
-                    <controls:FormField Margin="0,14,0,0" Label="{ui:Loc {x:Static shell:GalleryText.StartDate}}">
-                        <DatePicker x:Name="DateBox" ui:ThemeAssist.Placeholder="{ui:Loc {x:Static ui:CommonText.PickDate}}" />
-                    </controls:FormField>
-                </StackPanel>
-            </Border>
-        </StackPanel>
+                <Border Style="{DynamicResource Card}" Padding="20" Margin="0,16,0,0">
+                    <StackPanel>
+                        <TextBlock Style="{DynamicResource Text.Overline}" Text="{ui:Loc {x:Static shell:GalleryText.Inputs}}" />
+                        <controls:FormField Margin="0,12,0,0" Label="{ui:Loc {x:Static ui:CommonText.FullName}}">
+                            <TextBox ui:ThemeAssist.Placeholder="{ui:Loc {x:Static shell:GalleryText.NamePlaceholder}}" />
+                        </controls:FormField>
+                        <controls:FormField Margin="0,14,0,0" Label="{ui:Loc {x:Static ui:CommonText.Password}}">
+                            <PasswordBox ui:ThemeAssist.Placeholder="••••••" />
+                        </controls:FormField>
+                        <controls:FormField Margin="0,14,0,0" Label="{ui:Loc {x:Static shell:GalleryText.Plan}}">
+                            <ComboBox x:Name="PlanBox" />
+                        </controls:FormField>
+                        <controls:FormField Margin="0,14,0,0" Label="{ui:Loc {x:Static shell:GalleryText.StartDate}}">
+                            <DatePicker x:Name="DateBox" ui:ThemeAssist.Placeholder="{ui:Loc {x:Static ui:CommonText.PickDate}}" />
+                        </controls:FormField>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
 
         <!-- Column 2: search, choices, status, money, empty and loading -->
-        <StackPanel Grid.Column="2">
-            <Border Style="{DynamicResource Card}" Padding="20">
-                <StackPanel>
-                    <TextBlock Style="{DynamicResource Text.Overline}" Text="{ui:Loc {x:Static shell:GalleryText.SearchAndChoices}}" />
-                    <controls:SearchBox Margin="0,12,0,0" />
-                    <WrapPanel Margin="0,8,0,0">
-                        <CheckBox IsChecked="True" Margin="0,0,20,0" Content="{ui:Loc {x:Static shell:GalleryText.Active}}" />
-                        <CheckBox Content="{ui:Loc {x:Static shell:GalleryText.PrivateTrainer}}" />
-                    </WrapPanel>
-                    <controls:FormField Margin="0,8,0,0" Label="{ui:Loc {x:Static shell:GalleryText.Phone}}" x:Name="PhoneField">
-                        <TextBox Text="0944 12" FlowDirection="LeftToRight" />
-                    </controls:FormField>
-                </StackPanel>
-            </Border>
+        <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+            <StackPanel>
+                <Border Style="{DynamicResource Card}" Padding="20">
+                    <StackPanel>
+                        <TextBlock Style="{DynamicResource Text.Overline}" Text="{ui:Loc {x:Static shell:GalleryText.SearchAndChoices}}" />
+                        <controls:SearchBox Margin="0,12,0,0" />
+                        <WrapPanel Margin="0,8,0,0">
+                            <CheckBox IsChecked="True" Margin="0,0,20,0" Content="{ui:Loc {x:Static shell:GalleryText.Active}}" />
+                            <CheckBox Content="{ui:Loc {x:Static shell:GalleryText.PrivateTrainer}}" />
+                        </WrapPanel>
+                        <controls:FormField Margin="0,8,0,0" Label="{ui:Loc {x:Static shell:GalleryText.Phone}}" x:Name="PhoneField">
+                            <TextBox Text="0944 12" FlowDirection="LeftToRight" />
+                        </controls:FormField>
+                    </StackPanel>
+                </Border>
 
-            <Border Style="{DynamicResource Card}" Padding="20" Margin="0,16,0,0">
-                <StackPanel>
-                    <TextBlock Style="{DynamicResource Text.Overline}" Text="{ui:Loc {x:Static shell:GalleryText.StatusAndMoney}}" />
-                    <WrapPanel Margin="0,12,0,0">
-                        <controls:StatusPill Status="Active" Margin="0,0,8,8" />
-                        <controls:StatusPill Status="ExpiringSoon" Margin="0,0,8,8" />
-                        <controls:StatusPill Status="Expired" Margin="0,0,8,8" />
-                        <controls:StatusPill x:Name="NoStatusPill" Margin="0,0,8,8" />
-                        <controls:StatusPill Tone="Gold" Margin="0,0,8,8" Text="{ui:Loc {x:Static shell:GalleryText.PrivateTrainer}}" />
-                    </WrapPanel>
-                    <WrapPanel Margin="0,8,0,0">
-                        <controls:MoneyText Amount="180" FontSize="28" VerticalAlignment="Center" Margin="0,0,8,0" />
-                        <controls:SypText Amount="180" FontSize="16" VerticalAlignment="Center" Margin="0,0,16,0" />
-                        <controls:MoneyText Amount="-2" FontSize="16" VerticalAlignment="Center" Margin="0,0,16,0"
-                                            Foreground="{DynamicResource Brush.Bad}" />
-                        <controls:CurrencyPicker VerticalAlignment="Center" />
-                    </WrapPanel>
-                </StackPanel>
-            </Border>
+                <Border Style="{DynamicResource Card}" Padding="20" Margin="0,16,0,0">
+                    <StackPanel>
+                        <TextBlock Style="{DynamicResource Text.Overline}" Text="{ui:Loc {x:Static shell:GalleryText.StatusAndMoney}}" />
+                        <WrapPanel Margin="0,12,0,0">
+                            <controls:StatusPill Status="Active" Margin="0,0,8,8" />
+                            <controls:StatusPill Status="ExpiringSoon" Margin="0,0,8,8" />
+                            <controls:StatusPill Status="Expired" Margin="0,0,8,8" />
+                            <controls:StatusPill x:Name="NoStatusPill" Margin="0,0,8,8" />
+                            <controls:StatusPill Tone="Gold" Margin="0,0,8,8" Text="{ui:Loc {x:Static shell:GalleryText.PrivateTrainer}}" />
+                        </WrapPanel>
+                        <WrapPanel Margin="0,8,0,0">
+                            <controls:MoneyText Amount="180" FontSize="28" VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <controls:SypText Amount="180" FontSize="16" VerticalAlignment="Center" Margin="0,0,16,0" />
+                            <controls:MoneyText Amount="-2" FontSize="16" VerticalAlignment="Center" Margin="0,0,16,0"
+                                                Foreground="{DynamicResource Brush.Bad}" />
+                            <controls:CurrencyPicker VerticalAlignment="Center" />
+                        </WrapPanel>
+                    </StackPanel>
+                </Border>
 
-            <Border Style="{DynamicResource Card}" Padding="0" Margin="0,16,0,0" Height="150" ClipToBounds="True">
-                <Grid>
-                    <TextBlock Margin="20" Style="{DynamicResource Text.Overline}" Text="{ui:Loc {x:Static shell:GalleryText.Members}}" />
-                    <controls:LoadingOverlay IsActive="True" Message="{ui:Loc {x:Static ui:CommonText.Loading}}" />
-                </Grid>
-            </Border>
-        </StackPanel>
+                <Border Style="{DynamicResource Card}" Padding="0" Margin="0,16,0,0" Height="150" ClipToBounds="True">
+                    <Grid>
+                        <TextBlock Margin="20" Style="{DynamicResource Text.Overline}" Text="{ui:Loc {x:Static shell:GalleryText.Members}}" />
+                        <controls:LoadingOverlay IsActive="True" Message="{ui:Loc {x:Static ui:CommonText.Loading}}" />
+                    </Grid>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
 
         <!-- Column 3: data grid and toasts -->
-        <StackPanel Grid.Column="4">
-            <Border Style="{DynamicResource Card}" Padding="12,16,12,8">
-                <StackPanel>
-                    <TextBlock Style="{DynamicResource Text.Overline}" Margin="8,0,0,0" Text="{ui:Loc {x:Static shell:GalleryText.Members}}" />
-                    <DataGrid x:Name="MembersGrid" Margin="0,8,0,0" Height="206">
-                        <DataGrid.Columns>
-                            <DataGridTemplateColumn Width="60">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <controls:Avatar Source="{Binding Photo}" Width="38" Height="38" ui:ThemeAssist.CornerRadius="11" />
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-                            <DataGridTemplateColumn Header="{ui:Loc {x:Static shell:GalleryText.Member}}" Width="*">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <StackPanel VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding Name}" Style="{DynamicResource Text.Strong}" FontSize="14" />
-                                            <TextBlock Text="{Binding Number}" Style="{DynamicResource Text.Caption}" FontSize="12" FlowDirection="LeftToRight"
-                                                       HorizontalAlignment="Left" />
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-                            <DataGridTemplateColumn Header="{ui:Loc {x:Static shell:GalleryText.Status}}" Width="116">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <controls:StatusPill Status="{Binding Status}" />
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-                            <DataGridTextColumn Header="{ui:Loc {x:Static shell:GalleryText.Ends}}" Binding="{Binding Ends}" Width="150" />
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </StackPanel>
-            </Border>
+        <ScrollViewer Grid.Column="4" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+            <StackPanel>
+                <Border Style="{DynamicResource Card}" Padding="12,16,12,8">
+                    <StackPanel>
+                        <TextBlock Style="{DynamicResource Text.Overline}" Margin="8,0,0,0" Text="{ui:Loc {x:Static shell:GalleryText.Members}}" />
+                        <DataGrid x:Name="MembersGrid" Margin="0,8,0,0" Height="206">
+                            <DataGrid.Columns>
+                                <DataGridTemplateColumn Width="60">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <controls:Avatar Source="{Binding Photo}" Width="38" Height="38" ui:ThemeAssist.CornerRadius="11" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="{ui:Loc {x:Static shell:GalleryText.Member}}" Width="*">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Name}" Style="{DynamicResource Text.Strong}" FontSize="14" />
+                                                <TextBlock Text="{Binding Number}" Style="{DynamicResource Text.Caption}" FontSize="12" FlowDirection="LeftToRight"
+                                                           HorizontalAlignment="Left" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="{ui:Loc {x:Static shell:GalleryText.Status}}" Width="116">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <controls:StatusPill Status="{Binding Status}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="{ui:Loc {x:Static shell:GalleryText.Ends}}" Binding="{Binding Ends}" Width="150" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </Border>
 
-            <Border Style="{DynamicResource Card}" Padding="20" Margin="0,16,0,0">
-                <StackPanel>
-                    <TextBlock Style="{DynamicResource Text.Overline}" Text="{ui:Loc {x:Static shell:GalleryText.Messages}}" />
-                    <controls:ToastView Kind="Success" HorizontalAlignment="Stretch" Message="{ui:Loc {x:Static ui:CommonText.SettingsSaved}}" />
-                    <controls:ToastView Kind="Warning" HorizontalAlignment="Stretch" Message="{ui:Loc {x:Static ui:CommonText.LiveReconnecting}}" />
-                    <controls:ToastView Kind="Error" HorizontalAlignment="Stretch" Message="{ui:Loc {x:Static ui:ErrorText.InsufficientStock}}" />
-                </StackPanel>
-            </Border>
+                <Border Style="{DynamicResource Card}" Padding="20" Margin="0,16,0,0">
+                    <StackPanel>
+                        <TextBlock Style="{DynamicResource Text.Overline}" Text="{ui:Loc {x:Static shell:GalleryText.Messages}}" />
+                        <controls:ToastView Kind="Success" HorizontalAlignment="Stretch" Message="{ui:Loc {x:Static ui:CommonText.SettingsSaved}}" />
+                        <controls:ToastView Kind="Warning" HorizontalAlignment="Stretch" Message="{ui:Loc {x:Static ui:CommonText.LiveReconnecting}}" />
+                        <controls:ToastView Kind="Error" HorizontalAlignment="Stretch" Message="{ui:Loc {x:Static ui:ErrorText.InsufficientStock}}" />
+                    </StackPanel>
+                </Border>
 
-            <Border Style="{DynamicResource Card}" Padding="8" Margin="0,16,0,0">
-                <controls:EmptyState Title="{ui:Loc {x:Static ui:CommonText.NoResults}}" Text="{ui:Loc {x:Static ui:CommonText.NoResultsText}}" />
-            </Border>
-        </StackPanel>
+                <Border Style="{DynamicResource Card}" Padding="8" Margin="0,16,0,0">
+                    <controls:EmptyState Title="{ui:Loc {x:Static ui:CommonText.NoResults}}" Text="{ui:Loc {x:Static ui:CommonText.NoResultsText}}" />
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
     </Grid>
 </shell:PageView>

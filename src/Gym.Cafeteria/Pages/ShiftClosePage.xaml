@@ -15,7 +15,7 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="24" />
-            <ColumnDefinition Width="392" />
+            <ColumnDefinition Width="0.8*" MinWidth="320" MaxWidth="392" />
         </Grid.ColumnDefinitions>
 
         <!-- The shown shift -->
@@ -95,7 +95,7 @@
                     <Grid>
                         <DataGrid x:Name="ItemsGrid">
                             <DataGrid.Columns>
-                                <DataGridTemplateColumn Header="{ui:Loc {x:Static local:CafeteriaText.Item}}" Width="*">
+                                <DataGridTemplateColumn Header="{ui:Loc {x:Static local:CafeteriaText.Item}}" Width="2*" MinWidth="120">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate DataType="{x:Type sales:SoldItem}">
                                             <TextBlock Text="{Binding Name}" Style="{DynamicResource Text.Strong}" FontSize="14" VerticalAlignment="Center"
@@ -103,7 +103,7 @@
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTemplateColumn Header="{ui:Loc {x:Static local:CafeteriaText.Quantity}}" Width="110">
+                                <DataGridTemplateColumn Header="{ui:Loc {x:Static local:CafeteriaText.Quantity}}" Width="1.1*" MinWidth="77">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate DataType="{x:Type sales:SoldItem}">
                                             <TextBlock Text="{Binding QuantityText}" FontFamily="{DynamicResource Font.Heading}" FontSize="15" FontWeight="Bold"
@@ -111,7 +111,7 @@
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTemplateColumn Header="{ui:Loc {x:Static local:CafeteriaText.Total}}" Width="150">
+                                <DataGridTemplateColumn Header="{ui:Loc {x:Static local:CafeteriaText.Total}}" Width="1.5*" MinWidth="105">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate DataType="{x:Type sales:SoldItem}">
                                             <controls:MoneyText Amount="{Binding Total}" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"

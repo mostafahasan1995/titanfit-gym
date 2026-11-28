@@ -32,71 +32,117 @@
             </Border>
         </DockPanel>
 
-        <Border Width="480" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{DynamicResource Card}" Padding="40,36">
-            <StackPanel>
-                <Border Width="76" Height="76" CornerRadius="22" HorizontalAlignment="Center" Background="{DynamicResource Brush.LogoTile}"
-                        BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1">
-                    <Image Source="{DynamicResource Image.Logo}" Width="68" Height="68" Stretch="Uniform" />
-                </Border>
-                <controls:Wordmark FontSize="30" HorizontalAlignment="Center" Margin="0,16,0,0" />
-                <TextBlock x:Name="AppNameText" Style="{DynamicResource Text.Caption}" HorizontalAlignment="Center" Margin="0,4,0,0"
-                           FontSize="14" />
+        <!--
+            The card is never taller than the window: logo and title on top, the message, the sign-in button and the
+            server line docked at the bottom, the fields scroll between them (the 4 fields of the first admin on a
+            short window). On short windows the big logo tile is left out and the spacing is tighter.
+        -->
+        <Border x:Name="Card" Width="480" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,16">
+            <Border.Style>
+                <Style TargetType="Border" BasedOn="{StaticResource Card}">
+                    <Setter Property="Padding" Value="40,36" />
+                    <Style.Triggers>
+                        <Trigger Property="ui:Responsive.IsShort" Value="True">
+                            <Setter Property="Padding" Value="36,20" />
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Top">
+                    <Border Width="76" Height="76" CornerRadius="22" HorizontalAlignment="Center" Background="{DynamicResource Brush.LogoTile}"
+                            BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" Margin="0,0,0,16" ui:Responsive.CollapseWhenShort="True">
+                        <Image Source="{DynamicResource Image.Logo}" Width="68" Height="68" Stretch="Uniform" />
+                    </Border>
+                    <controls:Wordmark FontSize="30" HorizontalAlignment="Center" />
+                    <TextBlock x:Name="AppNameText" Style="{DynamicResource Text.Caption}" HorizontalAlignment="Center" Margin="0,4,0,0"
+                               FontSize="14" />
 
-                <TextBlock x:Name="TitleText" Style="{DynamicResource Text.H2}" FontSize="22" Margin="0,30,0,0" />
-                <TextBlock x:Name="SubtitleText" Style="{DynamicResource Text.Caption}" TextWrapping="Wrap" TextTrimming="None"
-                           Margin="0,4,0,0" FontSize="14" />
-
-                <StackPanel x:Name="SignInForm" Margin="0,22,0,0">
-                    <controls:FormField x:Name="UsernameField">
-                        <TextBox x:Name="UsernameBox" KeyDown="OnUsernameKeyDown" />
-                    </controls:FormField>
-                    <controls:FormField x:Name="PasswordField" Margin="0,16,0,0">
-                        <PasswordBox x:Name="PasswordBox" KeyDown="OnPasswordKeyDown" />
-                    </controls:FormField>
+                    <TextBlock x:Name="TitleText" FontSize="22">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource Text.H2}">
+                                <Setter Property="Margin" Value="0,30,0,0" />
+                                <Style.Triggers>
+                                    <Trigger Property="ui:Responsive.IsShort" Value="True">
+                                        <Setter Property="Margin" Value="0,14,0,0" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock x:Name="SubtitleText" Style="{DynamicResource Text.Caption}" TextWrapping="Wrap" TextTrimming="None"
+                               Margin="0,4,0,0" FontSize="14" />
                 </StackPanel>
 
-                <StackPanel x:Name="SetupForm" Margin="0,22,0,0" Visibility="Collapsed">
-                    <controls:FormField x:Name="SetupNameField">
-                        <TextBox x:Name="SetupNameBox" />
-                    </controls:FormField>
-                    <controls:FormField x:Name="SetupUsernameField" Margin="0,14,0,0">
-                        <TextBox x:Name="SetupUsernameBox" />
-                    </controls:FormField>
-                    <controls:FormField x:Name="SetupPasswordField" Margin="0,14,0,0">
-                        <PasswordBox x:Name="SetupPasswordBox" />
-                    </controls:FormField>
-                    <controls:FormField x:Name="SetupConfirmField" Margin="0,14,0,0">
-                        <PasswordBox x:Name="SetupConfirmBox" KeyDown="OnPasswordKeyDown" />
-                    </controls:FormField>
+                <StackPanel DockPanel.Dock="Bottom">
+                    <Border x:Name="MessageBorder" Visibility="Collapsed" CornerRadius="12" Padding="14,10" Margin="0,14,0,0" BorderThickness="1">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <controls:Icon x:Name="MessageIcon" Size="18" StrokeThickness="2.2" VerticalAlignment="Top" Margin="0,2,10,0" />
+                            <TextBlock x:Name="MessageText" Grid.Column="1" TextWrapping="Wrap" FontSize="14"
+                                       Foreground="{DynamicResource Brush.Text}" />
+                        </Grid>
+                    </Border>
+
+                    <Button x:Name="SubmitButton" Style="{DynamicResource Button.Primary}" Height="54" Margin="0,18,0,0" FontSize="16"
+                            Click="OnSubmitClick" />
+
+                    <Border BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,1,0,0">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Margin" Value="0,24,0,0" />
+                                <Setter Property="Padding" Value="0,16,0,0" />
+                                <Style.Triggers>
+                                    <Trigger Property="ui:Responsive.IsShort" Value="True">
+                                        <Setter Property="Margin" Value="0,14,0,0" />
+                                        <Setter Property="Padding" Value="0,10,0,0" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <DockPanel>
+                            <Button x:Name="ServerButton" DockPanel.Dock="Right" Style="{DynamicResource Button.Ghost}"
+                                    ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Server}" Click="OnServerSettingsClick" />
+                            <StackPanel VerticalAlignment="Center" Margin="0,0,12,0">
+                                <TextBlock x:Name="ServerCaption" Style="{DynamicResource Text.Overline}" />
+                                <TextBlock x:Name="ServerText" Style="{DynamicResource Text.Caption}" FlowDirection="LeftToRight"
+                                           HorizontalAlignment="Left" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
                 </StackPanel>
 
-                <Border x:Name="MessageBorder" Visibility="Collapsed" CornerRadius="12" Padding="14,10" Margin="0,18,0,0" BorderThickness="1">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <controls:Icon x:Name="MessageIcon" Size="18" StrokeThickness="2.2" VerticalAlignment="Top" Margin="0,2,10,0" />
-                        <TextBlock x:Name="MessageText" Grid.Column="1" TextWrapping="Wrap" FontSize="14"
-                                   Foreground="{DynamicResource Brush.Text}" />
-                    </Grid>
-                </Border>
-
-                <Button x:Name="SubmitButton" Style="{DynamicResource Button.Primary}" Height="54" Margin="0,22,0,0" FontSize="16"
-                        Click="OnSubmitClick" />
-
-                <Border BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,1,0,0" Margin="0,24,0,0" Padding="0,16,0,0">
-                    <DockPanel>
-                        <Button x:Name="ServerButton" DockPanel.Dock="Right" Style="{DynamicResource Button.Ghost}"
-                                ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Server}" Click="OnServerSettingsClick" />
-                        <StackPanel VerticalAlignment="Center" Margin="0,0,12,0">
-                            <TextBlock x:Name="ServerCaption" Style="{DynamicResource Text.Overline}" />
-                            <TextBlock x:Name="ServerText" Style="{DynamicResource Text.Caption}" FlowDirection="LeftToRight"
-                                       HorizontalAlignment="Left" Margin="0,2,0,0" />
+                <ScrollViewer Margin="0,18,0,0" Focusable="False" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
+                        <StackPanel x:Name="SignInForm">
+                            <controls:FormField x:Name="UsernameField">
+                                <TextBox x:Name="UsernameBox" KeyDown="OnUsernameKeyDown" />
+                            </controls:FormField>
+                            <controls:FormField x:Name="PasswordField" Margin="0,16,0,0">
+                                <PasswordBox x:Name="PasswordBox" KeyDown="OnPasswordKeyDown" />
+                            </controls:FormField>
                         </StackPanel>
-                    </DockPanel>
-                </Border>
-            </StackPanel>
+
+                        <StackPanel x:Name="SetupForm" Visibility="Collapsed">
+                            <controls:FormField x:Name="SetupNameField">
+                                <TextBox x:Name="SetupNameBox" />
+                            </controls:FormField>
+                            <controls:FormField x:Name="SetupUsernameField" Margin="0,14,0,0">
+                                <TextBox x:Name="SetupUsernameBox" />
+                            </controls:FormField>
+                            <controls:FormField x:Name="SetupPasswordField" Margin="0,14,0,0">
+                                <PasswordBox x:Name="SetupPasswordBox" />
+                            </controls:FormField>
+                            <controls:FormField x:Name="SetupConfirmField" Margin="0,14,0,0">
+                                <PasswordBox x:Name="SetupConfirmBox" KeyDown="OnPasswordKeyDown" />
+                            </controls:FormField>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
         </Border>
     </Grid>
 </UserControl>

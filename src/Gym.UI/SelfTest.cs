@@ -43,6 +43,7 @@ public static partial class SelfTest
         {
             new("Embedded fonts", EmbeddedFonts),
             new("WPF rendering (offscreen)", WpfRendering),
+            new("Per-monitor DPI awareness", PerMonitorDpi),
         };
         checks.AddRange(definition.SelfTestChecks);
         checks.Add(new("Visual C++ runtime in use", LoadedVcRuntime));
@@ -160,6 +161,15 @@ public static partial class SelfTest
         }
 
         return $"{width}x{height} English + Arabic text, {ink} dark pixels, render tier {RenderCapability.Tier >> 16}";
+    }
+
+    /// <summary>The process runs per-monitor V2 DPI aware (app.manifest), so the UI is sharp at any display scaling.</summary>
+    private static string PerMonitorDpi()
+    {
+        var awareness = DpiAwareness.Current();
+        return awareness == "PerMonitorV2"
+            ? awareness
+            : throw new InvalidOperationException($"The process is {awareness} DPI aware, not PerMonitorV2 (check app.manifest).");
     }
 
     /// <summary>

@@ -149,7 +149,7 @@ public sealed class LocalizationTests
     }
 
     [Fact]
-    public void Smoke_screenshot_files_are_named_app_page_language()
+    public void Smoke_screenshot_files_are_named_app_page_language_screen()
     {
         var app = new AppDefinition
         {
@@ -160,7 +160,7 @@ public sealed class LocalizationTests
             Pages = [],
         };
 
-        Assert.Equal("Reception-check-in-ar.png", SmokeScreenshot.FileName(app, "check-in", AppLanguage.Arabic));
+        Assert.Equal("Reception-check-in-ar-1366x768-125.png", SmokeScreenshot.FileName(app, "check-in", AppLanguage.Arabic, new SmokeScreen(1366, 768, 125)));
         Assert.Equal("Reception-en.json", SmokeScreenshot.ManifestName(app, AppLanguage.English));
     }
 }

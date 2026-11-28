@@ -13,11 +13,11 @@
                 xmlns:pages="clr-namespace:Gym.Cafeteria.Pages">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="360" />
-            <ColumnDefinition Width="24" />
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="24" />
-            <ColumnDefinition Width="340" />
+            <ColumnDefinition Width="0.95*" MinWidth="240" MaxWidth="360" />
+            <ColumnDefinition Width="20" />
+            <ColumnDefinition Width="*" MinWidth="260" />
+            <ColumnDefinition Width="20" />
+            <ColumnDefinition Width="0.9*" MinWidth="230" MaxWidth="340" />
         </Grid.ColumnDefinitions>
 
         <!-- The day's sales -->
@@ -69,58 +69,58 @@
                 </DockPanel>
                 <Border CornerRadius="14" Background="{DynamicResource Brush.Background}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1">
                     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
-                        <Border x:Name="Paper" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,18,0,18" Background="White"
-                                SnapsToDevicePixels="True">
-                            <Border.Effect>
-                                <DropShadowEffect BlurRadius="18" ShadowDepth="4" Opacity="0.45" Color="#000000" />
-                            </Border.Effect>
-                        </Border>
+                        <!-- The 80 mm paper shrinks to fit a narrow column. -->
+                        <Viewbox Stretch="Uniform" StretchDirection="DownOnly" VerticalAlignment="Top" Margin="10,18,10,18">
+                            <Border x:Name="Paper" HorizontalAlignment="Center" VerticalAlignment="Top" Background="White"
+                                    SnapsToDevicePixels="True">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="18" ShadowDepth="4" Opacity="0.45" Color="#000000" />
+                                </Border.Effect>
+                            </Border>
+                        </Viewbox>
                     </ScrollViewer>
                 </Border>
             </DockPanel>
         </Border>
 
         <!-- Hardware of this station -->
-        <StackPanel Grid.Column="4">
-            <Border Style="{DynamicResource Card}" Padding="20">
-                <StackPanel>
-                    <StackPanel Orientation="Horizontal">
-                        <controls:Icon Data="{x:Static ui:UiIcons.Printer}" Size="22" Foreground="{DynamicResource Brush.Accent}" VerticalAlignment="Center" />
-                        <TextBlock Style="{DynamicResource Text.H2}" FontWeight="Bold" Margin="10,0,0,0" VerticalAlignment="Center"
-                                   Text="{ui:Loc {x:Static local:CafeteriaText.ReceiptPrinter}}" />
+        <ScrollViewer Grid.Column="4" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+            <StackPanel>
+                <Border Style="{DynamicResource Card}" Padding="20">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <controls:Icon Data="{x:Static ui:UiIcons.Printer}" Size="22" Foreground="{DynamicResource Brush.Accent}" VerticalAlignment="Center" />
+                            <TextBlock Style="{DynamicResource Text.H2}" FontWeight="Bold" Margin="10,0,0,0" VerticalAlignment="Center"
+                                       Text="{ui:Loc {x:Static local:CafeteriaText.ReceiptPrinter}}" />
+                        </StackPanel>
+                        <controls:FormField Margin="0,14,0,0" Label="{ui:Loc {x:Static local:CafeteriaText.Printer}}"
+                                            Hint="{ui:Loc {x:Static local:CafeteriaText.PrinterHint}}">
+                            <ComboBox x:Name="PrinterBox" />
+                        </controls:FormField>
+                        <controls:ResponsiveColumns Margin="0,14,0,0" Columns="2" MinColumnWidth="130" Gap="10" RowGap="10">
+                            <Button x:Name="SavePrinterButton" Style="{DynamicResource Button.Primary}" Padding="8,0"
+                                    ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Check}" Content="{ui:Loc {x:Static ui:CommonText.Save}}" Click="OnSavePrinterClick" />
+                            <Button x:Name="TestPrintButton" Padding="8,0" ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Receipt}"
+                                    Content="{ui:Loc {x:Static local:CafeteriaText.TestPrint}}" Click="OnTestPrintClick" />
+                        </controls:ResponsiveColumns>
+                        <TextBlock x:Name="PrinterNote" Style="{DynamicResource Text.Caption}" Margin="0,12,0,0" TextWrapping="Wrap" />
                     </StackPanel>
-                    <controls:FormField Margin="0,14,0,0" Label="{ui:Loc {x:Static local:CafeteriaText.Printer}}"
-                                        Hint="{ui:Loc {x:Static local:CafeteriaText.PrinterHint}}">
-                        <ComboBox x:Name="PrinterBox" />
-                    </controls:FormField>
-                    <Grid Margin="0,14,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="10" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <Button x:Name="SavePrinterButton" Grid.Column="0" Style="{DynamicResource Button.Primary}" Padding="8,0"
-                                ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Check}" Content="{ui:Loc {x:Static ui:CommonText.Save}}" Click="OnSavePrinterClick" />
-                        <Button x:Name="TestPrintButton" Grid.Column="2" Padding="8,0" ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Receipt}"
-                                Content="{ui:Loc {x:Static local:CafeteriaText.TestPrint}}" Click="OnTestPrintClick" />
-                    </Grid>
-                    <TextBlock x:Name="PrinterNote" Style="{DynamicResource Text.Caption}" Margin="0,12,0,0" TextWrapping="Wrap" />
-                </StackPanel>
-            </Border>
+                </Border>
 
-            <Border Style="{DynamicResource Card}" Padding="20" Margin="0,16,0,0">
-                <StackPanel>
-                    <StackPanel Orientation="Horizontal">
-                        <controls:Icon Data="{x:Static ui:UiIcons.Barcode}" Size="22" Foreground="{DynamicResource Brush.Accent}" VerticalAlignment="Center" />
-                        <TextBlock Style="{DynamicResource Text.H2}" FontWeight="Bold" Margin="10,0,0,0" VerticalAlignment="Center"
-                                   Text="{ui:Loc {x:Static local:CafeteriaText.ScannerTest}}" />
+                <Border Style="{DynamicResource Card}" Padding="20" Margin="0,16,0,0">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <controls:Icon Data="{x:Static ui:UiIcons.Barcode}" Size="22" Foreground="{DynamicResource Brush.Accent}" VerticalAlignment="Center" />
+                            <TextBlock Style="{DynamicResource Text.H2}" FontWeight="Bold" Margin="10,0,0,0" VerticalAlignment="Center"
+                                       Text="{ui:Loc {x:Static local:CafeteriaText.ScannerTest}}" />
+                        </StackPanel>
+                        <TextBlock Style="{DynamicResource Text.Caption}" Margin="0,6,0,0" TextWrapping="Wrap" Text="{ui:Loc {x:Static local:CafeteriaText.ScannerTestText}}" />
+                        <TextBox x:Name="ScanTestInput" Margin="0,12,0,0" FlowDirection="LeftToRight" KeyDown="OnScanTestKeyDown"
+                                 ui:ThemeAssist.Placeholder="{ui:Loc {x:Static local:CafeteriaText.ScanHere}}" />
+                        <TextBlock x:Name="ScanTestResult" Style="{DynamicResource Text.Body}" Margin="0,10,0,0" TextWrapping="Wrap" />
                     </StackPanel>
-                    <TextBlock Style="{DynamicResource Text.Caption}" Margin="0,6,0,0" TextWrapping="Wrap" Text="{ui:Loc {x:Static local:CafeteriaText.ScannerTestText}}" />
-                    <TextBox x:Name="ScanTestInput" Margin="0,12,0,0" FlowDirection="LeftToRight" KeyDown="OnScanTestKeyDown"
-                             ui:ThemeAssist.Placeholder="{ui:Loc {x:Static local:CafeteriaText.ScanHere}}" />
-                    <TextBlock x:Name="ScanTestResult" Style="{DynamicResource Text.Body}" Margin="0,10,0,0" TextWrapping="Wrap" />
-                </StackPanel>
-            </Border>
-        </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
     </Grid>
 </shell:PageView>

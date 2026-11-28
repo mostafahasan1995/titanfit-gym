@@ -266,6 +266,21 @@
         </Setter>
     </Style>
 
+    <!-- The big photo of a details card (member, trainer): 112 px, 80 px on a short window. -->
+    <Style x:Key="Avatar.Large" TargetType="controls:Avatar" BasedOn="{StaticResource {x:Type controls:Avatar}}">
+        <Setter Property="Width" Value="112" />
+        <Setter Property="Height" Value="112" />
+        <Setter Property="ui:ThemeAssist.CornerRadius" Value="18" />
+        <Setter Property="VerticalAlignment" Value="Top" />
+        <Style.Triggers>
+            <Trigger Property="ui:Responsive.IsShort" Value="True">
+                <Setter Property="Width" Value="80" />
+                <Setter Property="Height" Value="80" />
+                <Setter Property="ui:ThemeAssist.CornerRadius" Value="14" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
     <!-- Placeholder of a screen that comes next. -->
     <Style TargetType="controls:PagePlaceholder">
         <Setter Property="Focusable" Value="False" />
@@ -362,23 +377,33 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="controls:DialogFrame">
-                    <Border Background="{DynamicResource Brush.Panel}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
+                    <!-- Title and message on top, the buttons docked at the bottom, the content scrolls between them:
+                         on a short window the buttons stay visible. -->
+                    <Border x:Name="Card" Background="{DynamicResource Brush.Panel}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
                             CornerRadius="20" Padding="28,24,28,24">
-                        <StackPanel>
-                            <TextBlock Text="{TemplateBinding Title}" Style="{DynamicResource Text.H2}" FontSize="20"
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Top" Text="{TemplateBinding Title}" Style="{DynamicResource Text.H2}" FontSize="20"
                                        TextWrapping="Wrap" TextTrimming="None" />
-                            <TextBlock x:Name="MessageText" Text="{TemplateBinding Message}" Style="{DynamicResource Text.Body}" Visibility="Collapsed"
+                            <TextBlock x:Name="MessageText" DockPanel.Dock="Top" Text="{TemplateBinding Message}" Style="{DynamicResource Text.Body}" Visibility="Collapsed"
                                        TextWrapping="Wrap" TextTrimming="None" Margin="0,8,0,0" Foreground="{DynamicResource Brush.TextSecondary}" />
-                            <ContentPresenter x:Name="ContentPart" Margin="0,20,0,0" />
-                            <ContentPresenter Content="{TemplateBinding Footer}" Margin="0,24,0,0" HorizontalAlignment="Right" />
-                        </StackPanel>
+                            <ContentPresenter x:Name="FooterPart" DockPanel.Dock="Bottom" Content="{TemplateBinding Footer}" Margin="0,24,0,0" HorizontalAlignment="Right" />
+                            <ScrollViewer x:Name="ContentScroll" Margin="0,20,0,0" Focusable="False"
+                                          VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <ContentPresenter x:Name="ContentPart" />
+                            </ScrollViewer>
+                        </DockPanel>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="HasMessage" Value="True">
                             <Setter TargetName="MessageText" Property="Visibility" Value="Visible" />
                         </Trigger>
                         <Trigger Property="Content" Value="{x:Null}">
-                            <Setter TargetName="ContentPart" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="ContentScroll" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="ui:Responsive.IsShort" Value="True">
+                            <Setter TargetName="Card" Property="Padding" Value="24,16,24,16" />
+                            <Setter TargetName="ContentScroll" Property="Margin" Value="0,12,0,0" />
+                            <Setter TargetName="FooterPart" Property="Margin" Value="0,14,0,0" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

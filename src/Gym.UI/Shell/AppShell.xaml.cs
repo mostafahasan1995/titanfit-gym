@@ -80,7 +80,7 @@ public partial class AppShell : UserControl
                 views[page] = view;
             }
 
-            PageHost.Content = view;
+            ShowView(view);
             if (view is IShellPage shown)
             {
                 await shown.OnShownAsync(token).ConfigureAwait(true);
@@ -210,7 +210,7 @@ public partial class AppShell : UserControl
         }
 
         HideHeaderTitle(title);
-        PageHost.Content = view;
+        ShowView(view);
         try
         {
             if (view is IShellPage shown)
@@ -226,6 +226,18 @@ public partial class AppShell : UserControl
         {
             return ex;
         }
+    }
+
+    /// <summary>
+    /// Puts a view in the page area. The area follows the visible size; the page's MinWidth/MinHeight (default
+    /// <see cref="PageView.DefaultMinWidth"/> x <see cref="PageView.DefaultMinHeight"/>) is where the whole page starts to scroll.
+    /// </summary>
+    private void ShowView(FrameworkElement view)
+    {
+        PageHost.MinWidth = view.MinWidth;
+        PageHost.MinHeight = view.MinHeight;
+        PageScroller.ScrollToHome();
+        PageHost.Content = view;
     }
 
     /// <summary>Stops the page loading (logout).</summary>

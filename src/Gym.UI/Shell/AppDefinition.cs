@@ -88,6 +88,12 @@ public sealed class AppDefinition
     /// </summary>
     public IReadOnlyList<SelfTestCheck> SelfTestChecks { get; init; } = [];
 
+    /// <summary>
+    /// The window size drawn at 100 %; bigger windows draw the UI larger (see <see cref="UiScale"/>).
+    /// <see cref="UiScale.TouchReference"/> makes a touch app (Reception) grow earlier.
+    /// </summary>
+    public Size ScaleReference { get; init; } = UiScale.DefaultReference;
+
     /// <summary>"Reception": the prefix of the screenshot files.</summary>
     public string Id => App.ToString();
 }

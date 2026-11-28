@@ -17,8 +17,12 @@ namespace Gym.UI.Shell;
 /// </summary>
 public sealed class StationWindow : Window
 {
-    public const double DesignWidth = 1440;
-    public const double DesignHeight = 900;
+    /// <summary>
+    /// The smallest window: below 1366 x 768 at 125 % (1093 x 614 logical px, minus the taskbar) the layout still fits;
+    /// smaller windows scroll the page.
+    /// </summary>
+    public const double MinimumWidth = 900;
+    public const double MinimumHeight = 520;
 
     private readonly StationServices services;
     private readonly ContentControl viewHost;
@@ -38,15 +42,14 @@ public sealed class StationWindow : Window
 
         SetResourceReference(StyleProperty, "Window.TitanFit");
         SetResourceReference(IconProperty, "Image.Logo");
-        Width = DesignWidth;
-        Height = DesignHeight;
-        MinWidth = 1024;
-        MinHeight = 640;
+        // Opens maximized on the monitor's work area (the taskbar stays visible); "restore" gives a large centred window.
+        var work = SystemParameters.WorkArea;
+        Width = Math.Max(MinimumWidth, Math.Round(work.Width * 0.9));
+        Height = Math.Max(MinimumHeight, Math.Round(work.Height * 0.9));
+        MinWidth = Math.Min(MinimumWidth, work.Width);
+        MinHeight = Math.Min(MinimumHeight, work.Height);
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
-        if (SystemParameters.WorkArea.Width < DesignWidth || SystemParameters.WorkArea.Height < DesignHeight)
-        {
-            WindowState = WindowState.Maximized;
-        }
+        WindowState = WindowState.Maximized;
 
         // The root carries the theme itself (not only the window), so it also renders on its own (smoke screenshots).
         viewHost = new ContentControl { Focusable = false, HorizontalContentAlignment = HorizontalAlignment.Stretch, VerticalContentAlignment = VerticalAlignment.Stretch };
@@ -60,7 +63,10 @@ public sealed class StationWindow : Window
         NumberSubstitution.SetSubstitution(Root, NumberSubstitutionMethod.European);
         Root.Children.Add(viewHost);
         Root.Children.Add(Overlay);
-        Content = Root;
+
+        // Larger on big screens (same layout, drawn bigger), compact breakpoints on small ones.
+        ScaledRoot = new UiScaleHost(Root) { Reference = app.ScaleReference };
+        Content = ScaledRoot;
 
         api = services.CreateApi(Settings);
         api.SessionExpired += OnSessionExpired;
@@ -82,8 +88,11 @@ public sealed class StationWindow : Window
 
     public OverlayHost Overlay { get; }
 
-    /// <summary>Everything inside the window (rendered on its own by the smoke screenshots).</summary>
+    /// <summary>Everything inside the window, at design scale.</summary>
     public Grid Root { get; }
+
+    /// <summary>The window content: <see cref="Root"/> scaled to the window size (rendered on its own by the smoke screenshots).</summary>
+    public UiScaleHost ScaledRoot { get; }
 
     /// <summary>The login screen while it is shown.</summary>
     public LoginView? Login { get; private set; }

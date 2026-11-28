@@ -17,23 +17,30 @@
         </Grid.RowDefinitions>
 
         <!-- Filters and New item -->
-        <DockPanel Grid.Row="0" Margin="0,0,0,16" LastChildFill="False">
-            <controls:SearchBox x:Name="SearchInput" DockPanel.Dock="Left" Width="300" SearchChanged="OnSearchChanged"
-                                ui:ThemeAssist.Placeholder="{ui:Loc {x:Static local:CafeteriaText.StockSearchPlaceholder}}" />
-            <ComboBox x:Name="CategoryBox" DockPanel.Dock="Left" Width="210" Margin="12,0,0,0" SelectionChanged="OnCategoryChanged" />
-            <CheckBox x:Name="LowOnlyBox" DockPanel.Dock="Left" Margin="18,0,0,0" VerticalAlignment="Center"
-                      Content="{ui:Loc {x:Static local:CafeteriaText.LowOnly}}" Checked="OnFilterChanged" Unchecked="OnFilterChanged" />
-            <CheckBox x:Name="InactiveBox" DockPanel.Dock="Left" Margin="18,0,0,0" VerticalAlignment="Center"
-                      Content="{ui:Loc {x:Static local:CafeteriaText.ShowInactive}}" Checked="OnFilterChanged" Unchecked="OnFilterChanged" />
-            <Button DockPanel.Dock="Right" Style="{DynamicResource Button.Primary}" ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Plus}"
+        <!-- The filters wrap to a second line on a narrow window; New item stays at the end. -->
+        <Grid Grid.Row="0" Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <WrapPanel>
+                <controls:SearchBox x:Name="SearchInput" Width="300" Margin="0,0,12,6" SearchChanged="OnSearchChanged"
+                                    ui:ThemeAssist.Placeholder="{ui:Loc {x:Static local:CafeteriaText.StockSearchPlaceholder}}" />
+                <ComboBox x:Name="CategoryBox" Width="210" Margin="0,0,18,6" SelectionChanged="OnCategoryChanged" />
+                <CheckBox x:Name="LowOnlyBox" Margin="0,0,18,6" MinHeight="48" VerticalAlignment="Center"
+                          Content="{ui:Loc {x:Static local:CafeteriaText.LowOnly}}" Checked="OnFilterChanged" Unchecked="OnFilterChanged" />
+                <CheckBox x:Name="InactiveBox" Margin="0,0,18,6" MinHeight="48" VerticalAlignment="Center"
+                          Content="{ui:Loc {x:Static local:CafeteriaText.ShowInactive}}" Checked="OnFilterChanged" Unchecked="OnFilterChanged" />
+            </WrapPanel>
+            <Button Grid.Column="1" VerticalAlignment="Top" Style="{DynamicResource Button.Primary}" ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Plus}"
                     Content="{ui:Loc {x:Static local:CafeteriaText.NewItem}}" Click="OnNewItemClick" />
-        </DockPanel>
+        </Grid>
 
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="20" />
-                <ColumnDefinition Width="364" />
+                <ColumnDefinition Width="0.6*" MinWidth="280" MaxWidth="364" />
             </Grid.ColumnDefinitions>
 
             <!-- Items -->
@@ -63,7 +70,7 @@
                                 </Style>
                             </DataGrid.RowStyle>
                             <DataGrid.Columns>
-                                <DataGridTemplateColumn Header="{ui:Loc {x:Static local:CafeteriaText.Item}}" Width="*">
+                                <DataGridTemplateColumn Header="{ui:Loc {x:Static local:CafeteriaText.Item}}" Width="2.4*" MinWidth="100">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate DataType="{x:Type inventory:StockRow}">
                                             <DockPanel VerticalAlignment="Center">
@@ -80,7 +87,7 @@
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTemplateColumn Header="{ui:Loc {x:Static local:CafeteriaText.Barcode}}" Width="128">
+                                <DataGridTemplateColumn Header="{ui:Loc {x:Static local:CafeteriaText.Barcode}}" Width="1.28*" MinWidth="72">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate DataType="{x:Type inventory:StockRow}">
                                             <TextBlock Text="{Binding Barcode}" FontSize="13" FlowDirection="LeftToRight" HorizontalAlignment="Left"
@@ -88,7 +95,7 @@
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTemplateColumn Header="{ui:Loc {x:Static local:CafeteriaText.Price}}" Width="112">
+                                <DataGridTemplateColumn Header="{ui:Loc {x:Static local:CafeteriaText.Price}}" Width="1.12*" MinWidth="78">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate DataType="{x:Type inventory:StockRow}">
                                             <controls:MoneyText Amount="{Binding Price}" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"
@@ -96,7 +103,7 @@
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTemplateColumn Header="{ui:Loc {x:Static local:CafeteriaText.StockColumn}}" Width="96">
+                                <DataGridTemplateColumn Header="{ui:Loc {x:Static local:CafeteriaText.StockColumn}}" Width="0.96*" MinWidth="70">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate DataType="{x:Type inventory:StockRow}">
                                             <StackPanel VerticalAlignment="Center">
@@ -107,7 +114,7 @@
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTemplateColumn Header="{ui:Loc {x:Static local:CafeteriaText.Status}}" Width="136">
+                                <DataGridTemplateColumn Header="{ui:Loc {x:Static local:CafeteriaText.Status}}" Width="1.36*" MinWidth="104">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate DataType="{x:Type inventory:StockRow}">
                                             <controls:StatusPill Tone="{Binding StatusTone}" Text="{Binding StatusText}" />

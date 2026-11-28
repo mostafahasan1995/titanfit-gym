@@ -98,7 +98,10 @@ public sealed class OverlayHost : Grid, IShellUi
             Content = request.Content,
             Footer = footer,
             Width = request.Width,
-            MaxHeight = 820,
+            MaxHeight = 860,
+
+            // Never taller than the window: the body scrolls, the buttons stay docked at the bottom.
+            Margin = new Thickness(20),
         };
         var layer = new Grid();
         layer.SetResourceReference(BackgroundProperty, "Brush.Scrim");

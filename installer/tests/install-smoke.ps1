@@ -149,9 +149,9 @@ function Assert-SelfTest([string]$Exe, [string[]]$Expected) {
     $lines = @(Get-Content $out -ErrorAction SilentlyContinue) + @(Get-Content "$out.err" -ErrorAction SilentlyContinue)
     $lines | ForEach-Object { Write-Host "    | $_" }
     Assert-True ($process.ExitCode -eq 0) "$name --self-test exit code $($process.ExitCode) (installed exe)"
-    $all = $Expected.Count + 3   # + embedded fonts, WPF rendering, Visual C++ runtime in use
+    $all = $Expected.Count + 4   # + embedded fonts, WPF rendering, per-monitor DPI awareness, Visual C++ runtime in use
     Assert-True (@($lines | Where-Object { $_ -match "self-test: all $all checks passed\.$" }).Count -eq 1) "$name self-test: all $all checks passed"
-    $missing = @(@('Embedded fonts', 'WPF rendering', 'Visual C++ runtime in use') + $Expected | Where-Object {
+    $missing = @(@('Embedded fonts', 'WPF rendering', 'Per-monitor DPI awareness', 'Visual C++ runtime in use') + $Expected | Where-Object {
         $check = $_
         @($lines | Where-Object { $_.StartsWith("PASS  $check", [StringComparison]::Ordinal) }).Count -ne 1
     })

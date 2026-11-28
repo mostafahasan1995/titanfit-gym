@@ -6,6 +6,8 @@
     <UseWPF>true</UseWPF>
     <!-- Program.Main handles the normal start and the CI screenshot smoke mode. -->
     <StartupObject>Gym.Admin.Program</StartupObject>
+    <!-- Per-monitor V2 DPI awareness (shared manifest). -->
+    <ApplicationManifest>..\Gym.UI\app.manifest</ApplicationManifest>
     <AssemblyTitle>TITANFIT Admin</AssemblyTitle>
     <!-- Admin app (admin PC: dashboard, management, reports, backups). -->
   </PropertyGroup>

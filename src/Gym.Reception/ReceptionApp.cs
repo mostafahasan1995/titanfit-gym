@@ -20,6 +20,9 @@ internal static class ReceptionApp
         AppName = ReceptionText.AppName,
         NavLabel = ReceptionText.NavLabel,
         DefaultStationName = "Reception 1",
+
+        // Touch screen, check-in read from a distance: drawn larger on big screens than the other apps.
+        ScaleReference = UiScale.TouchReference,
         Pages =
         [
             new("check-in", UiIcons.Scan, ReceptionText.CheckIn, context => new CheckInPage(context)),

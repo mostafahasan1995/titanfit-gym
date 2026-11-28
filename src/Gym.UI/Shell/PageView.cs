@@ -1,3 +1,4 @@
+using System.Windows;
 using System.Windows.Controls;
 
 namespace Gym.UI.Shell;
@@ -9,10 +10,20 @@ namespace Gym.UI.Shell;
 /// </summary>
 public class PageView : UserControl, IShellPage
 {
+    /// <summary>
+    /// Below this size the whole page scrolls (the safety net for very small windows). It is less than the page area
+    /// at 1366 x 768 with 125 % scaling, so a page must fit that area with its own scrolling lists and docked action bars.
+    /// </summary>
+    public const double DefaultMinWidth = 720;
+
+    public const double DefaultMinHeight = 400;
+
     protected PageView(PageContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
         Context = context;
+        MinWidth = DefaultMinWidth;
+        MinHeight = DefaultMinHeight;
     }
 
     public PageContext Context { get; }

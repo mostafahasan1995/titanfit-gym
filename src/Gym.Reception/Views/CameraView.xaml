@@ -18,25 +18,29 @@
             </Image>
 
             <!-- Check-in: the scan frame with its moving line. -->
-            <Grid x:Name="ScanFrame" Width="240" Height="240" Margin="0,0,0,64"
-                  HorizontalAlignment="Center" VerticalAlignment="Center">
-                <Border Width="44" Height="44" HorizontalAlignment="Left" VerticalAlignment="Top"
-                        BorderThickness="4,4,0,0" CornerRadius="18,0,0,0" BorderBrush="{DynamicResource Brush.Accent}" />
-                <Border Width="44" Height="44" HorizontalAlignment="Right" VerticalAlignment="Top"
-                        BorderThickness="0,4,4,0" CornerRadius="0,18,0,0" BorderBrush="{DynamicResource Brush.Accent}" />
-                <Border Width="44" Height="44" HorizontalAlignment="Left" VerticalAlignment="Bottom"
-                        BorderThickness="4,0,0,4" CornerRadius="0,0,0,18" BorderBrush="{DynamicResource Brush.Accent}" />
-                <Border Width="44" Height="44" HorizontalAlignment="Right" VerticalAlignment="Bottom"
-                        BorderThickness="0,0,4,4" CornerRadius="0,0,18,0" BorderBrush="{DynamicResource Brush.Accent}" />
-                <controls:Icon x:Name="QrPlaceholder" Data="{x:Static ui:UiIcons.Qr}" Size="112" StrokeThickness="1.2"
-                               HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource Brush.Border}" />
-                <Border x:Name="ScanLine" Height="2" CornerRadius="1" Margin="14,0" VerticalAlignment="Top"
-                        Background="{DynamicResource Brush.Accent}">
-                    <Border.RenderTransform>
-                        <TranslateTransform x:Name="ScanLineOffset" Y="60" />
-                    </Border.RenderTransform>
-                </Border>
-            </Grid>
+            <!-- The frame shrinks on a small camera card (it stays above the hint). -->
+            <Viewbox Stretch="Uniform" StretchDirection="DownOnly" Margin="16,16,16,84" IsHitTestVisible="False"
+                     Visibility="{Binding Visibility, ElementName=ScanFrame}">
+                <Grid x:Name="ScanFrame" Width="240" Height="240"
+                      HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Border Width="44" Height="44" HorizontalAlignment="Left" VerticalAlignment="Top"
+                            BorderThickness="4,4,0,0" CornerRadius="18,0,0,0" BorderBrush="{DynamicResource Brush.Accent}" />
+                    <Border Width="44" Height="44" HorizontalAlignment="Right" VerticalAlignment="Top"
+                            BorderThickness="0,4,4,0" CornerRadius="0,18,0,0" BorderBrush="{DynamicResource Brush.Accent}" />
+                    <Border Width="44" Height="44" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                            BorderThickness="4,0,0,4" CornerRadius="0,0,0,18" BorderBrush="{DynamicResource Brush.Accent}" />
+                    <Border Width="44" Height="44" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                            BorderThickness="0,0,4,4" CornerRadius="0,0,18,0" BorderBrush="{DynamicResource Brush.Accent}" />
+                    <controls:Icon x:Name="QrPlaceholder" Data="{x:Static ui:UiIcons.Qr}" Size="112" StrokeThickness="1.2"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource Brush.Border}" />
+                    <Border x:Name="ScanLine" Height="2" CornerRadius="1" Margin="14,0" VerticalAlignment="Top"
+                            Background="{DynamicResource Brush.Accent}">
+                        <Border.RenderTransform>
+                            <TranslateTransform x:Name="ScanLineOffset" Y="60" />
+                        </Border.RenderTransform>
+                    </Border>
+                </Grid>
+            </Viewbox>
 
             <!-- Photo: an oval for the face. -->
             <Grid x:Name="FaceGuide" Visibility="Collapsed" IsHitTestVisible="False">

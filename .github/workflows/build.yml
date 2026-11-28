@@ -140,12 +140,16 @@ jobs:
           }
 
       # Each app renders its login, server settings, every registered page, the control gallery and a dialog on
-      # sample data (no server) and writes screenshots/<App>-<lang>.json listing them. A new page needs no change here.
-      - name: Smoke screenshots (every page, EN and AR)
+      # sample data (no server) at 4 test screens (1366x768 at 100 and 125 %, 1920x1080 at 125 and 100 %) and writes
+      # screenshots/<App>-<lang>.json listing them. Every screenshot also gets the layout check (Gym.UI/LayoutAudit.cs):
+      # an interactive control outside the window or cut off, or a primary button that needs scrolling, fails the step.
+      # A new page needs no change here.
+      - name: Smoke screenshots and layout check (every page, EN and AR, 4 screen sizes)
         run: |
           New-Item -ItemType Directory -Force screenshots, smoke-logs | Out-Null
           $out = (Resolve-Path screenshots).Path
           $failures = @()
+          $summary = @()
           foreach ($app in 'Gym.Admin', 'Gym.Reception', 'Gym.Cafeteria') {
             $id = $app.Substring(4)
             foreach ($lang in 'en', 'ar') {
@@ -154,7 +158,7 @@ jobs:
               $proc = Start-Process -FilePath $exe -ArgumentList @('--smoke-screenshots', "`"$out`"", '--lang', $lang) `
                 -NoNewWindow -PassThru -RedirectStandardOutput "$log.out.txt" -RedirectStandardError "$log.err.txt"
               $null = $proc.Handle  # keeps the exit code readable after the process ends
-              if (-not $proc.WaitForExit(300000)) {
+              if (-not $proc.WaitForExit(900000)) {
                 $proc.Kill()
                 $failures += "$app ($lang): timed out"
                 continue
@@ -171,25 +175,48 @@ jobs:
                 continue
               }
               $manifest = Get-Content $manifestPath -Raw -Encoding utf8 | ConvertFrom-Json
-              if (@($manifest.screenshots).Count -lt 3) {
+              if ($manifest.dpiAwareness -ne 'PerMonitorV2') {
+                $failures += "$app ($lang): DPI awareness is $($manifest.dpiAwareness), not PerMonitorV2"
+              }
+              if (@($manifest.screens).Count -lt 4) {
+                $failures += "$app ($lang): only $(@($manifest.screens).Count) screen sizes"
+              }
+              if (@($manifest.screenshots).Count -lt 12) {
                 $failures += "$app ($lang): only $(@($manifest.screenshots).Count) screenshots"
               }
               foreach ($shot in @($manifest.screenshots)) {
                 $png = Join-Path $out $shot.file
-                if (-not $shot.ok) {
-                  $failures += "$app ($lang) $($shot.name): $((("$($shot.error)") -split "`n")[0])"
+                if ($shot.error) {
+                  $failures += "$app ($lang) $($shot.name) [$($shot.screen)]: $((("$($shot.error)") -split "`n")[0])"
                 } elseif (-not (Test-Path $png) -or (Get-Item $png).Length -lt 10KB) {
-                  $failures += "$app ($lang) $($shot.name): missing or tiny PNG"
-                } else {
-                  Write-Host ("  OK: {0} ({1:N0} bytes)" -f $shot.file, (Get-Item $png).Length)
+                  $failures += "$app ($lang) $($shot.name) [$($shot.screen)]: missing or tiny PNG"
+                }
+                foreach ($problem in @($shot.layoutProblems | Where-Object { $_ })) {
+                  $failures += "$app ($lang) $($shot.name) [$($shot.screen)] layout: $problem"
+                }
+              }
+              foreach ($screen in @($manifest.screens)) {
+                $at = @($manifest.screenshots | Where-Object { $_.screen -eq $screen })
+                $bad = @($at | ForEach-Object { @($_.layoutProblems | Where-Object { $_ }) }).Count
+                $summary += [pscustomobject]@{
+                  App = $id; Lang = $lang; Screen = $screen; Screenshots = $at.Count
+                  Controls = [int]($at | Measure-Object -Property controlsChecked -Sum).Sum
+                  Primary = [int]($at | Measure-Object -Property primaryChecked -Sum).Sum
+                  Problems = $bad
                 }
               }
               foreach ($problem in @($manifest.textProblems | Where-Object { $_ })) { $failures += "$app ($lang) text: $problem" }
               foreach ($problem in @($manifest.unhandledErrors | Where-Object { $_ })) { $failures += "$app ($lang) unhandled: $problem" }
             }
           }
+          Write-Host '==== Layout check (controls in window bounds, not cut off; primary buttons in view)'
+          $summary | Format-Table -AutoSize | Out-String -Width 200 | Write-Host
+          $total = $summary | Measure-Object -Property Screenshots, Controls, Primary, Problems -Sum
+          Write-Host ("Total: {0} screenshots, {1} controls checked, {2} primary buttons, {3} layout problems" -f `
+            $total[0].Sum, $total[1].Sum, $total[2].Sum, $total[3].Sum)
           if ($failures.Count -gt 0) {
-            $failures | ForEach-Object { Write-Host "::error::$_" }
+            $failures | Select-Object -First 300 | ForEach-Object { Write-Host "::error::$_" }
+            Write-Host "$($failures.Count) failures"
             exit 1
           }
 

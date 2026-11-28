@@ -23,7 +23,7 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="20" />
-            <ColumnDefinition Width="400" />
+            <ColumnDefinition Width="0.6*" MinWidth="290" MaxWidth="400" />
         </Grid.ColumnDefinitions>
 
         <!-- List -->
@@ -70,7 +70,7 @@
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:MembersText.Member}}" Width="*">
+                            <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:MembersText.Member}}" Width="2.2*" MinWidth="110">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <StackPanel VerticalAlignment="Center">
@@ -85,7 +85,7 @@
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:MembersText.Phone}}" Width="132">
+                            <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:MembersText.Phone}}" Width="1.32*" MinWidth="80">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding Phone}" Style="{DynamicResource Text.Body}" FontSize="14" Foreground="{DynamicResource Brush.TextTertiary}"
@@ -93,14 +93,14 @@
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTemplateColumn x:Name="StatusColumn" Header="{ui:Loc {x:Static pages:MembersText.Status}}" Width="178">
+                            <DataGridTemplateColumn x:Name="StatusColumn" Header="{ui:Loc {x:Static pages:MembersText.Status}}" Width="1.78*" MinWidth="104">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <controls:StatusPill Status="{Binding Status}" HorizontalAlignment="Left" />
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTemplateColumn x:Name="EndsColumn" Header="{ui:Loc {x:Static pages:MembersText.ValidUntil}}" Width="128">
+                            <DataGridTemplateColumn x:Name="EndsColumn" Header="{ui:Loc {x:Static pages:MembersText.ValidUntil}}" Width="1.28*" MinWidth="84">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding Ends}" Style="{DynamicResource Text.Body}" FontSize="14" Foreground="{DynamicResource Brush.TextTertiary}" />

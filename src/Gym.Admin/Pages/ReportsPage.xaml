@@ -3,7 +3,7 @@
     main table on the left, one or two smaller tables on the right. Export CSV (UTF-8 with BOM for Excel) and Print.
     The tables are built in code from Logic/ReportTables.cs, so the screen, the CSV file and the print-out match.
 -->
-<shell:PageView x:Class="Gym.Admin.Pages.ReportsPage"
+<shell:PageView x:Class="Gym.Admin.Pages.ReportsPage" MinHeight="640"
                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                 xmlns:ui="clr-namespace:Gym.UI;assembly=Gym.UI"
@@ -38,14 +38,7 @@
         <!-- Report kind, period and the export buttons -->
         <Border Grid.Row="0" Style="{DynamicResource Card}" Padding="18,14">
             <StackPanel>
-                <DockPanel>
-                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                        <Button x:Name="ExportButton" Style="{DynamicResource Button.Secondary}" ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Receipt}"
-                                Content="{ui:Loc {x:Static pages:ReportsText.ExportCsv}}" Click="OnExportClick" />
-                        <Button x:Name="PrintButton" Style="{DynamicResource Button.Secondary}" Margin="10,0,0,0"
-                                ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Printer}"
-                                Content="{ui:Loc {x:Static pages:ReportsText.Print}}" Click="OnPrintClick" />
-                    </StackPanel>
+                <controls:SplitRow Gap="16">
                     <Border Style="{StaticResource Segment}" HorizontalAlignment="Left" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal">
                             <RadioButton x:Name="SubscriptionsButton" Style="{DynamicResource Lang.Toggle}" GroupName="ReportKind" MinWidth="120"
@@ -56,19 +49,16 @@
                                          Content="{ui:Loc {x:Static pages:ReportsText.Sales}}" Checked="OnKindChecked" />
                         </StackPanel>
                     </Border>
-                </DockPanel>
-
-                <DockPanel Margin="0,12,0,0">
-                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Style="{DynamicResource Text.Label}" VerticalAlignment="Center" Margin="0,0,8,0"
-                                   Text="{ui:Loc {x:Static pages:ReportsText.From}}" />
-                        <DatePicker x:Name="FromPicker" Width="190" SelectedDateChanged="OnDateChanged"
-                                    ui:ThemeAssist.Placeholder="{ui:Loc {x:Static ui:CommonText.PickDate}}" />
-                        <TextBlock Style="{DynamicResource Text.Label}" VerticalAlignment="Center" Margin="16,0,8,0"
-                                   Text="{ui:Loc {x:Static pages:ReportsText.To}}" />
-                        <DatePicker x:Name="ToPicker" Width="190" SelectedDateChanged="OnDateChanged"
-                                    ui:ThemeAssist.Placeholder="{ui:Loc {x:Static ui:CommonText.PickDate}}" />
+                    <StackPanel Orientation="Horizontal">
+                        <Button x:Name="ExportButton" Style="{DynamicResource Button.Secondary}" ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Receipt}"
+                                Content="{ui:Loc {x:Static pages:ReportsText.ExportCsv}}" Click="OnExportClick" />
+                        <Button x:Name="PrintButton" Style="{DynamicResource Button.Secondary}" Margin="10,0,0,0"
+                                ui:ThemeAssist.Icon="{x:Static ui:UiIcons.Printer}"
+                                Content="{ui:Loc {x:Static pages:ReportsText.Print}}" Click="OnPrintClick" />
                     </StackPanel>
+                </controls:SplitRow>
+
+                <controls:SplitRow Gap="16" Margin="0,12,0,0">
                     <Border Style="{StaticResource Segment}" HorizontalAlignment="Left" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal">
                             <RadioButton x:Name="TodayButton" Style="{DynamicResource Lang.Toggle}" GroupName="ReportPeriod"
@@ -83,14 +73,24 @@
                                          Content="{ui:Loc {x:Static pages:ReportsText.Custom}}" Checked="OnPresetChecked" />
                         </StackPanel>
                     </Border>
-                </DockPanel>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Style="{DynamicResource Text.Label}" VerticalAlignment="Center" Margin="0,0,8,0"
+                                   Text="{ui:Loc {x:Static pages:ReportsText.From}}" />
+                        <DatePicker x:Name="FromPicker" Width="190" SelectedDateChanged="OnDateChanged"
+                                    ui:ThemeAssist.Placeholder="{ui:Loc {x:Static ui:CommonText.PickDate}}" />
+                        <TextBlock Style="{DynamicResource Text.Label}" VerticalAlignment="Center" Margin="16,0,8,0"
+                                   Text="{ui:Loc {x:Static pages:ReportsText.To}}" />
+                        <DatePicker x:Name="ToPicker" Width="190" SelectedDateChanged="OnDateChanged"
+                                    ui:ThemeAssist.Placeholder="{ui:Loc {x:Static ui:CommonText.PickDate}}" />
+                    </StackPanel>
+                </controls:SplitRow>
             </StackPanel>
         </Border>
 
         <!-- Title, range and totals -->
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="230" />
+                <ColumnDefinition Width="0.4*" MinWidth="180" MaxWidth="230" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <StackPanel VerticalAlignment="Center" Margin="4,0,16,0">
@@ -131,7 +131,7 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="20" />
-                <ColumnDefinition Width="500" />
+                <ColumnDefinition Width="0.9*" MinWidth="300" MaxWidth="500" />
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="3*" />

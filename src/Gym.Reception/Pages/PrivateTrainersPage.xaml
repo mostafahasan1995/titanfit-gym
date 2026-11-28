@@ -11,7 +11,7 @@
                 xmlns:local="clr-namespace:Gym.Reception">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="390" />
+            <ColumnDefinition Width="0.62*" MinWidth="280" MaxWidth="390" />
             <ColumnDefinition Width="20" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
@@ -65,11 +65,11 @@
                 <Border Grid.Row="0" Style="{DynamicResource Card}" Padding="20">
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="104" />
+                            <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="20" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <controls:Avatar x:Name="TrainerPhoto" Width="104" Height="104" ui:ThemeAssist.CornerRadius="18" VerticalAlignment="Top" />
+                        <controls:Avatar x:Name="TrainerPhoto" Style="{DynamicResource Avatar.Large}" />
                         <StackPanel Grid.Column="2">
                             <TextBlock x:Name="TrainerName" FontFamily="{DynamicResource Font.Heading}" FontSize="24" FontWeight="Bold"
                                        Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" HorizontalAlignment="Left" />
