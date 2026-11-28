@@ -12,7 +12,7 @@
                 xmlns:local="clr-namespace:Gym.Reception">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="0.62*" MinWidth="280" MaxWidth="400" />
+            <ColumnDefinition Width="0.62*" MinWidth="260" MaxWidth="400" />
             <ColumnDefinition Width="20" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
@@ -141,7 +141,7 @@
                                            Text="{ui:Loc {x:Static local:ReceptionText.PaymentsTitle}}" />
                                 <DataGrid x:Name="PaymentsGrid">
                                     <DataGrid.Columns>
-                                        <DataGridTemplateColumn Header="{ui:Loc {x:Static local:ReceptionText.ColumnWhat}}" Width="2.2*" MinWidth="74">
+                                        <DataGridTemplateColumn Header="{ui:Loc {x:Static local:ReceptionText.ColumnWhat}}" Width="2.2*" MinWidth="66">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <StackPanel VerticalAlignment="Center">
@@ -151,7 +151,7 @@
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
-                                        <DataGridTemplateColumn Header="{ui:Loc {x:Static local:ReceptionText.ColumnPeriod}}" Width="2.6*" MinWidth="96">
+                                        <DataGridTemplateColumn Header="{ui:Loc {x:Static local:ReceptionText.ColumnPeriod}}" Width="2.6*" MinWidth="86">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <StackPanel VerticalAlignment="Center">
@@ -161,7 +161,7 @@
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
-                                        <DataGridTemplateColumn Header="{ui:Loc {x:Static local:ReceptionText.ColumnPaid}}" Width="1.28*" MinWidth="80">
+                                        <DataGridTemplateColumn Header="{ui:Loc {x:Static local:ReceptionText.ColumnPaid}}" Width="1.28*" MinWidth="76">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <StackPanel VerticalAlignment="Center" ToolTip="{Binding PaidDetail}">
@@ -182,7 +182,7 @@
                                            Text="{ui:Loc {x:Static local:ReceptionText.CheckInsTitle}}" />
                                 <DataGrid x:Name="CheckInsGrid">
                                     <DataGrid.Columns>
-                                        <DataGridTemplateColumn Header="{ui:Loc {x:Static local:ReceptionText.ColumnWhen}}" Width="2*" MinWidth="70">
+                                        <DataGridTemplateColumn Header="{ui:Loc {x:Static local:ReceptionText.ColumnWhen}}" Width="2*" MinWidth="60">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <StackPanel VerticalAlignment="Center">
@@ -192,7 +192,7 @@
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
-                                        <DataGridTemplateColumn Header="{ui:Loc {x:Static local:ReceptionText.ColumnResult}}" Width="1.24*" MinWidth="106">
+                                        <DataGridTemplateColumn Header="{ui:Loc {x:Static local:ReceptionText.ColumnResult}}" Width="1.24*" MinWidth="100">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <controls:StatusPill Tone="{Binding Tone}" Text="{Binding Result}" FontSize="12" />

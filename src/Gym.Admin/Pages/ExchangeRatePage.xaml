@@ -75,7 +75,7 @@
                 <Grid>
                     <DataGrid x:Name="HistoryGrid">
                         <DataGrid.Columns>
-                            <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:ExchangeRateText.ColumnDate}}" Width="2*" MinWidth="110">
+                            <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:ExchangeRateText.ColumnDate}}" Width="2*" MinWidth="96">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding Date}" Style="{DynamicResource Text.Strong}" FontSize="14" VerticalAlignment="Center" />
@@ -90,7 +90,7 @@
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:ExchangeRateText.ColumnBy}}" Width="1.8*" MinWidth="100">
+                            <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:ExchangeRateText.ColumnBy}}" Width="1.8*" MinWidth="86">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding By}" Style="{DynamicResource Text.Body}" FontSize="14" VerticalAlignment="Center"

@@ -16,7 +16,7 @@ public class PageView : UserControl, IShellPage
     /// </summary>
     public const double DefaultMinWidth = 720;
 
-    public const double DefaultMinHeight = 400;
+    public const double DefaultMinHeight = 340;
 
     protected PageView(PageContext context)
     {

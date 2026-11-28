@@ -34,14 +34,14 @@
                 </DockPanel>
                 <DataGrid x:Name="StaffGrid" SelectionChanged="OnSelectionChanged" MouseDoubleClick="OnGridDoubleClick">
                     <DataGrid.Columns>
-                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:StaffText.ColumnName}}" Width="2.5*" MinWidth="96">
+                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:StaffText.ColumnName}}" Width="2.5*" MinWidth="90">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding Name}" Style="{DynamicResource Text.Strong}" FontSize="14" VerticalAlignment="Center" />
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:StaffText.ColumnJob}}" Width="1.2*" MinWidth="70">
+                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:StaffText.ColumnJob}}" Width="1.2*" MinWidth="64">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding Job}" Style="{DynamicResource Text.Body}" FontSize="14" VerticalAlignment="Center"
@@ -49,7 +49,7 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:StaffText.ColumnLogin}}" Width="1.5*" MinWidth="90">
+                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:StaffText.ColumnLogin}}" Width="1.5*" MinWidth="82">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel VerticalAlignment="Center">
@@ -60,7 +60,7 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:StaffText.ColumnPhone}}" Width="1.3*" MinWidth="80">
+                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:StaffText.ColumnPhone}}" Width="1.3*" MinWidth="76">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding Phone}" FlowDirection="LeftToRight" HorizontalAlignment="Left" VerticalAlignment="Center"
@@ -68,7 +68,7 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:StaffText.ColumnStatus}}" Width="1.3*" MinWidth="104">
+                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:StaffText.ColumnStatus}}" Width="1.3*" MinWidth="100">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <controls:StatusPill Tone="{Binding Tone}" Text="{Binding StatusText}" HorizontalAlignment="Left" />

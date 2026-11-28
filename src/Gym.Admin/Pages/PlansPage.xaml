@@ -41,7 +41,7 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:PlansText.Price}}" Width="1.2*" MinWidth="100">
+                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:PlansText.Price}}" Width="1.2*" MinWidth="92">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel VerticalAlignment="Center">
@@ -51,14 +51,14 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:PlansText.PerMonth}}" Width="*" MinWidth="90">
+                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:PlansText.PerMonth}}" Width="*" MinWidth="84">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <controls:MoneyText Amount="{Binding PerMonth}" Style="{DynamicResource Text.Caption}" />
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:PlansText.Status}}" Width="*" MinWidth="100">
+                        <DataGridTemplateColumn Header="{ui:Loc {x:Static pages:PlansText.Status}}" Width="*" MinWidth="96">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <controls:StatusPill Tone="{Binding Tone}" Text="{Binding StatusText}" HorizontalAlignment="Left" />

@@ -28,7 +28,8 @@ public sealed class CurrencyPicker : Border
         usdButton = NewButton(group);
         sypButton = NewButton(group);
         sypButton.Margin = new Thickness(4, 0, 0, 0);
-        var panel = new StackPanel { Orientation = Orientation.Horizontal };
+        var panel = new WrapPanel(); // the two buttons go on two lines in a very narrow place
+
         panel.Children.Add(usdButton);
         panel.Children.Add(sypButton);
         Child = panel;

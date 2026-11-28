@@ -332,8 +332,9 @@
                         <TextBlock x:Name="CashErrorText" HorizontalAlignment="Right" VerticalAlignment="Center" FontSize="13" Visibility="Collapsed"
                                    Foreground="{DynamicResource Brush.Bad}" Text="{ui:Loc {x:Static local:CafeteriaText.CashTooLow}}" />
                     </DockPanel>
-                    <Border Style="{DynamicResource Divider}" Margin="0,10" />
-                    <DockPanel>
+                    <!-- On a very short window the Charge button (it shows the amount due) stands in for the total row. -->
+                    <Border Style="{DynamicResource Divider}" Margin="0,10" ui:Responsive.CollapseWhenVeryShort="True" />
+                    <DockPanel ui:Responsive.CollapseWhenVeryShort="True">
                         <TextBlock DockPanel.Dock="Left" Style="{DynamicResource Text.Body}" Foreground="{DynamicResource Brush.TextTertiary}"
                                    VerticalAlignment="Bottom" Margin="0,0,0,8" Text="{ui:Loc {x:Static local:CafeteriaText.TotalCash}}" />
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
