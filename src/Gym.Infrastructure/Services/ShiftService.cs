@@ -55,7 +55,7 @@ public sealed class ShiftService(GymDbContext db, GymClock clock)
         var shift = await GetAsync(id, ct);
         EnsureCanSee(shift.CashierId, staffId, isAdmin);
 
-        var totals = await db.Sales.AsNoTracking().Where(s => s.ShiftId == id).Select(s => s.Total).ToListAsync(ct);
+        var sales = await db.Sales.AsNoTracking().Where(s => s.ShiftId == id).Select(s => new { s.Total, s.Currency, s.PaidAmount }).ToListAsync(ct);
         var lines = await db.SaleLines.AsNoTracking()
             .Where(l => l.Sale!.ShiftId == id)
             .Select(l => new { l.ProductId, l.Product!.NameEn, l.Product.NameAr, l.Quantity, l.LineTotal })
@@ -66,9 +66,10 @@ public sealed class ShiftService(GymDbContext db, GymClock clock)
             .OrderByDescending(p => p.Total).ThenBy(p => p.NameEn)
             .ToList();
 
-        var salesTotal = totals.Sum();
+        var salesTotal = sales.Sum(s => s.Total);
         var expectedCash = shift.OpeningCash + salesTotal;
-        return new ShiftSummaryDto(shift, totals.Count, salesTotal, expectedCash, shift.ClosingCash - expectedCash, products);
+        var paid = CurrencyTotalsOf.From(sales.Select(s => (s.Currency, s.Total, s.PaidAmount)));
+        return new ShiftSummaryDto(shift, sales.Count, salesTotal, expectedCash, shift.ClosingCash - expectedCash, products, paid);
     }
 
     public async Task<IReadOnlyList<ShiftDto>> ListAsync(DateOnly from, DateOnly to, int? cashierId, CancellationToken ct = default)

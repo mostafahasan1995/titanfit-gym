@@ -19,10 +19,10 @@ public sealed class SettingsService(GymDbContext db, GymClock clock)
             db.Settings.Add(settings);
         }
 
-        settings.Update(request.ExpiringSoonDays, request.PrivateTrainingMonthlyFee, clock.UtcNow);
+        settings.Update(request.ExpiringSoonDays, request.PrivateTrainingMonthlyFee, clock.UtcNow, request.SypRoundingStep);
         await db.SaveChangesAsync(ct);
         return ToDto(settings);
     }
 
-    private static SettingsDto ToDto(GymSettings s) => new(s.ExpiringSoonDays, s.PrivateTrainingMonthlyFee);
+    private static SettingsDto ToDto(GymSettings s) => new(s.ExpiringSoonDays, s.PrivateTrainingMonthlyFee, s.SypRoundingStep);
 }

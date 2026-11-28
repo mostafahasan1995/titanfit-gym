@@ -20,6 +20,8 @@ public sealed class LiveUpdates(IHubContext<GymHub, IGymHubClient> hub, ILogger<
 
     public Task SettingsChangedAsync(SettingsDto settings) => SendAsync(clients => clients.SettingsChanged(settings));
 
+    public Task ExchangeRateChangedAsync(ExchangeRateStatusDto status) => SendAsync(clients => clients.ExchangeRateChanged(status));
+
     private async Task SendAsync(Func<IGymHubClient, Task> send)
     {
         try

@@ -85,9 +85,11 @@
                         <controls:StatusPill Tone="Gold" Margin="0,0,8,8" Text="{ui:Loc {x:Static shell:GalleryText.PrivateTrainer}}" />
                     </WrapPanel>
                     <WrapPanel Margin="0,8,0,0">
-                        <controls:MoneyText Amount="1400000" FontSize="28" VerticalAlignment="Center" Margin="0,0,16,0" />
-                        <controls:MoneyText Amount="-2000" FontSize="16" VerticalAlignment="Center"
+                        <controls:MoneyText Amount="180" FontSize="28" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <controls:SypText Amount="180" FontSize="16" VerticalAlignment="Center" Margin="0,0,16,0" />
+                        <controls:MoneyText Amount="-2" FontSize="16" VerticalAlignment="Center" Margin="0,0,16,0"
                                             Foreground="{DynamicResource Brush.Bad}" />
+                        <controls:CurrencyPicker VerticalAlignment="Center" />
                     </WrapPanel>
                 </StackPanel>
             </Border>

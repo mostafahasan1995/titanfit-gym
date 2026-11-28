@@ -191,4 +191,37 @@ public static class CommonText
     // Money
 
     public static LocalText Currency { get; } = new("SYP", "ل.س");
+
+    // Currencies and the exchange rate (money is stored in US dollars; pounds at the day's rate)
+
+    public static LocalText CurrencyUsd { get; } = new("US dollars", "دولار أمريكي");
+
+    public static LocalText CurrencySyp { get; } = new("Syrian pounds", "ليرة سورية");
+
+    public static LocalText PayIn { get; } = new("Pay in", "الدفع بـ");
+
+    public static LocalText PayInUsd { get; } = new("$ Dollars", "$ دولار");
+
+    public static LocalText PayInSyp { get; } = new("SYP Pounds", "ل.س ليرة");
+
+    public static LocalText NoRateForSyp { get; } = new(
+        "No exchange rate yet: take US dollars.",
+        "لا يوجد سعر صرف بعد: اقبض بالدولار.");
+
+    public static LocalText ExchangeRate { get; } = new("Exchange rate", "سعر الصرف");
+
+    /// <summary>The header chip: {0} = the pounds for one dollar ("11,500 SYP").</summary>
+    public static LocalText RateChip { get; } = new("$1 = {0}", "1 دولار = {0}");
+
+    /// <summary>{0} = the pounds for one dollar, {1} = the day it was entered.</summary>
+    public static LocalText RateStaleBanner { get; } = new(
+        "Today's exchange rate has not been entered yet. The last rate is used: $1 = {0} (entered on {1}). The manager enters today's rate in the Admin app, Exchange rate page.",
+        "لم يُدخَل سعر صرف اليوم بعد. يُستخدم آخر سعر: 1 دولار = {0} (أُدخل في {1}). يُدخِل المدير سعر اليوم من تطبيق الإدارة، صفحة سعر الصرف.");
+
+    public static LocalText RateMissingBanner { get; } = new(
+        "No exchange rate yet: amounts in Syrian pounds are hidden and only US dollars can be taken. The manager enters today's rate in the Admin app, Exchange rate page.",
+        "لا يوجد سعر صرف بعد: المبالغ بالليرة السورية مخفية ويُقبض بالدولار فقط. يُدخِل المدير سعر اليوم من تطبيق الإدارة، صفحة سعر الصرف.");
+
+    /// <summary>A payment line: {0} = the amount paid ("230,000 SYP"), {1} = the rate ("11,500 SYP").</summary>
+    public static LocalText PaidInSypAtRate { get; } = new("Paid {0} at $1 = {1}", "دُفع {0} بسعر 1 دولار = {1}");
 }

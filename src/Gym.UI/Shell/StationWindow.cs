@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
+using System.Windows.Threading;
 using Gym.Client;
 using Gym.Contracts;
 using Gym.UI.Station;
@@ -23,6 +24,7 @@ public sealed class StationWindow : Window
     private readonly ContentControl viewHost;
     private IGymApi api;
     private ILiveConnection? live;
+    private DispatcherTimer? rateTimer;
     private PageContext? context;
 
     public StationWindow(AppDefinition app, StationServices services, AppLanguage? language = null)
@@ -234,6 +236,7 @@ public sealed class StationWindow : Window
         StopLive();
         live = services.CreateLive(api);
         live.StatusChanged += OnLiveStatusChanged;
+        live.ExchangeRateChanged += OnExchangeRateChanged;
         context = new PageContext(App, api, live, new UserSession(response), Settings, Overlay, services.IsSample)
         {
             StationSaver = SaveStationSettings,
@@ -248,8 +251,39 @@ public sealed class StationWindow : Window
         shell.SetLiveStatus(live.Status);
         live.Connect();
         UpdateTitle();
+        await ExchangeRates.Current.RefreshAsync(api).ConfigureAwait(true);
+        StartRateTimer();
         await shell.ShowPageAsync(App.Pages[0]).ConfigureAwait(true);
     }
+
+    /// <summary>Reloads the exchange rate every few minutes (a rate from yesterday turns stale after midnight; a missed live event).</summary>
+    private void StartRateTimer()
+    {
+        rateTimer?.Stop();
+        if (services.IsSample)
+        {
+            return;
+        }
+
+        rateTimer = new DispatcherTimer(DispatcherPriority.Background, Dispatcher) { Interval = TimeSpan.FromMinutes(5) };
+        rateTimer.Tick += async (_, _) =>
+        {
+            if (context is not null)
+            {
+                await ExchangeRates.Current.RefreshAsync(api).ConfigureAwait(true);
+            }
+        };
+        rateTimer.Start();
+    }
+
+    private void OnExchangeRateChanged(ExchangeRateStatusDto status) =>
+        _ = Dispatcher.InvokeAsync(() =>
+        {
+            if (context is not null)
+            {
+                ExchangeRates.Current.Set(status);
+            }
+        });
 
     /// <summary>A page changed a station setting (printer, camera): keep it here too, so a later save does not undo it.</summary>
     private bool SaveStationSettings(Func<StationSettings, StationSettings> change)
@@ -274,6 +308,10 @@ public sealed class StationWindow : Window
         var old = live;
         live = null;
         old.StatusChanged -= OnLiveStatusChanged;
+        old.ExchangeRateChanged -= OnExchangeRateChanged;
+        rateTimer?.Stop();
+        rateTimer = null;
+        ExchangeRates.Current.Set(null);
         _ = DisposeQuietlyAsync(old);
     }
 

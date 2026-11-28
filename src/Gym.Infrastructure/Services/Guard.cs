@@ -51,6 +51,8 @@ internal static class Guard
         return value;
     }
 
+    public static decimal NotNegative(decimal value, string field) => CurrencyRules.CheckUsd(value, field);
+
     public static (int Page, int PageSize) Paging(int page, int pageSize, int maxPageSize = 100) =>
         (Math.Max(page, 1), Math.Clamp(pageSize, 1, maxPageSize));
 

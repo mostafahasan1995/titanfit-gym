@@ -33,7 +33,7 @@ internal static class MemberEndpoints
 
         members.MapPost("/{id:guid}/renew", async (Guid id, RenewRequest request, ClaimsPrincipal user, MemberService service, LiveUpdates live, CancellationToken ct) =>
         {
-            var subscription = await service.RenewAsync(id, request.PlanId, user.StaffId(), ct);
+            var subscription = await service.RenewAsync(id, request.PlanId, request.Payment, user.StaffId(), ct);
             await live.MemberChangedAsync(id, MemberChangeKind.Renewed);
             return subscription;
         });
@@ -113,7 +113,7 @@ internal static class MemberEndpoints
         // Buy or renew the private training service: months × the monthly fee from the settings.
         trainers.MapPost("/{id:guid}/service", async (Guid id, PrivateServiceRequest request, ClaimsPrincipal user, MemberService service, LiveUpdates live, CancellationToken ct) =>
         {
-            var subscription = await service.AddPrivateServiceAsync(id, request.Months, user.StaffId(), ct);
+            var subscription = await service.AddPrivateServiceAsync(id, request.Months, request.Payment, user.StaffId(), ct);
             await live.MemberChangedAsync(id, MemberChangeKind.PrivateServiceChanged);
             return subscription;
         });

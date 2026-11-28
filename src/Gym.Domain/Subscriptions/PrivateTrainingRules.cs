@@ -7,7 +7,7 @@ namespace Gym.Domain;
 /// </summary>
 public static class PrivateTrainingRules
 {
-    public static long CalculatePrice(int months, long monthlyFee)
+    public static decimal CalculatePrice(int months, decimal monthlyFee)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(months, 1);
         ArgumentOutOfRangeException.ThrowIfNegative(monthlyFee);

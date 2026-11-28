@@ -32,7 +32,7 @@ public sealed partial class SampleGymApi : IGymApi
     private readonly List<StockMovementDto> movements = [];
     private readonly List<ReceiptDto> sales = [];
     private readonly List<ShiftDto> shifts = [];
-    private SettingsDto settings = new(SubscriptionRules.DefaultExpiringSoonDays, 100_000);
+    private SettingsDto settings = new(SubscriptionRules.DefaultExpiringSoonDays, GymSettings.DefaultPrivateTrainingMonthlyFee, CurrencyRules.DefaultSypRoundingStep);
     private StaffDto? current;
     private int nextId = 10_000;
 
@@ -188,7 +188,8 @@ public sealed partial class SampleGymApi : IGymApi
         members.Add(row);
         if (request.PlanId is { } planId)
         {
-            AddMembership(row.Id, Plan(planId), DateTime.UtcNow);
+            var plan = Plan(planId);
+            AddMembership(row.Id, plan, DateTime.UtcNow, Due(plan.Price, request.Payment));
         }
 
         Live.PublishMemberChanged(new MemberChangedEvent(row.Id, MemberChangeKind.Created));
@@ -219,10 +220,11 @@ public sealed partial class SampleGymApi : IGymApi
         return Task.FromResult(ToDto(row));
     }
 
-    public Task<SubscriptionDto> RenewMemberAsync(Guid id, int planId, CancellationToken ct = default)
+    public Task<SubscriptionDto> RenewMemberAsync(Guid id, int planId, PaymentRequest? payment = null, CancellationToken ct = default)
     {
         var row = Member(id);
-        var subscription = AddMembership(row.Id, Plan(planId), DateTime.UtcNow);
+        var plan = Plan(planId);
+        var subscription = AddMembership(row.Id, plan, DateTime.UtcNow, Due(plan.Price, payment));
         Live.PublishMemberChanged(new MemberChangedEvent(id, MemberChangeKind.Renewed));
         return Task.FromResult(subscription);
     }
@@ -358,7 +360,7 @@ public sealed partial class SampleGymApi : IGymApi
         return Task.CompletedTask;
     }
 
-    public Task<SubscriptionDto> AddPrivateServiceAsync(Guid trainerId, int months, CancellationToken ct = default)
+    public Task<SubscriptionDto> AddPrivateServiceAsync(Guid trainerId, int months, PaymentRequest? payment = null, CancellationToken ct = default)
     {
         _ = Trainer(trainerId);
         if (months < 1)
@@ -368,7 +370,8 @@ public sealed partial class SampleGymApi : IGymApi
 
         var latest = subscriptions.Where(s => s.MemberId == trainerId && s.Kind == SubscriptionKind.PrivateTraining).Select(s => (DateOnly?)s.EndDate).Max();
         var start = SubscriptionRules.GetRenewalStartDate(latest, Today);
-        var subscription = AddSubscription(trainerId, SubscriptionKind.PrivateTraining, null, months, start, months * settings.PrivateTrainingMonthlyFee, DateTime.UtcNow);
+        var price = months * settings.PrivateTrainingMonthlyFee;
+        var subscription = AddSubscription(trainerId, SubscriptionKind.PrivateTraining, null, months, start, price, DateTime.UtcNow, Due(price, payment));
         Live.PublishMemberChanged(new MemberChangedEvent(trainerId, MemberChangeKind.PrivateServiceChanged));
         return Task.FromResult(subscription);
     }
@@ -604,14 +607,15 @@ public sealed partial class SampleGymApi : IGymApi
         }
 
         var total = lines.Sum(l => l.Product.Price * l.Quantity);
-        if (request.CashReceived is { } cash && cash < total)
+        var due = Due(total, request.Payment);
+        if (request.CashReceived is { } cash && cash < due.Amount)
         {
-            throw Bad("cash_received_too_low", "The cash received is less than the total.");
+            throw Bad("cash_received_too_low", "The cash received is less than the amount due.");
         }
 
         var shift = shifts.FirstOrDefault(s => s.CashierId == cashier.Id && s.ClosedAt is null)
                     ?? OpenShift(cashier, request.Station, 0, DateTime.UtcNow);
-        var receipt = AddSale(cashier, shift, request.Station, DateTime.UtcNow, lines.Select(l => (l.Product, l.Quantity)).ToList(), request.CashReceived);
+        var receipt = AddSale(cashier, shift, request.Station, DateTime.UtcNow, lines.Select(l => (l.Product, l.Quantity)).ToList(), request.CashReceived, due);
         Live.PublishStockChanged(new StockChangedEvent(lines.Select(l => ToLevel(l.Product)).ToList()));
         Live.PublishSaleCompleted(new SaleCompletedEvent(receipt.Id, receipt.Number, receipt.Station, receipt.Total, receipt.At));
         return Task.FromResult(receipt);
@@ -624,7 +628,7 @@ public sealed partial class SampleGymApi : IGymApi
         ListOf(sales
             .Where(s => InRange(s.At, from, to) && (cashierId is null || s.CashierId == cashierId))
             .OrderByDescending(s => s.At)
-            .Select(s => new SaleSummaryDto(s.Id, s.Number, s.At, s.Station, s.CashierId, s.CashierName, s.Total, s.Lines.Sum(l => l.Quantity))));
+            .Select(s => new SaleSummaryDto(s.Id, s.Number, s.At, s.Station, s.CashierId, s.CashierName, s.Total, s.Lines.Sum(l => l.Quantity), s.Currency, s.PaidAmount)));
 
     public Task<ShiftDto> OpenShiftAsync(OpenShiftRequest request, CancellationToken ct = default)
     {
@@ -713,7 +717,8 @@ public sealed partial class SampleGymApi : IGymApi
             Days(from, to).Select(d => rows.Where(s => LocalDay(s.CreatedAt) == d).ToList())
                 .Select((list, i) => new DayAmount(from.AddDays(i), list.Count, list.Sum(s => s.PricePaid))).ToList(),
             rows.GroupBy(s => (s.CreatedById, s.CreatedBy)).OrderByDescending(g => g.Sum(s => s.PricePaid))
-                .Select(g => new StaffAmount(g.Key.CreatedById, g.Key.CreatedBy, g.Count(), g.Sum(s => s.PricePaid))).ToList()));
+                .Select(g => new StaffAmount(g.Key.CreatedById, g.Key.CreatedBy, g.Count(), g.Sum(s => s.PricePaid))).ToList(),
+            Totals(rows.Select(s => (s.Currency, s.PricePaid, s.PaidAmount)))));
     }
 
     public Task<AttendanceReportDto> GetAttendanceReportAsync(DateOnly from, DateOnly to, CancellationToken ct = default)
@@ -744,7 +749,8 @@ public sealed partial class SampleGymApi : IGymApi
                 .Select((list, i) => new DayAmount(from.AddDays(i), list.Count, list.Sum(s => s.Total))).ToList(),
             ProductTotals(rows),
             rows.GroupBy(s => (s.CashierId, s.CashierName)).OrderByDescending(g => g.Sum(s => s.Total))
-                .Select(g => new StaffAmount(g.Key.CashierId, g.Key.CashierName, g.Count(), g.Sum(s => s.Total))).ToList()));
+                .Select(g => new StaffAmount(g.Key.CashierId, g.Key.CashierName, g.Count(), g.Sum(s => s.Total))).ToList(),
+            Totals(rows.Select(s => (s.Currency, s.Total, s.PaidAmount)))));
     }
 
     public Task<SettingsDto> GetSettingsAsync(CancellationToken ct = default) => Task.FromResult(settings);
@@ -757,8 +763,14 @@ public sealed partial class SampleGymApi : IGymApi
             throw Bad("invalid_setting", "Settings cannot be negative.");
         }
 
+        if (settings.SypRoundingStep is < 1 or > CurrencyRules.MaxSypRoundingStep)
+        {
+            throw Bad("invalid_setting", "The rounding step must be 1 or more.");
+        }
+
         this.settings = settings;
         Live.PublishSettingsChanged(settings);
+        Live.PublishExchangeRateChanged(RateStatus());
         return Task.FromResult(settings);
     }
 
@@ -957,18 +969,20 @@ public sealed partial class SampleGymApi : IGymApi
             row.Type == MemberType.PrivateTrainer ? StatusOf(row.Id, SubscriptionKind.PrivateTraining) : null);
     }
 
-    private SubscriptionDto AddMembership(Guid memberId, PlanDto plan, DateTime createdAt)
+    private SubscriptionDto AddMembership(Guid memberId, PlanDto plan, DateTime createdAt, PaymentAmount payment)
     {
         var latest = subscriptions.Where(s => s.MemberId == memberId && s.Kind == SubscriptionKind.Membership).Select(s => (DateOnly?)s.EndDate).Max();
         var start = SubscriptionRules.GetRenewalStartDate(latest, Today);
-        return AddSubscription(memberId, SubscriptionKind.Membership, plan.Id, plan.Months, start, plan.Price, createdAt);
+        return AddSubscription(memberId, SubscriptionKind.Membership, plan.Id, plan.Months, start, plan.Price, createdAt, payment);
     }
 
-    private SubscriptionDto AddSubscription(Guid memberId, SubscriptionKind kind, int? planId, int months, DateOnly start, long price, DateTime createdAt)
+    private SubscriptionDto AddSubscription(
+        Guid memberId, SubscriptionKind kind, int? planId, int months, DateOnly start, decimal price, DateTime createdAt, PaymentAmount payment)
     {
         var by = current ?? staff.First(s => s.Role == StaffRole.Reception);
         var subscription = new SubscriptionDto(
-            NextId(), memberId, kind, planId, months, start, SubscriptionRules.CalculateEndDate(start, months), price, by.Id, by.FullName, createdAt);
+            NextId(), memberId, kind, planId, months, start, SubscriptionRules.CalculateEndDate(start, months), price, by.Id, by.FullName, createdAt,
+            payment.Currency, payment.Amount, payment.SypPerUsd);
         subscriptions.Add(subscription);
         return subscription;
     }
@@ -979,20 +993,24 @@ public sealed partial class SampleGymApi : IGymApi
         movements.Add(new StockMovementDto(NextId(), product.Id, product.NameEn, product.NameAr, quantity, type, saleId, note, by.FullName, at));
     }
 
-    private ShiftDto OpenShift(StaffDto cashier, string station, long openingCash, DateTime at)
+    private ShiftDto OpenShift(StaffDto cashier, string station, decimal openingCash, DateTime at)
     {
         var shift = new ShiftDto(shifts.Count == 0 ? 1 : shifts.Max(s => s.Id) + 1, cashier.Id, cashier.FullName, station, at, null, openingCash, null, null);
         shifts.Add(shift);
         return shift;
     }
 
-    private ReceiptDto AddSale(StaffDto cashier, ShiftDto shift, string station, DateTime at, List<(ProductRow Product, int Quantity)> lines, long? cashReceived)
+    private ReceiptDto AddSale(
+        StaffDto cashier, ShiftDto shift, string station, DateTime at, List<(ProductRow Product, int Quantity)> lines, decimal? cashReceived, PaymentAmount? payment = null)
     {
         var id = sales.Count == 0 ? 1 : sales.Max(s => s.Id) + 1;
         var number = sales.Count == 0 ? 1001 : sales.Max(s => s.Number) + 1;
         var receiptLines = lines.Select(l => new ReceiptLineDto(l.Product.Id, l.Product.NameEn, l.Product.NameAr, l.Quantity, l.Product.Price, l.Product.Price * l.Quantity)).ToList();
         var total = receiptLines.Sum(l => l.LineTotal);
-        var receipt = new ReceiptDto(id, number, at, station, cashier.Id, cashier.FullName, shift.Id, receiptLines, total, cashReceived, cashReceived - total);
+        var due = payment ?? new PaymentAmount(Currency.Usd, total, null);
+        var receipt = new ReceiptDto(
+            id, number, at, station, cashier.Id, cashier.FullName, shift.Id, receiptLines, total, cashReceived, cashReceived - due.Amount,
+            due.Currency, due.Amount, due.SypPerUsd);
         sales.Add(receipt);
         foreach (var (product, quantity) in lines)
         {
@@ -1007,7 +1025,17 @@ public sealed partial class SampleGymApi : IGymApi
         var shiftSales = sales.Where(s => s.ShiftId == shift.Id).ToList();
         var total = shiftSales.Sum(s => s.Total);
         var expected = shift.OpeningCash + total;
-        return new ShiftSummaryDto(shift, shiftSales.Count, total, expected, shift.ClosingCash - expected, ProductTotals(shiftSales));
+        return new ShiftSummaryDto(
+            shift, shiftSales.Count, total, expected, shift.ClosingCash - expected, ProductTotals(shiftSales),
+            Totals(shiftSales.Select(s => (s.Currency, s.Total, s.PaidAmount))));
+    }
+
+    private static CurrencyTotals Totals(IEnumerable<(Currency Currency, decimal Usd, decimal Paid)> payments)
+    {
+        var list = payments.ToList();
+        var syp = list.Where(p => p.Currency == Currency.Syp).ToList();
+        var usd = list.Where(p => p.Currency != Currency.Syp).ToList();
+        return new CurrencyTotals(usd.Sum(p => p.Usd), syp.Sum(p => p.Paid), syp.Sum(p => p.Usd), usd.Count, syp.Count);
     }
 
     private static List<ProductSalesDto> ProductTotals(IEnumerable<ReceiptDto> receipts) =>
@@ -1068,7 +1096,7 @@ public sealed partial class SampleGymApi : IGymApi
 
         public string? Barcode { get; set; }
 
-        public long Price { get; set; }
+        public decimal Price { get; set; }
 
         public int MinStock { get; set; }
 

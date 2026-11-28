@@ -17,17 +17,17 @@ public class Shift
 
     public DateTime? ClosedAt { get; set; }
 
-    /// <summary>Cash in the drawer at the start (whole SYP).</summary>
-    public long OpeningCash { get; set; }
+    /// <summary>Cash in the drawer at the start (US dollars, the pounds counted at their dollar value).</summary>
+    public decimal OpeningCash { get; set; }
 
-    /// <summary>Cash counted at the close, if entered.</summary>
-    public long? ClosingCash { get; set; }
+    /// <summary>Cash counted at the close (US dollars), if entered.</summary>
+    public decimal? ClosingCash { get; set; }
 
     public string? Note { get; set; }
 
     public bool IsOpen => ClosedAt is null;
 
-    public void Close(long? closingCash, string? note, DateTime nowUtc)
+    public void Close(decimal? closingCash, string? note, DateTime nowUtc)
     {
         if (!IsOpen)
         {

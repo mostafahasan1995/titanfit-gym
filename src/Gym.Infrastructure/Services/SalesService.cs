@@ -4,7 +4,7 @@ namespace Gym.Infrastructure.Services;
 /// Cafeteria sales. A sale saves its lines and stock movements in one transaction; the product rows are
 /// locked first, so two tills selling the last items at the same moment can never oversell.
 /// </summary>
-public sealed class SalesService(GymDbContext db, GymClock clock, StockService stock)
+public sealed class SalesService(GymDbContext db, GymClock clock, StockService stock, ExchangeRateService rates)
 {
     public const int MaxListSize = 1000;
 
@@ -72,7 +72,8 @@ public sealed class SalesService(GymDbContext db, GymClock clock, StockService s
             });
         }
 
-        sale.SetCashReceived(request.CashReceived);
+        var payment = await rates.GetDueAsync(sale.Total, request.Payment, ct);
+        sale.SetPayment(payment, request.CashReceived);
         db.Sales.Add(sale);
         await db.SaveChangesOrConflictAsync(ct);
         await transaction.CommitAsync(ct);
@@ -94,6 +95,9 @@ public sealed class SalesService(GymDbContext db, GymClock clock, StockService s
                 s.ShiftId,
                 s.Total,
                 s.CashReceived,
+                s.Currency,
+                s.PaidAmount,
+                s.ExchangeRate,
             })
             .SingleOrDefaultAsync(ct) ?? throw new NotFoundException("sale_not_found", $"Sale {id} does not exist.");
 
@@ -105,7 +109,7 @@ public sealed class SalesService(GymDbContext db, GymClock clock, StockService s
 
         return new ReceiptDto(
             sale.Id, sale.Number, sale.At, sale.Station, sale.CashierId, sale.CashierName, sale.ShiftId,
-            lines, sale.Total, sale.CashReceived, sale.CashReceived - sale.Total);
+            lines, sale.Total, sale.CashReceived, sale.CashReceived - sale.PaidAmount, sale.Currency, sale.PaidAmount, sale.ExchangeRate);
     }
 
     public async Task<IReadOnlyList<SaleSummaryDto>> ListAsync(DateOnly from, DateOnly to, int? cashierId, CancellationToken ct = default)
@@ -120,7 +124,7 @@ public sealed class SalesService(GymDbContext db, GymClock clock, StockService s
         return await query
             .OrderByDescending(s => s.At).ThenByDescending(s => s.Id)
             .Take(MaxListSize)
-            .Select(s => new SaleSummaryDto(s.Id, s.Number, s.At, s.Station, s.CashierId, s.Cashier!.FullName, s.Total, s.Lines.Sum(l => l.Quantity)))
+            .Select(s => new SaleSummaryDto(s.Id, s.Number, s.At, s.Station, s.CashierId, s.Cashier!.FullName, s.Total, s.Lines.Sum(l => l.Quantity), s.Currency, s.PaidAmount))
             .ToListAsync(ct);
     }
 }

@@ -48,7 +48,8 @@ public sealed record CreateMemberRequest(
     string? Notes = null,
     MemberType Type = MemberType.Regular,
     int? PlanId = null,
-    Guid? PrivateTrainerId = null);
+    Guid? PrivateTrainerId = null,
+    PaymentRequest? Payment = null);
 
 public sealed record UpdateMemberRequest(
     string FirstName,
@@ -62,7 +63,7 @@ public sealed record UpdateMemberRequest(
     string? Notes = null,
     MemberType Type = MemberType.Regular);
 
-public sealed record RenewRequest(int PlanId);
+public sealed record RenewRequest(int PlanId, PaymentRequest? Payment = null);
 
 public sealed record QrCodeResponse(string QrCode);
 
@@ -74,10 +75,13 @@ public sealed record SubscriptionDto(
     int Months,
     DateOnly StartDate,
     DateOnly EndDate,
-    long PricePaid,
+    decimal PricePaid,
     int CreatedById,
     string CreatedBy,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    Currency Currency = Currency.Usd,
+    decimal PaidAmount = 0,
+    decimal? ExchangeRate = null);
 
 public sealed record PrivateTrainerDto(
     Guid Id,
@@ -91,4 +95,4 @@ public sealed record PrivateTrainerDto(
     SubscriptionStatusDto? PrivateService);
 
 /// <summary>Buys or renews the private training service: price = months × the monthly fee in the settings.</summary>
-public sealed record PrivateServiceRequest(int Months);
+public sealed record PrivateServiceRequest(int Months, PaymentRequest? Payment = null);

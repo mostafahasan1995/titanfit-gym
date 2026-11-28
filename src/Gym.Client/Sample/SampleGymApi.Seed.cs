@@ -40,7 +40,7 @@ public sealed partial class SampleGymApi
     {
         var random = new Random(20261126);
 
-        plans.AddRange([new(1, 1, 150_000, true), new(2, 3, 400_000, true), new(3, 6, 750_000, true), new(4, 12, 1_400_000, true)]);
+        plans.AddRange([new(1, 1, 20m, true), new(2, 3, 55m, true), new(3, 6, 100m, true), new(4, 12, 180m, true)]);
 
         var created = At(Today.AddDays(-400), 9, 0);
         staff.AddRange(
@@ -57,6 +57,7 @@ public sealed partial class SampleGymApi
         ]);
         var admin = staff[0];
         var reception = staff[1];
+        SeedRates();
 
         // Club trainer ratings: the last 3 months (the current month is not rated yet for one trainer).
         string[] notes = ["ممتاز مع المشتركين الجدد", "ملتزم بالمواعيد", "يحتاج متابعة في النظافة", "Great energy in the evening classes", ""];
@@ -114,12 +115,16 @@ public sealed partial class SampleGymApi
                 var earlier = start.AddMonths(-1).AddDays(-10);
                 subscriptions.Add(new SubscriptionDto(
                     NextId(), row.Id, SubscriptionKind.Membership, plans[0].Id, 1, earlier, SubscriptionRules.CalculateEndDate(earlier, 1),
-                    plans[0].Price, reception.Id, reception.FullName, At(earlier, 11, 30)));
+                    plans[0].Price, reception.Id, reception.FullName, At(earlier, 11, 30), Currency.Usd, plans[0].Price));
             }
 
+            // Every third payment in Syrian pounds at that day's rate (when the sample has one).
+            var paid = i % 3 == 1 && RateOn(start) is { } rate
+                ? new PaymentAmount(Currency.Syp, CurrencyRules.ToSyp(plan.Price, rate, settings.SypRoundingStep), rate)
+                : new PaymentAmount(Currency.Usd, plan.Price, RateOn(start));
             subscriptions.Add(new SubscriptionDto(
                 NextId(), row.Id, SubscriptionKind.Membership, plan.Id, months, start, SubscriptionRules.CalculateEndDate(start, months),
-                plan.Price, reception.Id, reception.FullName, At(start, s.StartsToday ? 9 + i % 8 : 11, 30)));
+                plan.Price, reception.Id, reception.FullName, At(start, s.StartsToday ? 9 + i % 8 : 11, 30), paid.Currency, paid.Amount, paid.SypPerUsd));
         }
 
         foreach (var (s, i) in SampleMembers.Select((s, i) => (s, i)).Where(x => x.s.ClientOf is not null))
@@ -164,25 +169,25 @@ public sealed partial class SampleGymApi
         ]);
 
         // (id, English, Arabic, category, barcode, price, min stock, stock at the end, active)
-        (int Id, string En, string Ar, int Category, string? Barcode, long Price, int Min, int Stock, bool Active)[] items =
+        (int Id, string En, string Ar, int Category, string? Barcode, decimal Price, int Min, int Stock, bool Active)[] items =
         [
-            (1, "Water 500 ml", "مياه 500 مل", 1, "6291001000011", 3_000, 24, 60, true),
-            (2, "Water 1.5 L", "مياه 1.5 لتر", 1, "6291001000028", 6_000, 12, 8, true),
-            (3, "Energy drink", "مشروب طاقة", 1, "9002490100070", 18_000, 12, 30, true),
-            (4, "Orange juice", "عصير برتقال", 1, "6291001000042", 12_000, 10, 14, true),
-            (5, "Iced coffee", "قهوة باردة", 1, "6291001000059", 15_000, 6, 0, true),
-            (6, "Chocolate protein shake", "شيك بروتين بالشوكولا", 2, null, 35_000, 0, 40, true),
-            (7, "Banana shake", "شيك موز", 2, null, 28_000, 0, 25, true),
-            (8, "Berry shake", "شيك توت", 2, null, 30_000, 5, 3, true),
-            (9, "Protein bar", "لوح بروتين", 3, "5060495110124", 20_000, 10, 22, true),
-            (10, "Oat cookies", "كوكيز الشوفان", 3, "6291001000103", 9_000, 10, 6, true),
-            (11, "Mixed nuts", "مكسرات مشكلة", 3, "6291001000110", 16_000, 5, 12, true),
-            (12, "Rice cakes", "كعك الأرز", 3, "6291001000127", 7_000, 5, 18, true),
-            (13, "Whey protein 1 kg", "واي بروتين 1 كغ", 4, "5060469988254", 450_000, 2, 5, true),
-            (14, "Creatine 300 g", "كرياتين 300 غ", 4, "5060469988261", 250_000, 2, 1, true),
-            (15, "BCAA 250 g", "أحماض أمينية BCAA 250 غ", 4, "5060469988278", 220_000, 2, 4, true),
-            (16, "Shaker bottle", "مطرة خلط", 4, "6291001000165", 25_000, 3, 9, true),
-            (17, "Chocolate wafer", "ويفر شوكولا", 3, "6291001000172", 5_000, 0, 0, false),
+            (1, "Water 500 ml", "مياه 500 مل", 1, "6291001000011", 0.25m, 24, 60, true),
+            (2, "Water 1.5 L", "مياه 1.5 لتر", 1, "6291001000028", 0.50m, 12, 8, true),
+            (3, "Energy drink", "مشروب طاقة", 1, "9002490100070", 1.50m, 12, 30, true),
+            (4, "Orange juice", "عصير برتقال", 1, "6291001000042", 1.00m, 10, 14, true),
+            (5, "Iced coffee", "قهوة باردة", 1, "6291001000059", 1.25m, 6, 0, true),
+            (6, "Chocolate protein shake", "شيك بروتين بالشوكولا", 2, null, 3.00m, 0, 40, true),
+            (7, "Banana shake", "شيك موز", 2, null, 2.50m, 0, 25, true),
+            (8, "Berry shake", "شيك توت", 2, null, 2.75m, 5, 3, true),
+            (9, "Protein bar", "لوح بروتين", 3, "5060495110124", 1.75m, 10, 22, true),
+            (10, "Oat cookies", "كوكيز الشوفان", 3, "6291001000103", 0.75m, 10, 6, true),
+            (11, "Mixed nuts", "مكسرات مشكلة", 3, "6291001000110", 1.50m, 5, 12, true),
+            (12, "Rice cakes", "كعك الأرز", 3, "6291001000127", 0.60m, 5, 18, true),
+            (13, "Whey protein 1 kg", "واي بروتين 1 كغ", 4, "5060469988254", 38.00m, 2, 5, true),
+            (14, "Creatine 300 g", "كرياتين 300 غ", 4, "5060469988261", 22.00m, 2, 1, true),
+            (15, "BCAA 250 g", "أحماض أمينية BCAA 250 غ", 4, "5060469988278", 19.00m, 2, 4, true),
+            (16, "Shaker bottle", "مطرة خلط", 4, "6291001000165", 2.00m, 3, 9, true),
+            (17, "Chocolate wafer", "ويفر شوكولا", 3, "6291001000172", 0.40m, 0, 0, false),
         ];
         foreach (var item in items)
         {
@@ -208,7 +213,7 @@ public sealed partial class SampleGymApi
             var day = Today.AddDays(-back);
             var cashier = cashiers[back % cashiers.Count];
             var station = back % 2 == 0 ? "Cafeteria 1" : "Cafeteria 2";
-            var shift = OpenShift(cashier, station, 50_000, At(day, 8, 0));
+            var shift = OpenShift(cashier, station, 20m, At(day, 8, 0));
             var count = back == 0 ? 14 : 9 + random.Next(9);
             for (var n = 0; n < count; n++)
             {
@@ -257,20 +262,32 @@ public sealed partial class SampleGymApi
             }
         }
 
+        var saleNo = 0;
         foreach (var sale in planned.OrderBy(p => p.At))
         {
+            // Every third sale is paid in Syrian pounds (cash up to the next 5,000), the others in dollars (up to the next $5).
             var total = sale.Lines.Sum(l => l.Product.Price * l.Quantity);
-            var cash = (total + 4_999) / 5_000 * 5_000;
-            AddSale(sale.Cashier, shifts.First(s => s.Id == sale.Shift.Id), sale.Station, sale.At, sale.Lines, cash);
+            var rate = RateOn(DateOnly.FromDateTime(sale.At.ToLocalTime()));
+            if (saleNo++ % 3 == 2 && rate is { } sypPerUsd)
+            {
+                var due = new PaymentAmount(Currency.Syp, CurrencyRules.ToSyp(total, sypPerUsd, settings.SypRoundingStep), sypPerUsd);
+                var pounds = Math.Ceiling(due.Amount / 5_000m) * 5_000m;
+                AddSale(sale.Cashier, shifts.First(s => s.Id == sale.Shift.Id), sale.Station, sale.At, sale.Lines, pounds, due);
+            }
+            else
+            {
+                var dollars = Math.Ceiling(total / 5m) * 5m;
+                AddSale(sale.Cashier, shifts.First(s => s.Id == sale.Shift.Id), sale.Station, sale.At, sale.Lines, dollars, new PaymentAmount(Currency.Usd, total, rate));
+            }
         }
 
-        // The closed shifts counted their cash (one was 2,000 short).
+        // The closed shifts counted their cash (one was $2 short).
         for (var i = 0; i < shifts.Count; i++)
         {
             if (shifts[i].ClosedAt is not null)
             {
                 var expected = shifts[i].OpeningCash + sales.Where(s => s.ShiftId == shifts[i].Id).Sum(s => s.Total);
-                shifts[i] = shifts[i] with { ClosingCash = i == 2 ? expected - 2_000 : expected };
+                shifts[i] = shifts[i] with { ClosingCash = i == 2 ? expected - 2m : expected };
             }
         }
     }
@@ -278,7 +295,7 @@ public sealed partial class SampleGymApi
     private void AddService(MemberRow trainer, int months, DateOnly start, StaffDto by) =>
         subscriptions.Add(new SubscriptionDto(
             NextId(), trainer.Id, SubscriptionKind.PrivateTraining, null, months, start, SubscriptionRules.CalculateEndDate(start, months),
-            months * settings.PrivateTrainingMonthlyFee, by.Id, by.FullName, At(start, 12, 0)));
+            months * settings.PrivateTrainingMonthlyFee, by.Id, by.FullName, At(start, 12, 0), Currency.Usd, months * settings.PrivateTrainingMonthlyFee));
 
     /// <summary>Busy in the morning and the evening, like a real gym.</summary>
     private static int PickHour(Random random)

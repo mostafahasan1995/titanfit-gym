@@ -64,6 +64,7 @@ internal sealed class SubscriptionConfiguration : IEntityTypeConfiguration<Subsc
         });
         b.HasKey(s => s.Id);
         b.Property(s => s.Kind).HasConversion<string>().HasMaxLength(32);
+        b.Property(s => s.Currency).HasConversion<string>().HasMaxLength(8).HasDefaultValue(Currency.Usd).HasSentinel((Currency)(-1));
 
         b.HasOne(s => s.Member).WithMany(m => m.Subscriptions).HasForeignKey(s => s.MemberId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne(s => s.Plan).WithMany().HasForeignKey(s => s.PlanId).OnDelete(DeleteBehavior.Restrict);
@@ -102,7 +103,9 @@ internal sealed class SettingsConfiguration : IEntityTypeConfiguration<GymSettin
             t.HasCheckConstraint("ck_settings_single_row", $"id = {GymSettings.SingletonId}");
             t.HasCheckConstraint("ck_settings_expiring_soon_days", "expiring_soon_days >= 0");
             t.HasCheckConstraint("ck_settings_private_training_fee", "private_training_monthly_fee >= 0");
+            t.HasCheckConstraint("ck_settings_syp_rounding_step", "syp_rounding_step >= 1");
         });
+        b.Property(s => s.SypRoundingStep).HasDefaultValue(CurrencyRules.DefaultSypRoundingStep).HasSentinel(0);
         b.HasKey(s => s.Id);
         b.Property(s => s.Id).ValueGeneratedNever();
         b.HasData(new GymSettings
@@ -110,7 +113,20 @@ internal sealed class SettingsConfiguration : IEntityTypeConfiguration<GymSettin
             Id = GymSettings.SingletonId,
             ExpiringSoonDays = SubscriptionRules.DefaultExpiringSoonDays,
             PrivateTrainingMonthlyFee = GymSettings.DefaultPrivateTrainingMonthlyFee,
+            SypRoundingStep = CurrencyRules.DefaultSypRoundingStep,
             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
         });
+    }
+}
+
+internal sealed class ExchangeRateConfiguration : IEntityTypeConfiguration<ExchangeRate>
+{
+    public void Configure(EntityTypeBuilder<ExchangeRate> b)
+    {
+        b.ToTable("exchange_rates", t => t.HasCheckConstraint("ck_exchange_rates_rate", "syp_per_usd > 0"));
+        b.HasKey(r => r.Id);
+        b.HasOne(r => r.EnteredBy).WithMany().HasForeignKey(r => r.EnteredById).OnDelete(DeleteBehavior.Restrict);
+        b.HasIndex(r => r.EnteredAt);
+        b.HasIndex(r => r.Date);
     }
 }

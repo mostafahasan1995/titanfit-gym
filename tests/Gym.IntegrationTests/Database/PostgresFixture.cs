@@ -32,11 +32,13 @@ public sealed class PostgresFixture : IAsyncLifetime
 
     public SettingsService Settings(GymDbContext db) => new(db, Clock);
 
-    public MemberService Members(GymDbContext db) => new(db, Clock, Settings(db));
+    public ExchangeRateService Rates(GymDbContext db) => new(db, Clock, Settings(db));
+
+    public MemberService Members(GymDbContext db) => new(db, Clock, Settings(db), Rates(db));
 
     public StockService Stock(GymDbContext db) => new(db, Clock);
 
-    public SalesService Sales(GymDbContext db) => new(db, Clock, Stock(db));
+    public SalesService Sales(GymDbContext db) => new(db, Clock, Stock(db), Rates(db));
 
     public StaffService Staff(GymDbContext db) => new(db, Clock, new PasswordHasher<StaffMember>());
 
@@ -50,7 +52,7 @@ public sealed class PostgresFixture : IAsyncLifetime
     }
 
     /// <summary>A product in the first category with the given stock (one stock-in movement).</summary>
-    public async Task<int> AddProductAsync(int stock, long price = 10_000, int minStock = 0)
+    public async Task<int> AddProductAsync(int stock, decimal price = 2.5m, int minStock = 0)
     {
         await using var db = CreateContext();
         var staffId = await AddStaffAsync(StaffType.Cashier);

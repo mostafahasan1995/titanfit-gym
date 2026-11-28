@@ -20,6 +20,8 @@ public sealed class SampleLiveConnection : ILiveConnection
 
     public event Action<SettingsDto>? SettingsChanged;
 
+    public event Action<ExchangeRateStatusDto>? ExchangeRateChanged;
+
     public event Action<LiveStatus>? StatusChanged;
 
     public LiveStatus Status { get; private set; } = LiveStatus.Offline;
@@ -55,4 +57,6 @@ public sealed class SampleLiveConnection : ILiveConnection
     public void PublishSaleCompleted(SaleCompletedEvent sale) => SaleCompleted?.Invoke(sale);
 
     public void PublishSettingsChanged(SettingsDto settings) => SettingsChanged?.Invoke(settings);
+
+    public void PublishExchangeRateChanged(ExchangeRateStatusDto status) => ExchangeRateChanged?.Invoke(status);
 }

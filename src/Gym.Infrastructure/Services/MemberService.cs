@@ -1,7 +1,7 @@
 namespace Gym.Infrastructure.Services;
 
 /// <summary>Members, their subscriptions, QR codes, photos and private trainer links.</summary>
-public sealed class MemberService(GymDbContext db, GymClock clock, SettingsService settings)
+public sealed class MemberService(GymDbContext db, GymClock clock, SettingsService settings, ExchangeRateService rates)
 {
     public const int MaxPrivateServiceMonths = 36;
 
@@ -30,8 +30,9 @@ public sealed class MemberService(GymDbContext db, GymClock clock, SettingsServi
         if (request.PlanId is { } planId)
         {
             var plan = await FindActivePlanAsync(planId, ct);
+            var payment = await rates.GetDueAsync(plan.Price, request.Payment, ct);
             db.Subscriptions.Add(Subscription.Start(
-                member.Id, SubscriptionKind.Membership, plan.Months, plan.Price, null, clock.Today, staffId, now, plan.Id));
+                member.Id, SubscriptionKind.Membership, plan.Months, plan.Price, null, clock.Today, staffId, now, plan.Id, payment));
         }
 
         await db.SaveChangesOrConflictAsync(ct);
@@ -110,20 +111,30 @@ public sealed class MemberService(GymDbContext db, GymClock clock, SettingsServi
         return new PagedResult<MemberSummary>(items, total, page, pageSize);
     }
 
-    public async Task<SubscriptionDto> RenewAsync(Guid memberId, int planId, int staffId, CancellationToken ct = default)
+    public async Task<SubscriptionDto> RenewAsync(Guid memberId, int planId, int staffId, CancellationToken ct = default) =>
+        await RenewAsync(memberId, planId, null, staffId, ct);
+
+    /// <summary>Renews with a plan, paid in dollars or pounds (<paramref name="payment"/>; null = dollars).</summary>
+    public async Task<SubscriptionDto> RenewAsync(Guid memberId, int planId, PaymentRequest? payment, int staffId, CancellationToken ct = default)
     {
         var plan = await FindActivePlanAsync(planId, ct);
-        return await AddSubscriptionAsync(memberId, SubscriptionKind.Membership, plan.Months, plan.Price, plan.Id, staffId, check: null, ct);
+        var due = await rates.GetDueAsync(plan.Price, payment, ct);
+        return await AddSubscriptionAsync(memberId, SubscriptionKind.Membership, plan.Months, plan.Price, plan.Id, staffId, check: null, due, ct);
     }
 
     /// <summary>Buys or renews a private trainer's private training service (months × the fixed monthly fee).</summary>
-    public async Task<SubscriptionDto> AddPrivateServiceAsync(Guid trainerId, int months, int staffId, CancellationToken ct = default)
+    public async Task<SubscriptionDto> AddPrivateServiceAsync(Guid trainerId, int months, int staffId, CancellationToken ct = default) =>
+        await AddPrivateServiceAsync(trainerId, months, null, staffId, ct);
+
+    /// <summary>The private training service, paid in dollars or pounds (<paramref name="payment"/>; null = dollars).</summary>
+    public async Task<SubscriptionDto> AddPrivateServiceAsync(Guid trainerId, int months, PaymentRequest? payment, int staffId, CancellationToken ct = default)
     {
         Guard.Range(months, "Months", 1, MaxPrivateServiceMonths);
         var fee = (await settings.GetAsync(ct)).PrivateTrainingMonthlyFee;
         var price = PrivateTrainingRules.CalculatePrice(months, fee);
+        var due = await rates.GetDueAsync(price, payment, ct);
         return await AddSubscriptionAsync(
-            trainerId, SubscriptionKind.PrivateTraining, months, price, null, staffId, PrivateTrainingRules.EnsureCanHaveService, ct);
+            trainerId, SubscriptionKind.PrivateTraining, months, price, null, staffId, PrivateTrainingRules.EnsureCanHaveService, due, ct);
     }
 
     public async Task<IReadOnlyList<SubscriptionDto>> GetSubscriptionsAsync(Guid memberId, CancellationToken ct = default)
@@ -235,7 +246,7 @@ public sealed class MemberService(GymDbContext db, GymClock clock, SettingsServi
     }
 
     private async Task<SubscriptionDto> AddSubscriptionAsync(
-        Guid memberId, SubscriptionKind kind, int months, long price, int? planId, int staffId, Action<Member>? check, CancellationToken ct)
+        Guid memberId, SubscriptionKind kind, int months, decimal price, int? planId, int staffId, Action<Member>? check, PaymentAmount payment, CancellationToken ct)
     {
         await using var transaction = await db.Database.BeginTransactionAsync(ct);
 
@@ -248,7 +259,7 @@ public sealed class MemberService(GymDbContext db, GymClock clock, SettingsServi
             .Where(s => s.MemberId == memberId && s.Kind == kind)
             .MaxAsync(s => (DateOnly?)s.EndDate, ct);
         var now = clock.UtcNow;
-        var subscription = Subscription.Start(memberId, kind, months, price, currentEnd, clock.Today, staffId, now, planId);
+        var subscription = Subscription.Start(memberId, kind, months, price, currentEnd, clock.Today, staffId, now, planId, payment);
         db.Subscriptions.Add(subscription);
         member.UpdatedAt = now;
         await db.SaveChangesOrConflictAsync(ct);
@@ -259,7 +270,8 @@ public sealed class MemberService(GymDbContext db, GymClock clock, SettingsServi
 
     private static IQueryable<SubscriptionDto> ProjectSubscriptions(IQueryable<Subscription> query) =>
         query.Select(s => new SubscriptionDto(
-            s.Id, s.MemberId, s.Kind, s.PlanId, s.Months, s.StartDate, s.EndDate, s.PricePaid, s.CreatedById, s.CreatedBy!.FullName, s.CreatedAt));
+            s.Id, s.MemberId, s.Kind, s.PlanId, s.Months, s.StartDate, s.EndDate, s.PricePaid, s.CreatedById, s.CreatedBy!.FullName, s.CreatedAt,
+            s.Currency, s.PaidAmount, s.ExchangeRate));
 
     private static void ApplyDetails(
         Member member, string? firstName, string? lastName, string? fatherName, string? motherName,

@@ -35,6 +35,15 @@ public sealed class GymDbContext(DbContextOptions<GymDbContext> options) : DbCon
 
     public DbSet<GymSettings> Settings => Set<GymSettings>();
 
+    public DbSet<ExchangeRate> ExchangeRates => Set<ExchangeRate>();
+
+    /// <summary>Money columns: US dollars with cents, pounds and rates with 2 decimals (numeric(14,2)).</summary>
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        ArgumentNullException.ThrowIfNull(configurationBuilder);
+        configurationBuilder.Properties<decimal>().HavePrecision(14, 2);
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasSequence<int>(MemberNumberSequence).StartsAt(1).IncrementsBy(1);

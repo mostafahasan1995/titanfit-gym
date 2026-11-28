@@ -51,7 +51,8 @@ public interface IGymApi
 
     Task<MemberDto> UpdateMemberAsync(Guid id, UpdateMemberRequest request, CancellationToken ct = default);
 
-    Task<SubscriptionDto> RenewMemberAsync(Guid id, int planId, CancellationToken ct = default);
+    /// <summary>Renews with a plan; <paramref name="payment"/> says the currency (null = US dollars).</summary>
+    Task<SubscriptionDto> RenewMemberAsync(Guid id, int planId, PaymentRequest? payment = null, CancellationToken ct = default);
 
     Task<IReadOnlyList<SubscriptionDto>> GetMemberSubscriptionsAsync(Guid id, CancellationToken ct = default);
 
@@ -92,7 +93,7 @@ public interface IGymApi
     Task UnlinkClientAsync(Guid trainerId, Guid memberId, CancellationToken ct = default);
 
     /// <summary>Buys or renews the private training service (months × the fixed monthly fee).</summary>
-    Task<SubscriptionDto> AddPrivateServiceAsync(Guid trainerId, int months, CancellationToken ct = default);
+    Task<SubscriptionDto> AddPrivateServiceAsync(Guid trainerId, int months, PaymentRequest? payment = null, CancellationToken ct = default);
 
     // Staff and ratings
 
@@ -173,6 +174,17 @@ public interface IGymApi
     Task<SettingsDto> GetSettingsAsync(CancellationToken ct = default);
 
     Task<SettingsDto> UpdateSettingsAsync(SettingsDto settings, CancellationToken ct = default);
+
+    // Exchange rate (Syrian pounds for 1 US dollar)
+
+    /// <summary>The rate in use (the newest one) and whether it is today's. Any staff.</summary>
+    Task<ExchangeRateStatusDto> GetExchangeRateAsync(CancellationToken ct = default);
+
+    /// <summary>Enters today's rate (Admin). Code <c>invalid_exchange_rate</c> when it is not above 0.</summary>
+    Task<ExchangeRateDto> SetExchangeRateAsync(SetExchangeRateRequest request, CancellationToken ct = default);
+
+    /// <summary>The rates entered, newest first (Admin).</summary>
+    Task<IReadOnlyList<ExchangeRateDto>> GetExchangeRatesAsync(DateOnly? from = null, DateOnly? to = null, CancellationToken ct = default);
 
     // Backups (Admin)
 

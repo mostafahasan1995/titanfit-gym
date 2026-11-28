@@ -61,12 +61,23 @@
         <Grid Grid.Column="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
             <Border Grid.Row="0" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" Padding="28,18">
                 <DockPanel>
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- Today's exchange rate (pounds for 1 dollar); amber while it is an older day's rate. -->
+                        <Border x:Name="RateChip" Height="40" Padding="14,0" Margin="0,0,12,0" CornerRadius="12" VerticalAlignment="Center"
+                                Visibility="Collapsed" Background="{DynamicResource Brush.Panel}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <controls:Icon x:Name="RateIcon" Data="{x:Static ui:UiIcons.Cash}" Size="16" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource Brush.Gold}" />
+                                <TextBlock x:Name="RateText" Margin="8,0,0,0" FontSize="13" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource Brush.TextTertiary}" />
+                            </StackPanel>
+                        </Border>
                         <Border x:Name="LiveBorder" Height="40" Padding="14,0" CornerRadius="12" VerticalAlignment="Center"
                                 Background="{DynamicResource Brush.Panel}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -94,8 +105,19 @@
                 </DockPanel>
             </Border>
 
+            <!-- Exchange rate warning: today's rate is missing (the last one is used) or there is none yet. A warning only. -->
+            <Border x:Name="RateBanner" Grid.Row="1" Margin="28,16,28,0" Padding="14,10" CornerRadius="14" Visibility="Collapsed"
+                    Background="{DynamicResource Brush.WarningSoft}" BorderBrush="{DynamicResource Brush.WarningLine}" BorderThickness="1">
+                <DockPanel>
+                    <controls:Icon DockPanel.Dock="Left" Data="{x:Static ui:UiIcons.Alert}" Size="20" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource Brush.Warning}" />
+                    <TextBlock x:Name="RateBannerText" Style="{DynamicResource Text.Strong}" FontSize="14" Margin="10,0,0,0"
+                               TextWrapping="Wrap" VerticalAlignment="Center" />
+                </DockPanel>
+            </Border>
+
             <!-- The current page. -->
-            <ContentControl x:Name="PageHost" Grid.Row="1" Margin="28,24,28,28" Focusable="False"
+            <ContentControl x:Name="PageHost" Grid.Row="2" Margin="28,24,28,28" Focusable="False"
                             HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
         </Grid>
 

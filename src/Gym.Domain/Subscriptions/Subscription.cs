@@ -23,8 +23,17 @@ public class Subscription
     /// <summary>Inclusive: the member can still enter on this day.</summary>
     public DateOnly EndDate { get; set; }
 
-    /// <summary>Whole SYP, copied at the time of payment (later price changes do not touch it).</summary>
-    public long PricePaid { get; set; }
+    /// <summary>US dollars, copied at the time of payment (later price changes do not touch it). The payment's dollar value.</summary>
+    public decimal PricePaid { get; set; }
+
+    /// <summary>The currency the customer paid in.</summary>
+    public Currency Currency { get; set; } = Currency.Usd;
+
+    /// <summary>The amount paid in <see cref="Currency"/>: the dollars, or the pounds (rounded) at <see cref="ExchangeRate"/>.</summary>
+    public decimal PaidAmount { get; set; }
+
+    /// <summary>The rate used (pounds for 1 dollar); null when no rate existed yet (a dollar payment).</summary>
+    public decimal? ExchangeRate { get; set; }
 
     public int CreatedById { get; set; }
 
@@ -43,12 +52,13 @@ public class Subscription
         Guid memberId,
         SubscriptionKind kind,
         int months,
-        long price,
+        decimal price,
         DateOnly? currentEndDate,
         DateOnly today,
         int createdById,
         DateTime createdAtUtc,
-        int? planId = null)
+        int? planId = null,
+        PaymentAmount? payment = null)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(months, 1);
         ArgumentOutOfRangeException.ThrowIfNegative(price);
@@ -63,6 +73,9 @@ public class Subscription
             StartDate = start,
             EndDate = SubscriptionRules.CalculateEndDate(start, months),
             PricePaid = price,
+            Currency = payment?.Currency ?? Currency.Usd,
+            PaidAmount = payment?.Amount ?? price,
+            ExchangeRate = payment?.SypPerUsd,
             CreatedById = createdById,
             CreatedAt = createdAtUtc,
         };

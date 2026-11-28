@@ -36,6 +36,9 @@ public interface ILiveConnection : IAsyncDisposable
 
     event Action<SettingsDto>? SettingsChanged;
 
+    /// <summary>A new exchange rate was entered (or the rounding step changed).</summary>
+    event Action<ExchangeRateStatusDto>? ExchangeRateChanged;
+
     /// <summary>Raised when <see cref="Status"/> changes.</summary>
     event Action<LiveStatus>? StatusChanged;
 

@@ -24,6 +24,7 @@ public static class DependencyInjection
 
         services.AddScoped<DatabaseInitializer>();
         services.AddScoped<SettingsService>();
+        services.AddScoped<ExchangeRateService>();
         services.AddScoped<PlanService>();
         services.AddScoped<MemberService>();
         services.AddScoped<CheckInService>();

@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Gym.Api.Auth;
 using Gym.Api.Live;
 
@@ -18,11 +19,25 @@ internal static class AdminEndpoints
 
         var settings = api.MapGroup("/settings").WithTags("Settings");
         settings.MapGet("/", (SettingsService service, CancellationToken ct) => service.GetDtoAsync(ct)).RequireAuthorization(Policies.AnyStaff);
-        settings.MapPut("/", async (SettingsDto request, SettingsService service, LiveUpdates live, CancellationToken ct) =>
+        settings.MapPut("/", async (SettingsDto request, SettingsService service, ExchangeRateService rates, LiveUpdates live, CancellationToken ct) =>
         {
             var updated = await service.UpdateAsync(request, ct);
             await live.SettingsChangedAsync(updated);
+            await live.ExchangeRateChangedAsync(await rates.GetStatusAsync(ct)); // the rounding step is part of it
             return updated;
+        }).RequireAuthorization(Policies.Admin);
+
+        // The daily exchange rate (Syrian pounds for 1 US dollar), entered by the manager. The newest one is in use.
+        var rates = api.MapGroup("/exchange-rates").WithTags("Exchange rate");
+        rates.MapGet("/current", (ExchangeRateService service, CancellationToken ct) => service.GetStatusAsync(ct))
+            .RequireAuthorization(Policies.AnyStaff);
+        rates.MapGet("/", (DateOnly? from, DateOnly? to, ExchangeRateService service, CancellationToken ct) => service.ListAsync(from, to, ct))
+            .RequireAuthorization(Policies.Admin);
+        rates.MapPost("/", async (SetExchangeRateRequest request, ClaimsPrincipal user, ExchangeRateService service, LiveUpdates live, CancellationToken ct) =>
+        {
+            var rate = await service.SetAsync(request, user.StaffId(), ct);
+            await live.ExchangeRateChangedAsync(await service.GetStatusAsync(ct));
+            return Results.Created($"/api/exchange-rates/{rate.Id}", rate);
         }).RequireAuthorization(Policies.Admin);
     }
 }

@@ -69,8 +69,8 @@ public sealed class GymApiClient(HttpClient http) : IGymApi
     public Task<MemberDto> UpdateMemberAsync(Guid id, UpdateMemberRequest request, CancellationToken ct = default) =>
         SendAsync<MemberDto>(HttpMethod.Put, $"api/members/{id}", request, ct);
 
-    public Task<SubscriptionDto> RenewMemberAsync(Guid id, int planId, CancellationToken ct = default) =>
-        PostAsync<SubscriptionDto>($"api/members/{id}/renew", new RenewRequest(planId), ct);
+    public Task<SubscriptionDto> RenewMemberAsync(Guid id, int planId, PaymentRequest? payment = null, CancellationToken ct = default) =>
+        PostAsync<SubscriptionDto>($"api/members/{id}/renew", new RenewRequest(planId, payment), ct);
 
     public Task<IReadOnlyList<SubscriptionDto>> GetMemberSubscriptionsAsync(Guid id, CancellationToken ct = default) =>
         GetAsync<IReadOnlyList<SubscriptionDto>>($"api/members/{id}/subscriptions", ct);
@@ -140,8 +140,8 @@ public sealed class GymApiClient(HttpClient http) : IGymApi
         SendAsync(HttpMethod.Delete, $"api/private-trainers/{trainerId}/clients/{memberId}", null, ct);
 
     /// <summary>Buys or renews the private training service (months × the fixed monthly fee).</summary>
-    public Task<SubscriptionDto> AddPrivateServiceAsync(Guid trainerId, int months, CancellationToken ct = default) =>
-        PostAsync<SubscriptionDto>($"api/private-trainers/{trainerId}/service", new PrivateServiceRequest(months), ct);
+    public Task<SubscriptionDto> AddPrivateServiceAsync(Guid trainerId, int months, PaymentRequest? payment = null, CancellationToken ct = default) =>
+        PostAsync<SubscriptionDto>($"api/private-trainers/{trainerId}/service", new PrivateServiceRequest(months, payment), ct);
 
     // Staff and ratings
 
@@ -261,6 +261,15 @@ public sealed class GymApiClient(HttpClient http) : IGymApi
 
     public Task<SettingsDto> UpdateSettingsAsync(SettingsDto settings, CancellationToken ct = default) =>
         SendAsync<SettingsDto>(HttpMethod.Put, "api/settings", settings, ct);
+
+    public Task<ExchangeRateStatusDto> GetExchangeRateAsync(CancellationToken ct = default) =>
+        GetAsync<ExchangeRateStatusDto>("api/exchange-rates/current", ct);
+
+    public Task<ExchangeRateDto> SetExchangeRateAsync(SetExchangeRateRequest request, CancellationToken ct = default) =>
+        PostAsync<ExchangeRateDto>("api/exchange-rates", request, ct);
+
+    public Task<IReadOnlyList<ExchangeRateDto>> GetExchangeRatesAsync(DateOnly? from = null, DateOnly? to = null, CancellationToken ct = default) =>
+        GetAsync<IReadOnlyList<ExchangeRateDto>>("api/exchange-rates" + Query(("from", from), ("to", to)), ct);
 
     // Backups
 

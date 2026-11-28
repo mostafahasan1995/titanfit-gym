@@ -55,6 +55,7 @@ internal sealed class SaleConfiguration : IEntityTypeConfiguration<Sale>
         b.Property(s => s.Number).HasDefaultValueSql($"nextval('{GymDbContext.SaleNumberSequence}')");
         b.HasIndex(s => s.Number).IsUnique().HasDatabaseName("ux_sales_number");
         b.Property(s => s.Station).HasMaxLength(CheckIn.StationMaxLength);
+        b.Property(s => s.Currency).HasConversion<string>().HasMaxLength(8).HasDefaultValue(Currency.Usd).HasSentinel((Currency)(-1));
         b.HasOne(s => s.Cashier).WithMany().HasForeignKey(s => s.CashierId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne(s => s.Shift).WithMany().HasForeignKey(s => s.ShiftId).OnDelete(DeleteBehavior.Restrict);
         b.HasMany(s => s.Lines).WithOne(l => l.Sale).HasForeignKey(l => l.SaleId).OnDelete(DeleteBehavior.Cascade);

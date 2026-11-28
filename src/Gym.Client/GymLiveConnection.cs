@@ -41,6 +41,7 @@ public sealed class GymLiveConnection : ILiveConnection
         connection.On<ProductChangedEvent>(nameof(IGymHubClient.ProductChanged), e => ProductChanged?.Invoke(e));
         connection.On<SaleCompletedEvent>(nameof(IGymHubClient.SaleCompleted), e => SaleCompleted?.Invoke(e));
         connection.On<SettingsDto>(nameof(IGymHubClient.SettingsChanged), e => SettingsChanged?.Invoke(e));
+        connection.On<ExchangeRateStatusDto>(nameof(IGymHubClient.ExchangeRateChanged), e => ExchangeRateChanged?.Invoke(e));
         connection.Reconnecting += _ => RaiseStateChanged();
         connection.Reconnected += _ => RaiseStateChanged();
         connection.Closed += _ => RaiseStateChanged();
@@ -57,6 +58,8 @@ public sealed class GymLiveConnection : ILiveConnection
     public event Action<SaleCompletedEvent>? SaleCompleted;
 
     public event Action<SettingsDto>? SettingsChanged;
+
+    public event Action<ExchangeRateStatusDto>? ExchangeRateChanged;
 
     /// <summary>Connected, reconnecting or closed (for a status light in the apps).</summary>
     public event Action<HubConnectionState>? StateChanged;

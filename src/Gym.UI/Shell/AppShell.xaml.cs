@@ -32,6 +32,7 @@ public partial class AppShell : UserControl
         Context = context;
         navItems = app.Pages.Select((p, i) => new NavItem(i, p.Icon)).ToList();
         NavList.ItemsSource = navItems;
+        PropertyChangedEventManager.AddHandler(ExchangeRates.Current, OnRateChanged, string.Empty);
         ApplyLanguage();
     }
 
@@ -126,6 +127,7 @@ public partial class AppShell : UserControl
         ArabicButton.IsChecked = language == AppLanguage.Arabic;
         UpdateHeader();
         SetLiveStatus(liveStatus);
+        UpdateRate();
 
         foreach (var view in views.Values.OfType<IShellPage>())
         {
@@ -158,6 +160,39 @@ public partial class AppShell : UserControl
         };
         LiveDot.SetResourceReference(System.Windows.Shapes.Shape.FillProperty, brush);
         LiveText.Text = text.For(UiLanguage.Current);
+    }
+
+    /// <summary>The rate chip in the header and the warning banner (an older day's rate, or none yet).</summary>
+    internal void UpdateRate()
+    {
+        var language = UiLanguage.Current;
+        var rates = ExchangeRates.Current;
+        if (!rates.IsLoaded)
+        {
+            RateChip.Visibility = Visibility.Collapsed;
+            RateBanner.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        if (rates.Rate is { } rate)
+        {
+            var pounds = Money.FormatSyp(rate.SypPerUsd, language);
+            RateText.Text = BidiText.FixNumbers(CommonText.RateChip.Format(language, pounds), language);
+            RateText.SetResourceReference(TextBlock.ForegroundProperty, rates.IsStale ? "Brush.Warning" : "Brush.TextTertiary");
+            RateChip.SetResourceReference(Border.BorderBrushProperty, rates.IsStale ? "Brush.WarningLine" : "Brush.Line");
+            RateChip.ToolTip = CommonText.ExchangeRate.For(language);
+            AutomationProperties.SetName(RateChip, CommonText.ExchangeRate.For(language));
+            RateChip.Visibility = Visibility.Visible;
+            RateBannerText.Text = BidiText.FixNumbers(
+                CommonText.RateStaleBanner.Format(language, pounds, DateText.ShortDate(rate.Date, language)), language);
+            RateBanner.Visibility = rates.IsStale ? Visibility.Visible : Visibility.Collapsed;
+        }
+        else
+        {
+            RateChip.Visibility = Visibility.Collapsed;
+            RateBannerText.Text = CommonText.RateMissingBanner.For(language);
+            RateBanner.Visibility = Visibility.Visible;
+        }
     }
 
     internal void HideHeaderTitle(LocalText title)
@@ -241,6 +276,8 @@ public partial class AppShell : UserControl
             LanguageRequested?.Invoke(this, language);
         }
     }
+
+    private void OnRateChanged(object? sender, PropertyChangedEventArgs e) => UpdateRate();
 
     private void OnLogoutClick(object sender, RoutedEventArgs e) => LogoutRequested?.Invoke(this, EventArgs.Empty);
 

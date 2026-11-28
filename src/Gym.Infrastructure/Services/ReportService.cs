@@ -8,7 +8,7 @@ public sealed class ReportService(GymDbContext db, GymClock clock)
         var (start, end) = clock.UtcRange(from, to);
         var rows = await db.Subscriptions.AsNoTracking()
             .Where(s => s.CreatedAt >= start && s.CreatedAt < end)
-            .Select(s => new { s.Kind, s.Months, s.PricePaid, s.CreatedAt, s.CreatedById, StaffName = s.CreatedBy!.FullName })
+            .Select(s => new { s.Kind, s.Months, s.PricePaid, s.Currency, s.PaidAmount, s.CreatedAt, s.CreatedById, StaffName = s.CreatedBy!.FullName })
             .ToListAsync(ct);
 
         return new SubscriptionReportDto(
@@ -27,7 +27,8 @@ public sealed class ReportService(GymDbContext db, GymClock clock)
             rows.GroupBy(r => (r.CreatedById, r.StaffName))
                 .Select(g => new StaffAmount(g.Key.CreatedById, g.Key.StaffName, g.Count(), g.Sum(r => r.PricePaid)))
                 .OrderByDescending(s => s.Total).ThenBy(s => s.StaffName)
-                .ToList());
+                .ToList(),
+            CurrencyTotalsOf.From(rows.Select(r => (r.Currency, r.PricePaid, r.PaidAmount))));
     }
 
     public async Task<AttendanceReportDto> AttendanceAsync(DateOnly from, DateOnly to, CancellationToken ct = default)
@@ -59,7 +60,7 @@ public sealed class ReportService(GymDbContext db, GymClock clock)
         var (start, end) = clock.UtcRange(from, to);
         var sales = await db.Sales.AsNoTracking()
             .Where(s => s.At >= start && s.At < end)
-            .Select(s => new { s.Id, s.At, s.Total, s.CashierId, CashierName = s.Cashier!.FullName })
+            .Select(s => new { s.Id, s.At, s.Total, s.Currency, s.PaidAmount, s.CashierId, CashierName = s.Cashier!.FullName })
             .ToListAsync(ct);
         var lines = await db.SaleLines.AsNoTracking()
             .Where(l => l.Sale!.At >= start && l.Sale.At < end)
@@ -82,6 +83,7 @@ public sealed class ReportService(GymDbContext db, GymClock clock)
             sales.GroupBy(s => (s.CashierId, s.CashierName))
                 .Select(g => new StaffAmount(g.Key.CashierId, g.Key.CashierName, g.Count(), g.Sum(s => s.Total)))
                 .OrderByDescending(s => s.Total).ThenBy(s => s.StaffName)
-                .ToList());
+                .ToList(),
+            CurrencyTotalsOf.From(sales.Select(s => (s.Currency, s.Total, s.PaidAmount))));
     }
 }

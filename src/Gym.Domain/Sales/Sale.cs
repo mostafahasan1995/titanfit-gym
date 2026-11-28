@@ -22,15 +22,25 @@ public class Sale
 
     public DateTime At { get; set; }
 
-    /// <summary>Whole SYP: the sum of the line totals.</summary>
-    public long Total { get; set; }
+    /// <summary>US dollars: the sum of the line totals. The sale's dollar value.</summary>
+    public decimal Total { get; set; }
 
-    /// <summary>Cash handed over by the customer, if the cashier typed it.</summary>
-    public long? CashReceived { get; set; }
+    /// <summary>The currency the customer paid in.</summary>
+    public Currency Currency { get; set; } = Currency.Usd;
+
+    /// <summary>The amount due in <see cref="Currency"/>: the total in dollars, or in pounds (rounded) at <see cref="ExchangeRate"/>.</summary>
+    public decimal PaidAmount { get; set; }
+
+    /// <summary>The rate used (pounds for 1 dollar); null when no rate existed yet (a dollar payment).</summary>
+    public decimal? ExchangeRate { get; set; }
+
+    /// <summary>Cash handed over by the customer in <see cref="Currency"/>, if the cashier typed it.</summary>
+    public decimal? CashReceived { get; set; }
 
     public List<SaleLine> Lines { get; set; } = [];
 
-    public long? Change => CashReceived - Total;
+    /// <summary>The change in <see cref="Currency"/>.</summary>
+    public decimal? Change => CashReceived - PaidAmount;
 
     /// <summary>Adds a line at the product's current price.</summary>
     public SaleLine AddLine(Product product, int quantity)
@@ -54,15 +64,26 @@ public class Sale
         return line;
     }
 
-    public void SetCashReceived(long? cashReceived)
+    /// <summary>
+    /// Sets how the customer pays (after the lines are added): the currency, the amount due in it, the rate, and the
+    /// cash handed over in that currency (optional; not less than the amount due).
+    /// </summary>
+    public void SetPayment(PaymentAmount payment, decimal? cashReceived)
     {
-        if (cashReceived is { } cash && cash < Total)
+        ArgumentNullException.ThrowIfNull(payment);
+        if (cashReceived is { } cash && cash < payment.Amount)
         {
-            throw new DomainException("cash_received_too_low", $"The cash received ({cash}) is less than the total ({Total}).");
+            throw new DomainException("cash_received_too_low", $"The cash received ({cash}) is less than the amount due ({payment.Amount}).");
         }
 
+        Currency = payment.Currency;
+        PaidAmount = payment.Amount;
+        ExchangeRate = payment.SypPerUsd;
         CashReceived = cashReceived;
     }
+
+    /// <summary>Paid in dollars at the total (no rate).</summary>
+    public void SetCashReceived(decimal? cashReceived) => SetPayment(new PaymentAmount(Currency.Usd, Total, null), cashReceived);
 }
 
 public class SaleLine
@@ -79,8 +100,8 @@ public class SaleLine
 
     public int Quantity { get; set; }
 
-    /// <summary>Price at the time of the sale.</summary>
-    public long UnitPrice { get; set; }
+    /// <summary>Price at the time of the sale (US dollars).</summary>
+    public decimal UnitPrice { get; set; }
 
-    public long LineTotal { get; set; }
+    public decimal LineTotal { get; set; }
 }

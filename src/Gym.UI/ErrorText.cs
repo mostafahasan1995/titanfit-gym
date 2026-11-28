@@ -31,9 +31,21 @@ public static class ErrorText
 
     public static LocalText WrongPassword { get; } = new("The current password is not right.", "كلمة المرور الحالية غير صحيحة.");
 
-    public static LocalText CashTooLow { get; } = new("The cash received is less than the total.", "المبلغ المستلم أقل من الإجمالي.");
+    public static LocalText CashTooLow { get; } = new("The cash received is less than the amount due.", "المبلغ المستلم أقل من المبلغ المطلوب.");
 
     public static LocalText EmptySale { get; } = new("Add at least one item.", "أضف صنفًا واحدًا على الأقل.");
+
+    public static LocalText NoExchangeRate { get; } = new(
+        "No exchange rate has been entered yet: take the payment in US dollars.",
+        "لم يُدخَل سعر صرف بعد: اقبض المبلغ بالدولار.");
+
+    public static LocalText InvalidExchangeRate { get; } = new(
+        "Enter the exchange rate as the pounds for 1 dollar (more than 0).",
+        "أدخل سعر الصرف بالليرة لكل 1 دولار (أكثر من 0).");
+
+    public static LocalText ExchangeRateNotFound { get; } = new(
+        "The exchange rate changed. Check the amount and try again.",
+        "تغيّر سعر الصرف. تحقّق من المبلغ وأعد المحاولة.");
 
     public static LocalText PageFailed { get; } = new("This screen could not load: {0}", "تعذّر تحميل هذه الشاشة: {0}");
 
@@ -48,6 +60,9 @@ public static class ErrorText
         ["wrong_password"] = WrongPassword,
         ["cash_received_too_low"] = CashTooLow,
         ["empty_sale"] = EmptySale,
+        ["no_exchange_rate"] = NoExchangeRate,
+        ["invalid_exchange_rate"] = InvalidExchangeRate,
+        ["exchange_rate_not_found"] = ExchangeRateNotFound,
     };
 
     /// <summary>The message for <paramref name="error"/> in <paramref name="language"/>.</summary>

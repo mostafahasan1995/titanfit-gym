@@ -17,6 +17,9 @@ public interface IGymHubClient
     Task SaleCompleted(SaleCompletedEvent sale);
 
     Task SettingsChanged(SettingsDto settings);
+
+    /// <summary>The manager entered a new exchange rate (or the rounding step changed).</summary>
+    Task ExchangeRateChanged(ExchangeRateStatusDto status);
 }
 
 public static class GymHubRoute
@@ -41,4 +44,4 @@ public sealed record StockChangedEvent(IReadOnlyList<StockLevelDto> Products);
 
 public sealed record ProductChangedEvent(int ProductId);
 
-public sealed record SaleCompletedEvent(long SaleId, long Number, string Station, long Total, DateTime At);
+public sealed record SaleCompletedEvent(long SaleId, long Number, string Station, decimal Total, DateTime At);

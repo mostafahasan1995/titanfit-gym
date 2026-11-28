@@ -43,8 +43,8 @@ public class Product
     /// <summary>Unique when present.</summary>
     public string? Barcode { get; set; }
 
-    /// <summary>Whole SYP.</summary>
-    public long Price { get; set; }
+    /// <summary>US dollars.</summary>
+    public decimal Price { get; set; }
 
     /// <summary>Low stock = current stock below this number.</summary>
     public int MinStock { get; set; }
